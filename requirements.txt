@@ -1,5 +1,4 @@
-fastapi
-uvicorn
+Flask
+gunicorn
 sqlmodel
-jinja2
 python-multipart

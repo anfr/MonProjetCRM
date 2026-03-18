@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Imprimerie - Toutes les Cartes</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+        /* CSS magique pour éviter que l'imprimante ne coupe une carte en deux ! */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background-color: white !important;
+            }
+
+            .carte-client {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-200 p-8">
+
+    <div class="mb-8 flex gap-4 no-print justify-center">
+        <button onclick="window.close()" class="rounded bg-gray-500 px-6 py-3 font-bold text-white shadow hover:bg-gray-600">Fermer</button>
+        <button onclick="window.print()" class="rounded bg-purple-600 px-6 py-3 font-bold text-white shadow hover:bg-purple-700">🖨️ Imprimer toutes les cartes</button>
+    </div>
+
+    <div class="flex flex-wrap gap-6 justify-center max-w-7xl mx-auto">
+        {% for client in clients %}
+        <div class="carte-client bg-white rounded-xl shadow-lg border border-gray-400 overflow-hidden" style="width: 380px; min-height: 220px;">
+            <div class="bg-blue-600 p-2 text-center">
+                <h1 class="text-white font-bold text-sm tracking-wider">CARTE D'ACCÈS RAPIDE</h1>
+            </div>
+
+            <div class="p-4 flex items-start justify-between gap-3 h-full">
+                <div class="flex-1">
+                    <h2 class="text-lg font-bold text-gray-800 leading-tight">{{ client.prenom }} {{ client.nom }}</h2>
+                    <p class="text-xs font-medium text-gray-600 mb-1">📞 {{ client.telephone }}</p>
+                    <p class="text-xs font-bold text-blue-600 bg-blue-50 inline-block px-2 py-0.5 rounded border border-blue-200 mb-2">ID: {{ client.id }}</p>
+
+                    {% if client.contrats %}
+                    <div class="pt-2 border-t border-gray-200">
+                        <ul class="space-y-0.5">
+                            {% for contrat in client.contrats %}
+                            <li class="flex items-center justify-between text-[10px]">
+                                <span class="font-semibold text-gray-700 truncate w-24">{{ contrat.service.nom_service }}</span>
+                                <span class="font-mono font-bold text-gray-900 bg-gray-100 px-1 rounded border border-gray-300">{{ contrat.numero_contrat }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="bg-white p-1 border border-dashed border-gray-300 rounded shrink-0 mt-1">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ client.telephone | replace(' ', '') }}" alt="QR" class="w-20 h-20">
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</body>
+</html>

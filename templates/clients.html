@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white shadow px-4 sm:px-8 py-4 mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <h1 class="text-xl sm:text-2xl font-bold flex items-center gap-2">👥 Clients</h1>
+    <a href="/ajouter_client" class="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 transition shadow-sm w-full sm:w-auto text-center">
+        ➕ Nouveau Client
+    </a>
+</div>
+
+<div class="max-w-6xl mx-auto px-4 pb-12">
+
+    <div class="mb-6 bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-blue-200">
+        <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-lg sm:text-xl">🔍</span>
+            <input type="text" id="rechercheLive" onkeyup="filtrerClients()" placeholder="Nom, quartier, service..."
+                   class="w-full pl-10 pr-3 py-2 sm:py-3 text-base sm:text-lg border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white shadow-inner">
+        </div>
+        <p class="text-xs text-gray-500 mt-2 ml-1">💡 La liste se met à jour toute seule !</p>
+    </div>
+
+    <div class="md:bg-white md:rounded-lg md:shadow-sm md:border md:border-gray-200 md:overflow-hidden">
+        <table class="w-full text-left text-sm text-gray-600 border-collapse block md:table">
+            <thead class="hidden md:table-header-group bg-gray-100 text-gray-700 uppercase text-xs font-bold border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-4">Client</th>
+                    <th class="px-6 py-4">Contact & Localisation</th>
+                    <th class="px-6 py-4">Contrats actifs</th>
+                    <th class="px-6 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableClients" class="block md:table-row-group">
+                {% for client in clients %}
+                <tr class="block md:table-row border border-gray-200 md:border-0 md:border-b md:border-gray-100 hover:bg-blue-50 transition ligne-client bg-white rounded-lg md:rounded-none mb-4 md:mb-0 shadow-sm md:shadow-none p-4 md:p-0">
+
+                    <td class="block md:table-cell md:px-6 md:py-4 border-b border-gray-100 md:border-0 pb-3 md:pb-0">
+                        <a href="/client/{{ client.id }}" class="block">
+                            <div class="font-bold text-gray-900 text-base uppercase">{{ client.nom }}</div>
+                            <div class="text-gray-700 font-medium capitalize">{{ client.prenom }}</div>
+                        </a>
+                    </td>
+
+                    <td class="block md:table-cell md:px-6 md:py-4 border-b border-gray-100 md:border-0 py-3 md:py-0">
+                        <div class="font-medium {% if not client.telephone %} text-red-400 italic text-xs {% else %} text-gray-800 {% endif %}">
+                            {% if client.telephone %} 📞 {{ client.telephone }} {% else %} ❌ Pas de numéro {% endif %}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            📍 {{ client.adresse or 'Adresse inconnue' }}
+                        </div>
+                    </td>
+
+                    <td class="block md:table-cell md:px-6 md:py-4 border-b border-gray-100 md:border-0 py-3 md:py-0">
+                        <div class="flex flex-wrap gap-1">
+                            {% if client.contrats %}
+                            {% for contrat in client.contrats %}
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                {{ contrat.service.nom_service }}
+                            </span>
+                            {% endfor %}
+                            {% else %}
+                            <span class="text-xs text-gray-400 italic">Aucun contrat</span>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td class="block md:table-cell md:px-6 md:py-4 pt-3 md:pt-0 text-right">
+                        <div class="flex flex-wrap items-center justify-start md:justify-end gap-2">
+                            <a href="/client/{{ client.id }}" class="flex-1 md:flex-none text-center bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white px-3 py-2 md:py-1.5 rounded font-bold transition shadow-sm text-xs" title="Voir le dossier">
+                                👁️ Dossier
+                            </a>
+
+                            <a href="/modifier_client/{{ client.id }}" class="flex-1 md:flex-none text-center bg-yellow-100 text-yellow-700 hover:bg-yellow-600 hover:text-white px-3 py-2 md:py-1.5 rounded font-bold transition shadow-sm text-xs" title="Modifier les infos">
+                                ✏️ Modifier
+                            </a>
+
+                            {% if session.get('role') == 'admin' %}
+                            <a href="/supprimer_client/{{ client.id }}" onclick="return confirm('Attention : Êtes-vous sûr de vouloir supprimer ce client et tout son historique ?');" class="bg-red-100 text-red-700 hover:bg-red-600 hover:text-white px-3 py-2 md:py-1.5 rounded font-bold transition shadow-sm text-xs flex-none" title="Supprimer définitivement">
+                                🗑️
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="px-6 py-8 text-center text-gray-500 font-medium block md:table-cell">
+                        Aucun client enregistré pour le moment.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function filtrerClients() {
+        let motCle = document.getElementById('rechercheLive').value.toLowerCase();
+        let lignes = document.querySelectorAll('.ligne-client');
+
+        lignes.forEach(function (ligne) {
+            let contenuLigne = ligne.innerText.toLowerCase();
+            if (contenuLigne.includes(motCle)) {
+                ligne.style.display = '';
+            } else {
+                ligne.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

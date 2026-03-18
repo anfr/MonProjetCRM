@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <h2 class="text-2xl font-semibold text-gray-800">
+        Ajouter un nouveau client
+    </h2>
+    <a href="/clients" class="text-gray-600 hover:text-gray-900 font-medium">
+        ← Retour à la liste
+    </a>
+</div>
+
+<div class="rounded-sm border border-gray-200 bg-white shadow-sm max-w-2xl">
+    <div class="border-b border-gray-200 py-4 px-6.5">
+        <h3 class="font-medium text-gray-900">
+            Informations du client
+        </h3>
+    </div>
+
+    <form action="/ajouter_client" method="POST">
+        <div class="p-6.5">
+
+            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                <div class="w-full xl:w-1/2">
+                    <label class="mb-2.5 block text-gray-900 font-medium">Nom</label>
+                    <input type="text" name="nom" required placeholder="Ex: Dupont" class="w-full rounded border-[1.5px] border-gray-300 bg-transparent py-3 px-5 text-gray-800 outline-none transition focus:border-blue-500 active:border-blue-500" />
+                </div>
+
+                <div class="w-full xl:w-1/2">
+                    <label class="mb-2.5 block text-gray-900 font-medium">Prénom</label>
+                    <input type="text" name="prenom" required placeholder="Ex: Jean" class="w-full rounded border-[1.5px] border-gray-300 bg-transparent py-3 px-5 text-gray-800 outline-none transition focus:border-blue-500 active:border-blue-500" />
+                </div>
+            </div>
+
+            <div class="mb-4.5">
+                <label class="mb-2.5 block text-gray-900 font-medium">Téléphone principal</label>
+                <input type="text" name="telephone" required placeholder="Ex: 06 12 34 56 78" class="w-full rounded border-[1.5px] border-gray-300 bg-transparent py-3 px-5 text-gray-800 outline-none transition focus:border-blue-500 active:border-blue-500" />
+            </div>
+
+            <div class="mb-6">
+                <label class="mb-2.5 block text-gray-900 font-medium">Adresse postale</label>
+                <textarea name="adresse" rows="3" placeholder="Adresse complète..." class="w-full rounded border-[1.5px] border-gray-300 bg-transparent py-3 px-5 text-gray-800 outline-none transition focus:border-blue-500 active:border-blue-500"></textarea>
+            </div>
+
+            <button type="submit" class="flex w-full justify-center rounded p-3 font-medium text-white hover:bg-opacity-90" style="background-color: #465fff;">
+                Enregistrer le client
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

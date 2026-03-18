@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <h2 class="text-2xl font-semibold text-gray-800">
+        Historique & Comptes
+    </h2>
+    <button onclick="window.print()" class="rounded bg-red-500 py-2 px-4 font-medium text-white hover:bg-red-600 shadow-sm">
+        📄 Exporter en PDF
+    </button>
+</div>
+
+<div id="zone-historique" class="rounded-sm border border-gray-200 bg-white px-5 pt-6 pb-2.5 shadow-sm sm:px-7.5 xl:pb-1">
+    <div class="max-w-full overflow-x-auto">
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="bg-gray-100 text-left">
+                    <th class="py-4 px-4 font-medium text-gray-900">Client</th>
+                    <th class="py-4 px-4 font-medium text-gray-900">Date</th>
+                    <th class="py-4 px-4 font-medium text-gray-900">Total Factures</th>
+                    <th class="py-4 px-4 font-medium text-gray-900">Avance reçue</th>
+                    <th class="py-4 px-4 font-bold text-gray-900">Statut / Reste</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for op in operations %}
+                <tr>
+                    <td class="border-b border-gray-200 py-4 px-4 text-gray-800 font-medium">
+                        {{ op.client.prenom }} {{ op.client.nom }}
+                    </td>
+                    <td class="border-b border-gray-200 py-4 px-4 text-gray-600">
+                        {{ op.date_operation.strftime('%d/%m/%Y') }}
+                    </td>
+                    <td class="border-b border-gray-200 py-4 px-4 text-blue-600 font-medium">
+                        {{ op.montant_total }} DH
+                    </td>
+                    <td class="border-b border-gray-200 py-4 px-4 text-gray-600 font-medium">
+                        {{ op.montant_avance }} DH
+                    </td>
+                    <td class="border-b border-gray-200 py-4 px-4">
+                        {% set reste = op.montant_total - op.montant_avance %}
+
+                        {% if reste > 0 %}
+                        <div class="flex items-center gap-3">
+                            <span class="text-red-600 font-bold">Manque {{ reste }} DH</span>
+                            <a href="/supprimer_operation/{{ op.id }}" onclick="return confirm('Effacer cette opération de l\'historique ?')" class="text-red-400 hover:text-red-600">🗑️</a>
+                            <a href="/regler_reste/{{ op.id }}" class="rounded bg-red-100 text-red-700 px-2 py-1 text-xs font-bold hover:bg-red-200 shadow-sm transition">
+                                Encaisser
+                            </a>
+                        </div>
+
+                        {% elif reste < 0 %}
+                        <div class="flex items-center gap-3">
+                            <span class="text-orange-500 font-bold">À rendre : {{ reste|abs }} DH</span>
+                            {% if session.get('role') == 'admin' %}
+                            <a href="/supprimer_operation/{{ op.id }}" onclick="return confirm('Effacer cette opération de l\'historique ?')" class="text-red-400 hover:text-red-600">🗑️</a>
+                            {% endif %}
+                            <a href="/regler_reste/{{ op.id }}" class="rounded bg-orange-100 text-orange-700 px-2 py-1 text-xs font-bold hover:bg-orange-200 shadow-sm transition">
+                                Rendre monnaie
+                            </a>
+                        </div>
+
+                        {% else %}
+                        <div class="flex items-center gap-2">
+                            <span class="text-green-600 font-bold">✓ Équilibré (0 DH)</span>
+
+                            <a href="https://wa.me/212{{ op.client.telephone | replace(' ', '') }}?text=Bonjour {{ op.client.prenom }}, votre paiement de {{ op.montant_total }} DH a bien été effectué. Merci de votre confiance !" target="_blank" class="flex items-center gap-1 rounded bg-green-500 text-white px-2 py-1 text-xs font-bold hover:bg-green-600 shadow-sm transition">
+                                💬 Reçu WhatsApp
+                            </a>
+
+                            {% if session.get('role') == 'admin' %}
+                            <a href="/supprimer_operation/{{ op.id }}" onclick="return confirm('Effacer cette opération de l\'historique ?')" class="text-red-400 hover:text-red-600 ml-2">
+                                🗑️
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="py-5 text-center text-gray-500">Aucune opération terminée pour le moment.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

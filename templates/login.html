@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion Kiosque</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-96 border border-gray-200">
+        <h2 class="text-2xl font-bold text-center text-blue-800 mb-6 flex justify-center items-center gap-2">
+            🔒 Accès Kiosque
+        </h2>
+
+        {% if erreur %}
+        <div class="bg-red-100 border border-red-300 text-red-700 p-3 rounded mb-5 text-sm text-center font-medium">
+            ⚠️ {{ erreur }}
+        </div>
+        {% endif %}
+
+        <form action="/login" method="POST" class="flex flex-col gap-5">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Nom d'utilisateur</label>
+                <input type="text" name="username" required placeholder="Ex: admin ou hassan..." class="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-50 outline-none focus:border-blue-500 focus:bg-white transition">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Mot de passe</label>
+                <input type="password" name="password" required placeholder="••••••••" class="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-50 outline-none focus:border-blue-500 focus:bg-white transition">
+            </div>
+            <button type="submit" class="bg-blue-600 text-white font-bold py-3 rounded-md hover:bg-blue-700 transition mt-2 shadow-sm text-lg">
+                Se connecter
+            </button>
+        </form>
+    </div>
+</body>
+</html>

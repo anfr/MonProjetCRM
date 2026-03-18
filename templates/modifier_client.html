@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <h2 class="text-2xl font-semibold text-gray-800">
+        Modifier le client : {{ client.prenom }} {{ client.nom }}
+    </h2>
+    <a href="/clients" class="text-gray-600 hover:text-gray-900 font-medium">
+        ← Annuler et revenir
+    </a>
+</div>
+
+<div class="rounded-sm border border-gray-200 bg-white shadow-sm max-w-2xl">
+    <form action="/modifier_client/{{ client.id }}" method="POST">
+        <div class="p-6.5">
+            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                <div class="w-full xl:w-1/2">
+                    <label class="mb-2.5 block text-gray-900 font-medium">Nom</label>
+                    <input type="text" name="nom" required value="{{ client.nom }}" class="w-full rounded border-[1.5px] border-gray-300 bg-transparent py-3 px-5 text-gray-800 outline-none transition focus:border-blue-500" />
+                </div>
+                <div class="w-full xl:w-1/2">
+                    <label class="mb-2.5 block text-gray-900 font-medium">Prénom</label>
+                    <input type="text" name="prenom" required value="{{ client.prenom }}" class="w-full rounded border-[1.5px] border-gray-300 bg-transparent py-3 px-5 text-gray-800 outline-none transition focus:border-blue-500" />
+                </div>
+            </div>
+
+            <div class="mb-4.5">
+                <label class="mb-2.5 block text-gray-900 font-medium">Téléphone principal</label>
+                <input type="text" name="telephone" required value="{{ client.telephone }}" class="w-full rounded border-[1.5px] border-gray-300 bg-transparent py-3 px-5 text-gray-800 outline-none transition focus:border-blue-500" />
+            </div>
+
+            <div class="mb-6">
+                <label class="mb-2.5 block text-gray-900 font-medium">Adresse postale</label>
+                <textarea name="adresse" rows="3" class="w-full rounded border-[1.5px] border-gray-300 bg-transparent py-3 px-5 text-gray-800 outline-none transition focus:border-blue-500">{{ client.adresse }}</textarea>
+            </div>
+
+            <button type="submit" class="flex w-full justify-center rounded bg-green-600 p-3 font-medium text-white hover:bg-green-700">
+                💾 Enregistrer les modifications
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Carte Client - {{ client.prenom }}</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+        /* Règles magiques pour l'impression */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            /* Cache les boutons quand on imprime */
+            body {
+                background-color: white !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="mb-8 flex gap-4 no-print">
+        <button onclick="window.close()" class="rounded bg-gray-500 px-4 py-2 font-bold text-white shadow-sm hover:bg-gray-600">
+            Fermer
+        </button>
+        <button onclick="window.print()" class="rounded bg-blue-600 px-4 py-2 font-bold text-white shadow-sm hover:bg-blue-700">
+            🖨️ Imprimer / Sauvegarder PDF
+        </button>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 overflow-hidden" style="width: 420px; min-height: 230px;">
+        <div class="bg-blue-600 p-3 text-center">
+            <h1 class="text-white font-bold text-lg tracking-wider">CARTE D'ACCÈS RAPIDE</h1>
+        </div>
+
+        <div class="p-5 flex items-start justify-between gap-4">
+
+            <div class="flex-1">
+                <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Client CRM</p>
+                <h2 class="text-xl font-bold text-gray-800 mb-1">{{ client.prenom }} {{ client.nom }}</h2>
+                <p class="text-sm font-medium text-gray-600 flex items-center gap-2 mb-2">
+                    📞 {{ client.telephone }}
+                </p>
+
+                <p class="text-xs font-bold text-blue-600 bg-blue-50 inline-block px-2 py-1 rounded border border-blue-200 mb-4">
+                    N° ID : {{ client.id }}
+                </p>
+
+                {% if client.contrats %}
+                <div class="pt-3 border-t border-gray-100">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Contrats enregistrés :</p>
+                    <ul class="space-y-1.5">
+                        {% for contrat in client.contrats %}
+                        <li class="flex items-center justify-between text-xs">
+                            <span class="font-semibold text-gray-700">{{ contrat.service.nom_service }}</span>
+                            <span class="font-mono font-bold text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                                {{ contrat.numero_contrat }}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="bg-white p-1 border-2 border-dashed border-gray-300 rounded-lg shrink-0 mt-2">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ client.telephone | replace(' ', '') }}" alt="QR Code" class="w-24 h-24">
+            </div>
+
+        </div>
+    </div>
+
+    <p class="mt-8 text-gray-500 text-sm no-print text-center max-w-md">
+        💡 <b>Astuce :</b> Avec une douchette USB, scanne ce QR Code depuis la barre de recherche du CRM pour ouvrir la fiche instantanément !
+    </p>
+
+</body>
+</html>

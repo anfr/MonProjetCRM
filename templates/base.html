@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon CRM - Kiosque Multiservices</title>
+
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        @media print {
+            /* On cache le menu de gauche, l'en-tête et tous les boutons pour l'impression */
+            aside, header, button, a, form {
+                display: none !important;
+            }
+            /* On donne toute la place au tableau */
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            body {
+                background-color: white !important;
+            }
+            /* On évite que le tableau soit coupé en plein milieu d'une ligne */
+            table {
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        #tab-services {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body x-data="{ sidebarToggle: false }" class="bg-gray-50 text-gray-800 font-sans">
+
+    <div class="flex h-screen overflow-hidden">
+
+        <div x-show="sidebarToggle"
+             @click="sidebarToggle = false"
+             class="fixed inset-0 z-40 bg-black bg-opacity-50 transition-opacity lg:hidden"
+             style="display: none;">
+        </div>
+
+        <aside :class="sidebarToggle ? 'translate-x-0' : '-translate-x-full'" class="absolute left-0 top-0 z-50 flex h-screen w-72 flex-col overflow-y-hidden bg-gray-900 duration-300 ease-linear lg:static lg:translate-x-0 shadow-2xl">
+
+            <div class="flex items-center justify-between gap-2 px-6 py-5 lg:py-6">
+                <a href="/">
+                    <h1 class="text-white text-2xl font-bold mt-4">🏪 Mon CRM</h1>
+                </a>
+                <button @click="sidebarToggle = false" class="block lg:hidden text-gray-400 hover:text-white text-2xl mt-4 focus:outline-none">
+                    ✖
+                </button>
+            </div>
+
+            <div class="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
+                <nav class="mt-5 py-4 px-4 lg:mt-9 lg:px-6">
+                    <ul class="mb-6 flex flex-col gap-1.5">
+                        <li>
+                            <a href="/" class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-gray-300 duration-300 ease-in-out hover:bg-gray-800 hover:text-white">
+                                📊 Tableau de bord
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/clients" class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-gray-300 duration-300 ease-in-out hover:bg-gray-800 hover:text-white">
+                                👥 Mes Clients
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/historique" class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-gray-300 duration-300 ease-in-out hover:bg-gray-800 hover:text-white">
+                                🗄️ Historique & Comptes
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/dettes" class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-red-400 duration-300 ease-in-out hover:bg-gray-800 hover:text-red-300">
+                                📓 Carnet de Crédit
+                            </a>
+                        </li>
+                        <li>
+                            {% if session.get('role') == 'admin' %}
+                            <a href="/parametres" class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-gray-300 duration-300 ease-in-out hover:bg-gray-800 hover:text-white">
+                                ⚙️ Paramètres
+                            </a>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+
+        <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+
+            <header class="sticky top-0 z-40 flex w-full bg-white drop-shadow-sm border-b border-gray-200">
+                <div class="flex flex-grow items-center justify-between py-3 px-4 shadow-sm md:px-6">
+
+                    <div class="flex items-center gap-2 sm:gap-4 lg:hidden">
+                        <button class="block rounded-sm border border-gray-200 bg-white p-1.5 shadow-sm lg:hidden hover:bg-gray-100 transition" @click.stop="sidebarToggle = !sidebarToggle">
+                            ☰ Menu
+                        </button>
+                    </div>
+
+                    <div class="hidden sm:block flex-1 max-w-md mx-4">
+                        <form action="/clients" method="GET" class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
+                            <input type="text" name="q" placeholder="Rechercher un client..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 focus:bg-white transition text-sm">
+                        </form>
+                    </div>
+
+                    <div class="flex items-center gap-3 ml-auto">
+                        <a href="/profil" class="bg-gray-100 text-gray-800 px-3 sm:px-4 py-2 rounded-full text-sm font-bold capitalize hover:bg-blue-100 hover:text-blue-800 transition flex items-center gap-2 border border-gray-200 shadow-sm" title="Mon Espace Personnel">
+                            👤 <span class="hidden sm:inline">{{ session.get('username') }}</span>
+                        </a>
+
+                        <a href="/logout" class="text-red-500 font-bold hover:text-red-700 transition text-sm sm:text-base px-2">
+                            Déconnexion
+                        </a>
+                    </div>
+
+                </div>
+            </header>
+
+            <main>
+                <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function telechargerPDF(idDuTableau, nomDuFichier) {
+            var element = document.getElementById(idDuTableau);
+            var options = {
+                margin: 0.5,
+                filename: nomDuFichier,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+            };
+            html2pdf().set(options).from(element).save();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mon Profil</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800">
+
+    <div class="bg-white shadow px-8 py-4 mb-8 flex justify-between items-center">
+        <h1 class="text-2xl font-bold flex items-center gap-2">👤 Mon Espace Personnel</h1>
+        <a href="/" class="bg-gray-800 text-white px-5 py-2 rounded font-medium hover:bg-gray-700 transition shadow-sm">
+            🏠 Retour au Kiosque
+        </a>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-4 pb-12">
+        {% if erreur %}
+        <div class="bg-red-100 text-red-700 p-4 rounded mb-6 font-bold text-center border border-red-300 shadow-sm">{{ erreur }}</div>
+        {% endif %}
+        {% if succes %}
+        <div class="bg-green-100 text-green-700 p-4 rounded mb-6 font-bold text-center border border-green-300 shadow-sm">{{ succes }}</div>
+        {% endif %}
+
+        <form action="/profil" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold text-blue-800 border-b border-gray-200 pb-3 mb-5">📝 Mes Informations</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Identifiant de connexion (Login) *</label>
+                        <input type="text" name="username" value="{{ user.username }}" required class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Prénom</label>
+                            <input type="text" name="prenom" value="{{ user.prenom or '' }}" class="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Nom</label>
+                            <input type="text" name="nom" value="{{ user.nom or '' }}" class="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Téléphone</label>
+                        <input type="text" name="telephone" value="{{ user.telephone or '' }}" class="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Adresse Email</label>
+                        <input type="email" name="email" value="{{ user.email or '' }}" class="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold text-red-700 border-b border-gray-200 pb-3 mb-5">🔒 Modifier mon mot de passe</h2>
+                <p class="text-xs text-gray-500 mb-5">Laissez ces champs vides si vous ne souhaitez pas modifier votre mot de passe actuel.</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Mot de passe ACTUEL</label>
+                        <input type="password" name="ancien_mdp" placeholder="Obligatoire pour changer le mot de passe" class="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-red-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">NOUVEAU mot de passe</label>
+                        <input type="password" name="nouveau_mdp" placeholder="Votre nouveau mot de passe secret" class="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-red-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">CONFIRMER le nouveau mot de passe</label>
+                        <input type="password" name="confirmer_mdp" placeholder="Retapez le nouveau mot de passe" class="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-red-500">
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-5 border-t border-gray-200 flex justify-end">
+                    <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-8 rounded hover:bg-blue-700 shadow-md transition">
+                        💾 Enregistrer les modifications
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</body>
+</html>

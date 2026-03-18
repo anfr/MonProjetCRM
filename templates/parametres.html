@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="bg-white shadow px-8 py-4 mb-8 flex justify-between items-center">
+    <h1 class="text-2xl font-bold flex items-center gap-2">⚙️ Paramètres de l'application</h1>
+   
+</div>
+
+<div class="max-w-6xl mx-auto px-4 pb-12">
+
+    <div class="mb-6 border-b border-gray-300 bg-white rounded-t-lg px-4 pt-4 shadow-sm overflow-x-auto">
+        <ul class="flex flex-nowrap -mb-px text-sm font-medium text-center text-gray-500 whitespace-nowrap">
+            <li class="mr-6">
+                <button onclick="changerOnglet(event, 'tab-services')" class="onglet-btn inline-flex items-center gap-2 pb-3 border-b-4 border-blue-600 text-blue-800 font-bold transition">
+                    🛠️ Services
+                </button>
+            </li>
+            <li class="mr-6">
+                <button onclick="changerOnglet(event, 'tab-equipe')" class="onglet-btn inline-flex items-center gap-2 pb-3 border-b-4 border-transparent hover:text-gray-700 hover:border-gray-300 transition">
+                    👥 Mon Équipe
+                </button>
+            </li>
+
+            <li class="mr-6">
+                <button onclick="changerOnglet(event, 'tab-sauvegarde')" class="onglet-btn inline-flex items-center gap-2 pb-3 border-b-4 border-transparent hover:text-gray-700 hover:border-gray-300 transition">
+                    💾 Sauvegarde
+                </button>
+            </li>
+            <li class="mr-6">
+                <button onclick="changerOnglet(event, 'tab-clients')" class="onglet-btn inline-flex items-center gap-2 pb-3 border-b-4 border-transparent hover:text-gray-700 hover:border-gray-300 transition">
+                    🗂️ Clients Avancés
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <div id="tab-services" class="tab-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded shadow-sm border border-gray-200">
+                <h3 class="font-bold text-gray-800 mb-4">Ajouter un Service</h3>
+                <form action="/ajouter_service" method="POST" class="flex gap-2">
+                    <input type="text" name="nom_service" required placeholder="Ex: Mobile - Orange..." class="flex-1 rounded border border-gray-300 px-3 py-2 outline-none focus:border-blue-500" />
+                    <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700">+ Ajouter</button>
+                </form>
+            </div>
+            <div class="bg-white p-6 rounded shadow-sm border border-gray-200">
+                <h3 class="font-bold text-gray-800 mb-4">Services actuels</h3>
+                <ul class="space-y-2">
+                    {% for service in services %}
+                    <li class="flex items-center justify-between rounded border border-gray-200 bg-gray-50 px-4 py-2">
+                        <span class="font-medium text-gray-700">{{ service.nom_service }}</span>
+                        <a href="/supprimer_service/{{ service.id }}" onclick="return confirm('Supprimer ce service ?')" class="text-gray-400 hover:text-red-600 text-xl">🗑️</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-equipe" class="tab-content">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-indigo-50 border border-indigo-200 p-6 rounded shadow-sm h-fit">
+                <h3 class="font-bold text-indigo-900 mb-4 flex items-center gap-2">👨‍💼 Nouveau Caissier</h3>
+                <form action="/ajouter_caissier" method="POST" class="flex flex-col gap-3">
+                    <input type="text" name="username" required placeholder="Identifiant (Login)" class="rounded border border-indigo-300 px-3 py-2 outline-none focus:border-indigo-600" />
+                    <input type="password" name="password" required placeholder="Mot de passe par défaut" class="rounded border border-indigo-300 px-3 py-2 outline-none focus:border-indigo-600" />
+                    <button type="submit" class="rounded bg-indigo-600 px-4 py-2 text-white font-bold hover:bg-indigo-700">Créer l'accès</button>
+                </form>
+                <p class="text-xs text-indigo-700 mt-4">Le caissier pourra ensuite compléter son profil (Nom, Téléphone) et changer son mot de passe depuis son espace personnel.</p>
+            </div>
+
+            <div class="lg:col-span-2 bg-white border border-gray-200 p-0 rounded shadow-sm overflow-hidden">
+                <table class="w-full text-left text-sm text-gray-600">
+                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs font-bold border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4">Employé</th>
+                            <th class="px-6 py-4">Contact</th>
+                            <th class="px-6 py-4">Rôle</th>
+                            <th class="px-6 py-4 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in utilisateurs %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-gray-900">{{ u.prenom or '' }} {{ u.nom or '' }}</div>
+                                <div class="text-xs text-gray-500">Login: {{ u.username }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-xs">
+                                {% if u.telephone %}📞 {{ u.telephone }}<br>{% endif %}
+                                {% if u.email %}✉️ {{ u.email }}{% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full {% if u.role == 'admin' %} bg-red-100 text-red-800 {% else %} bg-indigo-100 text-indigo-800 {% endif %}">{{ u.role }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                {% if u.role != 'admin' %}
+                                <a href="/supprimer_caissier/{{ u.id }}" onclick="return confirm('Révoquer cet accès de façon permanente ?')" class="text-red-500 hover:text-red-700 font-bold">Révoquer</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div id="tab-sauvegarde" class="tab-content">
+        <div class="rounded bg-green-50 border border-green-200 p-6 shadow-sm flex gap-4">
+            <a href="/exporter_donnees" class="flex-1 rounded bg-green-600 py-3 px-6 font-bold text-white hover:bg-green-700 text-center">📊 Exporter les Opérations</a>
+            <a href="/exporter_clients" class="flex-1 rounded bg-teal-600 py-3 px-6 font-bold text-white hover:bg-teal-700 text-center">👥 Exporter mes Clients</a>
+        </div>
+    </div>
+
+    <div id="tab-clients" class="tab-content">
+        <div class="rounded bg-purple-50 border border-purple-200 p-6 shadow-sm flex gap-4">
+            <a href="/imprimer_toutes_cartes" target="_blank" class="flex-1 rounded bg-purple-600 py-3 px-6 font-bold text-white hover:bg-purple-700 text-center">🖨️ Générer toutes les cartes</a>
+            <a href="/archiver_inactifs" onclick="return confirm('Archiver ?')" class="flex-1 rounded bg-gray-600 py-3 px-6 font-bold text-white hover:bg-gray-700 text-center">👻 Archiver les inactifs</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function changerOnglet(evt, idOnglet) {
+        let contenus = document.querySelectorAll('.tab-content');
+        contenus.forEach(c => c.style.display = 'none');
+
+        let boutons = document.querySelectorAll('.onglet-btn');
+        boutons.forEach(b => {
+            b.classList.remove('border-blue-600', 'text-blue-800', 'font-bold');
+            b.classList.add('border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        });
+
+        document.getElementById(idOnglet).style.display = 'block';
+        evt.currentTarget.classList.remove('border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+        evt.currentTarget.classList.add('border-blue-600', 'text-blue-800', 'font-bold');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <h2 class="text-2xl font-semibold text-gray-800">
+        📓 Carnet de Crédit (Impayés)
+    </h2>
+</div>
+
+<div class="mb-8 rounded-sm border border-red-200 bg-red-50 py-6 px-7.5 shadow-sm flex items-center justify-between">
+    <div>
+        <h4 class="text-2xl font-bold text-red-600">{{ total_dettes }} DH</h4>
+        <span class="text-sm font-medium text-red-800">Total de l'argent en attente de paiement</span>
+    </div>
+    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 text-2xl">
+        ⚠️
+    </div>
+</div>
+
+<div class="rounded-sm border border-gray-200 bg-white px-5 pt-6 pb-2.5 shadow-sm sm:px-7.5 xl:pb-1">
+    <div class="max-w-full overflow-x-auto">
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="bg-gray-100 text-left">
+                    <th class="py-4 px-4 font-medium text-gray-900">Client</th>
+                    <th class="py-4 px-4 font-medium text-gray-900">Date</th>
+                    <th class="py-4 px-4 font-medium text-red-600">Reste à payer</th>
+                    <th class="py-4 px-4 font-bold text-gray-900 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for op in operations %}
+                {% set reste = op.montant_total - op.montant_avance %}
+                <tr>
+                    <td class="border-b border-gray-200 py-4 px-4 text-gray-800 font-medium">
+                        {{ op.client.prenom }} {{ op.client.nom }}
+                        <div class="text-xs text-gray-500">{{ op.client.telephone }}</div>
+                    </td>
+                    <td class="border-b border-gray-200 py-4 px-4 text-gray-600">
+                        {{ op.date_operation.strftime('%d/%m/%Y') }}
+                    </td>
+                    <td class="border-b border-gray-200 py-4 px-4 text-red-600 font-bold">
+                        {{ reste }} DH
+                    </td>
+                    <td class="border-b border-gray-200 py-4 px-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <a href="https://wa.me/212{{ op.client.telephone | replace(' ', '') }}?text=Bonjour {{ op.client.prenom }}, sauf erreur de ma part, il reste un solde de {{ reste }} DH sur votre dernière opération du {{ op.date_operation.strftime('%d/%m/%Y') }}. Merci de passer au kiosque dès que possible ! 🙏"
+                               target="_blank"
+                               class="rounded bg-orange-500 px-3 py-1 text-xs font-bold text-white hover:bg-orange-600 shadow-sm transition">
+                                🚨 Relancer
+                            </a>
+
+                            <a href="/regler_reste/{{ op.id }}" class="rounded bg-green-100 text-green-700 px-3 py-1 text-xs font-bold hover:bg-green-200 shadow-sm transition">
+                                💰 Encaisser
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="py-8 text-center text-green-600 font-medium">
+                        🎉 Bonne nouvelle ! Personne ne te doit de l'argent.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

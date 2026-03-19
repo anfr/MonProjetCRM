@@ -1,10 +1,45 @@
 from flask import Flask, render_template, request, redirect, session, Response
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
+
 import csv
 import io
+import os      # Indispensable pour créer des dossiers et chemins
+import uuid    # Indispensable pour générer des noms de fichiers uniques
+from werkzeug.utils import secure_filename
+from PIL import Image
 
 app = Flask(__name__)
+
+# ==========================================
+# 📂 CONFIGURATION DES DOSSIERS
+# ==========================================
+# On définit le dossier où seront rangées les photos
+UPLOAD_FOLDER = 'static/uploads/recus'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def compresser_et_sauvegarder_image(file, chemin_sauvegarde):
+    """
+    Prend une image lourde, la redimensionne si elle est immense,
+    et la compresse intelligemment avant de la sauvegarder.
+    """
+    # 1. Ouvrir l'image envoyée par le téléphone
+    img = Image.open(file)
+    
+    # 2. Convertir en mode RGB (nécessaire si l'image est un PNG transparent)
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
+        
+    # 3. Réduire la taille maximale (ex: 1200px de large maximum)
+    # C'est largement suffisant pour lire du texte sur un reçu, et ça tue le poids !
+    taille_max = (1200, 1200)
+    img.thumbnail(taille_max, Image.Resampling.LANCZOS)
+    
+    # 4. Sauvegarder l'image optimisée (format JPEG, qualité 80% = invisible à l'œil nu)
+    img.save(chemin_sauvegarde, format='JPEG', optimize=True, quality=80)
+
+# On s'assure que le dossier existe, sinon on le crée
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.secret_key = "cle_secrete_super_robuste"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ma_base.db'
@@ -57,7 +92,8 @@ class Operation(db.Model):
     montant_total = db.Column(db.Float, nullable=True)
     statut = db.Column(db.String(20), default='En attente')
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=False) # <--- NOUVEAU : Le Mouchard !
+    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=False) 
+    photo_recu = db.Column(db.String(255), nullable=True) 
 
 
 # ==========================================
@@ -75,27 +111,25 @@ def verifier_connexion():
 def login():
     erreur = None
     if request.method == 'POST':
-        username_saisi = request.form.get('username', 'admin') # On permet de taper un nom
+        username_saisi = request.form.get('username', 'admin')
         mdp_saisi = request.form.get('password')
         
-        # On cherche l'utilisateur qui essaie de se connecter
         user = Utilisateur.query.filter_by(username=username_saisi).first()
         
         if user and mdp_saisi == user.password:
             session['connecte'] = True
-            session['user_id'] = user.id       # On mémorise son ID
-            session['role'] = user.role        # On mémorise s'il est Admin ou Caissier
-            session['username'] = user.username # On mémorise son nom
+            session['user_id'] = user.id
+            session['role'] = user.role
+            session['username'] = user.username
             return redirect('/')
         else:
             erreur = "Identifiants incorrects !"
             
-    # Si l'utilisateur n'est pas connecté, on affiche le formulaire de login
     return render_template('login.html', erreur=erreur)
 
 @app.route('/logout')
 def logout():
-    session.clear() # On vide toute la mémoire (ID, Rôle, Nom)
+    session.clear()
     return redirect('/login')
 
 
@@ -175,7 +209,6 @@ def modifier_client(id_client):
 
 @app.route('/supprimer_client/<int:id_client>')
 def supprimer_client(id_client):
-    # Sécurité : Seul l'Admin peut supprimer un client !
     if session.get('role') != 'admin':
         return redirect('/clients')
         
@@ -230,11 +263,24 @@ def nouvelle_operation(id_client):
     avance = request.form.get('montant_avance')
     if not avance: avance = 0.0
     
+    nom_fichier_photo = None
+    
+    if 'photo_recu' in request.files:
+        file = request.files['photo_recu']
+        
+        if file and file.filename != '':
+            # NOUVEAU : On utilise la compression !
+            nom_fichier_photo = f"{uuid.uuid4().hex}_recu.jpg"
+            chemin_sauvegarde = os.path.join(app.config['UPLOAD_FOLDER'], nom_fichier_photo)
+            compresser_et_sauvegarder_image(file, chemin_sauvegarde)
+
     nouvelle_op = Operation(
         client_id=id_client, 
         montant_avance=float(avance),
-        utilisateur_id=session.get('user_id') # Le Cerveau note automatiquement QUI a fait ça !
+        utilisateur_id=session.get('user_id'),
+        photo_recu=nom_fichier_photo
     )
+    
     db.session.add(nouvelle_op)
     db.session.commit()
     return redirect('/')
@@ -242,9 +288,20 @@ def nouvelle_operation(id_client):
 @app.route('/cloturer_operation/<int:id_op>', methods=['POST'])
 def cloturer_operation(id_op):
     op = Operation.query.get_or_404(id_op)
+    
     total = request.form.get('montant_total')
     if not total: total = 0.0
     op.montant_total = float(total)
+    
+    if 'photo_recu' in request.files:
+        file = request.files['photo_recu']
+        if file and file.filename != '':
+            # NOUVEAU : On utilise la compression !
+            nom_fichier_photo = f"{uuid.uuid4().hex}_recu.jpg"
+            chemin_sauvegarde = os.path.join(app.config['UPLOAD_FOLDER'], nom_fichier_photo)
+            compresser_et_sauvegarder_image(file, chemin_sauvegarde)
+            op.photo_recu = nom_fichier_photo
+            
     op.statut = 'Terminé'
     db.session.commit()
     return redirect('/')
@@ -291,12 +348,11 @@ def liste_dettes():
 
 @app.route('/parametres')
 def parametres():
-    # Sécurité : Si un caissier essaie d'aller dans les paramètres, on le renvoie à l'accueil !
     if session.get('role') != 'admin':
         return redirect('/')
         
     tous_les_services = Service.query.all()
-    tous_les_utilisateurs = Utilisateur.query.all() # Le Cerveau récupère toute ton équipe !
+    tous_les_utilisateurs = Utilisateur.query.all()
     
     return render_template('parametres.html', services=tous_les_services, utilisateurs=tous_les_utilisateurs)
 
@@ -326,14 +382,12 @@ def profil():
     succes = None
     
     if request.method == 'POST':
-        # Mise à jour des informations personnelles
         user.username = request.form.get('username')
         user.nom = request.form.get('nom')
         user.prenom = request.form.get('prenom')
         user.email = request.form.get('email')
         user.telephone = request.form.get('telephone')
         
-        # Gestion du changement de mot de passe ultra-sécurisé
         ancien_mdp = request.form.get('ancien_mdp')
         nouveau_mdp = request.form.get('nouveau_mdp')
         confirmer_mdp = request.form.get('confirmer_mdp')
@@ -351,7 +405,7 @@ def profil():
             
         if not erreur:
             db.session.commit()
-            session['username'] = user.username # Met à jour le nom en haut de l'écran
+            session['username'] = user.username
             
     return render_template('profil.html', user=user, erreur=erreur, succes=succes)
 
@@ -361,7 +415,6 @@ def ajouter_caissier():
     username = request.form.get('username')
     password = request.form.get('password')
     
-    # On vérifie que ce nom n'existe pas déjà
     existant = Utilisateur.query.filter_by(username=username).first()
     if not existant and username and password:
         nouveau_caissier = Utilisateur(username=username, password=password, role='caissier')
@@ -374,7 +427,6 @@ def supprimer_caissier(id_user):
     if session.get('role') != 'admin': return redirect('/')
     user_a_supprimer = Utilisateur.query.get_or_404(id_user)
     
-    # Sécurité ultime : On s'empêche de supprimer le compte Admin par erreur !
     if user_a_supprimer.role != 'admin':
         db.session.delete(user_a_supprimer)
         db.session.commit()
@@ -454,7 +506,7 @@ def archiver_inactifs():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # Création des services par défaut
+        
         if Service.query.count() == 0:
             db.session.add_all([
                 Service(nom_service='Eau'), 
@@ -464,7 +516,6 @@ if __name__ == '__main__':
             ])
             db.session.commit()
             
-        # Création du GRAND PATRON par défaut (Toi !)
         if Utilisateur.query.count() == 0:
             db.session.add(Utilisateur(username='admin', password='admin123', role='admin'))
             db.session.commit()

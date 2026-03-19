@@ -2,3 +2,4 @@ Flask
 gunicorn
 sqlmodel
 python-multipart
+python-multipartpython-multipart

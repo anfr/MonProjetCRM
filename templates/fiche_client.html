@@ -3,142 +3,288 @@
 {% block content %}
 <div x-data="{ modalContratOuverte: false, modalOperationOuverte: false }">
 
-    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
-            👤 Fiche de <span class="uppercase">{{ client.nom }}</span> <span class="capitalize">{{ client.prenom }}</span>
-        </h2>
+    <div class="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-8 py-5 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 -mt-4 sm:-mt-6 -mx-4 sm:-mx-6 lg:-mx-10 rounded-t-none sm:rounded-b-none">
 
-        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-            <button @click="modalOperationOuverte = true" class="w-full sm:w-auto justify-center rounded-lg bg-green-600 py-3 sm:py-2 px-4 font-bold text-white hover:bg-green-700 shadow-sm flex items-center gap-2 transition">
-                💰 Nouvelle Opération
+        <div class="flex items-center gap-4">
+            <div class="h-14 w-14 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-xl font-bold shadow-md shrink-0">
+                {{ client.prenom[0] | upper }}{{ client.nom[0] | upper }}
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Dossier Client</p>
+                <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+                    <span class="capitalize">{{ client.prenom }}</span> <span class="uppercase text-gray-700">{{ client.nom }}</span>
+                </h2>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto mt-4 sm:mt-0">
+
+            <a href="/clients" class="inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all w-full sm:w-auto">
+                <svg class="w-5 h-5 mr-2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                </svg>
+                Retour
+            </a>
+
+            <a href="/carte_client/{{ client.id }}" target="_blank" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all w-full sm:w-auto">
+                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+                </svg>
+                Imprimer Carte
+            </a>
+
+            <button @click="modalOperationOuverte = true" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all w-full sm:w-auto">
+                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Nouvelle Opération
             </button>
-            <a href="/carte_client/{{ client.id }}" target="_blank" class="w-full sm:w-auto justify-center rounded-lg bg-indigo-500 py-3 sm:py-2 px-4 font-bold text-white hover:bg-indigo-600 shadow-sm flex items-center gap-2 transition">
-                💳 Carte
-            </a>
-            <a href="/clients" class="w-full sm:w-auto justify-center rounded-lg bg-gray-200 py-3 sm:py-2 px-4 font-bold text-gray-700 hover:bg-gray-300 flex items-center gap-2 transition">
-                🏠 Retour
-            </a>
+
         </div>
     </div>
 
     <div class="rounded-xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm mb-6">
-        <h3 class="font-bold text-gray-900 mb-4 text-lg border-b pb-2">📋 Informations Générales</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                <span class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Téléphone</span>
-                <span class="text-gray-800 font-bold text-lg">{% if client.telephone %}📞 {{ client.telephone }}{% else %}❌ Non renseigné{% endif %}</span>
+        <h3 class="font-bold text-gray-900 mb-5 text-lg border-b border-gray-100 pb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+            </svg>
+            Coordonnées
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50/80 border border-gray-100">
+                <div class="p-2.5 bg-white rounded-lg border border-gray-200 shadow-sm text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                    </svg>
+                </div>
+                <div>
+                    <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Téléphone</span>
+                    <span class="text-gray-900 font-bold text-lg">
+                        {% if client.telephone %}{{ client.telephone }}{% else %}<span class="text-gray-400 italic text-sm font-normal">Non renseigné</span>{% endif %}
+                    </span>
+                </div>
             </div>
-            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                <span class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Adresse</span>
-                <span class="text-gray-800 font-bold text-lg">📍 {{ client.adresse or 'Non renseignée' }}</span>
+
+            <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50/80 border border-gray-100">
+                <div class="p-2.5 bg-white rounded-lg border border-gray-200 shadow-sm text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Adresse</span>
+                    <span class="text-gray-900 font-bold text-base leading-snug block mt-1">
+                        {% if client.adresse %}{{ client.adresse }}{% else %}<span class="text-gray-400 italic text-sm font-normal">Non renseignée</span>{% endif %}
+                    </span>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="rounded-xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm">
-        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-5 border-b pb-3 gap-3">
-            <h3 class="font-bold text-gray-900 text-lg">📑 Contrats du client</h3>
-            <button @click="modalContratOuverte = true" class="w-full sm:w-auto justify-center rounded-lg bg-blue-100 py-2 sm:py-1.5 px-4 text-sm font-bold text-blue-700 hover:bg-blue-200 transition">
-                ➕ Ajouter un contrat
+    <div class="rounded-xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm mb-6">
+
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 border-b border-gray-100 pb-4 gap-4">
+            <h3 class="font-bold text-gray-900 text-lg flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                </svg>
+                Contrats et Abonnements
+            </h3>
+
+            <button @click="modalContratOuverte = true" class="inline-flex items-center justify-center px-4 py-2 border border-blue-200 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors w-full sm:w-auto">
+                <svg class="w-4 h-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Ajouter un contrat
             </button>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {% for contrat in client.contrats %}
+
             <div x-data="{ copie: false }"
                  @click="copierEnSecurite('{{ contrat.numero_contrat }}'); copie = true; setTimeout(() => copie = false, 2000)"
-                 class="border border-gray-200 rounded-xl p-4 bg-gray-50 relative group cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition shadow-sm"
-                 title="Cliquer pour copier le numéro">
+                 class="group relative bg-white border border-gray-200 rounded-2xl p-5 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer overflow-hidden">
 
-                <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs font-black px-2 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200 uppercase tracking-wider">
+                <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full opacity-50 pointer-events-none transition-transform group-hover:scale-150"></div>
+
+                <div class="relative z-10 flex justify-between items-start mb-4">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-gray-100 text-gray-700 uppercase tracking-wider border border-gray-200 group-hover:bg-blue-100 group-hover:text-blue-800 group-hover:border-blue-200 transition-colors">
                         {{ contrat.service.nom_service }}
                     </span>
+
                     {% if session.get('role') == 'admin' %}
-                    <a href="/supprimer_contrat/{{ contrat.id }}" class="text-red-500 hover:text-red-700 bg-white p-1 rounded-full shadow-sm" onclick="event.stopPropagation(); return confirm('Supprimer ce contrat ?');" title="Supprimer">🗑️</a>
+                    <a href="/supprimer_contrat/{{ contrat.id }}" class="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-colors" onclick="event.stopPropagation(); return confirm('Supprimer définitivement ce contrat ?');" title="Supprimer">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                    </a>
                     {% endif %}
                 </div>
 
-                <div class="mt-2 flex items-center justify-between gap-2">
-                    <p class="font-black text-gray-900 text-xl tracking-tight">{{ contrat.numero_contrat }}</p>
-                    <span x-show="copie" x-transition class="text-xs font-bold text-green-800 bg-green-200 px-2 py-1 rounded shadow-sm" style="display: none;">
-                        ✓ Copié !
-                    </span>
+                <div class="relative z-10 mb-1">
+                    <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">N° Contrat</p>
+                    <div class="flex items-center justify-between h-8">
+                        <p class="font-black text-gray-900 text-xl tracking-tight group-hover:text-blue-600 transition-colors font-mono">{{ contrat.numero_contrat }}</p>
+
+                        <span x-show="copie"
+                              x-transition:enter="transition ease-out duration-200"
+                              x-transition:enter-start="opacity-0 translate-y-2"
+                              x-transition:enter-end="opacity-100 translate-y-0"
+                              x-transition:leave="transition ease-in duration-150"
+                              x-transition:leave-start="opacity-100"
+                              x-transition:leave-end="opacity-0"
+                              class="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded-md border border-green-200 flex items-center gap-1" style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
+                            Copié
+                        </span>
+                    </div>
                 </div>
 
-                <p class="text-sm text-gray-600 mt-2 font-medium">👤 {{ contrat.nom_proprietaire }}</p>
-
-                <div class="mt-3 text-center sm:text-left">
-                    <span class="text-xs text-blue-600 sm:text-blue-400 sm:opacity-0 sm:group-hover:opacity-100 transition font-bold bg-blue-100 sm:bg-transparent px-2 py-1 sm:p-0 rounded">
-                        👆 Toucher pour copier
-                    </span>
+                <div class="relative z-10 mt-4 pt-4 border-t border-gray-100">
+                    <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Titulaire</p>
+                    <p class="text-sm text-gray-700 font-medium truncate" title="{{ contrat.nom_proprietaire }}">{{ contrat.nom_proprietaire }}</p>
                 </div>
+
+                <div class="absolute inset-x-0 bottom-0 h-1 bg-transparent group-hover:bg-blue-500 transition-colors"></div>
             </div>
+
             {% else %}
-            <div class="col-span-full p-6 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                <p class="text-gray-500 font-medium">Aucun contrat enregistré pour ce client.</p>
+            <div class="col-span-full p-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                <div class="flex justify-center mb-3">
+                    <div class="bg-white p-3 rounded-full shadow-sm">
+                        <svg class="w-8 h-8 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                    </div>
+                </div>
+                <h4 class="text-base font-medium text-gray-900 mb-1">Aucun contrat</h4>
+                <p class="text-sm text-gray-500 mb-4">Ce client n'a pas encore de contrat ou d'abonnement rattaché à son dossier.</p>
+                <button @click="modalContratOuverte = true" class="text-sm font-medium text-blue-600 hover:text-blue-700">
+                    + Ajouter le premier contrat
+                </button>
             </div>
             {% endfor %}
         </div>
     </div>
 
-    <div x-show="modalContratOuverte" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4" style="display: none;">
-        <div @click.outside="modalContratOuverte = false" class="w-full max-w-lg rounded-2xl bg-white p-6 sm:p-8 shadow-2xl">
-            <h3 class="text-xl font-black text-gray-900 mb-5 border-b pb-2">➕ Nouveau contrat</h3>
-            <form action="/ajouter_contrat/{{ client.id }}" method="POST">
-                <div class="mb-4">
-                    <label class="mb-2 block text-sm font-bold text-gray-700">Service concerné</label>
-                    <select name="service_id" required class="w-full rounded-lg border border-gray-300 py-3 px-3 outline-none focus:border-blue-500 bg-gray-50 text-base">
-                        {% for service in services %}
-                        <option value="{{ service.id }}">{{ service.nom_service }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label class="mb-2 block text-sm font-bold text-gray-700">Numéro du contrat</label>
-                    <input type="text" name="numero_contrat" required class="w-full rounded-lg border border-gray-300 py-3 px-3 outline-none focus:border-blue-500 bg-gray-50 text-base" />
-                </div>
-                <div class="mb-6">
-                    <label class="mb-2 block text-sm font-bold text-gray-700">Nom du propriétaire sur la facture</label>
-                    <input type="text" name="nom_proprietaire" required value="{{ client.nom }} {{ client.prenom }}" class="w-full rounded-lg border border-gray-300 py-3 px-3 outline-none focus:border-blue-500 bg-gray-50 text-base capitalize" />
-                </div>
-                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
-                    <button type="button" @click="modalContratOuverte = false" class="w-full sm:w-auto rounded-lg bg-gray-200 py-3 sm:py-2 px-5 font-bold text-gray-700 hover:bg-gray-300 transition">Annuler</button>
-                    <button type="submit" class="w-full sm:w-auto rounded-lg bg-blue-600 py-3 sm:py-2 px-5 font-bold text-white hover:bg-blue-700 transition shadow-sm">Enregistrer</button>
-                </div>
-            </form>
-        </div>
+    <div class="rounded-xl border border-amber-200 bg-amber-50/50 p-5 sm:p-6 shadow-sm mb-6">
+        <h3 class="font-bold text-amber-900 mb-4 flex items-center gap-2 text-lg border-b border-amber-200/50 pb-3">
+            <svg class="w-5 h-5 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            Notes Internes Privées
+        </h3>
+
+        <form action="/maj_notes/{{ client.id }}" method="POST">
+            <div class="relative">
+                <textarea name="notes" rows="4" placeholder="Ajoutez ici des informations confidentielles sur le client (comportement de paiement, détails spécifiques...)" class="w-full rounded-xl border border-amber-200 bg-white py-3 px-4 text-gray-700 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition shadow-sm text-sm sm:text-base resize-y">{{ client.notes or '' }}</textarea>
+            </div>
+
+            <div class="mt-4 flex justify-end">
+                <button type="submit" class="inline-flex items-center justify-center px-6 py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-lg text-amber-900 bg-amber-300 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors w-full sm:w-auto">
+                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Enregistrer les notes
+                </button>
+            </div>
+        </form>
     </div>
 
-    <div x-show="modalOperationOuverte" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4" style="display: none;">
-        <div @click.outside="modalOperationOuverte = false" class="w-full max-w-sm rounded-2xl bg-white p-6 sm:p-8 shadow-2xl">
-            <h3 class="text-xl font-black text-gray-900 mb-5 border-b pb-2">💰 Démarrer l'opération</h3>
-            <form action="/nouvelle_operation/{{ client.id }}" method="POST">
-                <div class="mb-6">
-                    <label class="mb-2 block text-sm font-bold text-gray-700">Montant avancé (DH) <span class="text-gray-400 font-normal block sm:inline text-xs mt-1 sm:mt-0">(Optionnel)</span></label>
-                    <input type="number" step="0.01" name="montant_avance" placeholder="Ex: 100" class="w-full rounded-lg border border-gray-300 py-4 px-4 text-2xl font-black text-center text-green-600 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 bg-gray-50 transition" />
-                </div>
-                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
-                    <button type="button" @click="modalOperationOuverte = false" class="w-full sm:w-auto rounded-lg bg-gray-200 py-3 sm:py-2 px-4 font-bold text-gray-700 hover:bg-gray-300 transition">Annuler</button>
-                    <button type="submit" class="w-full sm:w-auto rounded-lg bg-green-600 py-3 sm:py-2 px-4 font-bold text-white hover:bg-green-700 transition shadow-sm">Lancer</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <div x-show="modalContratOuverte" class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" style="display: none;">
+        <div @click.outside="modalContratOuverte = false" class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl transform transition-all relative">
 
-</div> <div class="mt-6 sm:mt-8 rounded-xl border border-yellow-200 bg-yellow-50 p-5 sm:p-6 shadow-sm">
-    <h3 class="font-bold text-yellow-800 mb-3 flex items-center gap-2 text-lg">
-        🔒 Notes privées (Secrètes)
-    </h3>
-    <form action="/maj_notes/{{ client.id }}" method="POST">
-        <textarea name="notes" rows="4" placeholder="Écris tes remarques sur ce client ici (ex: très bon payeur, à relancer souvent...)" class="w-full rounded-lg border border-yellow-300 bg-yellow-100/50 py-3 px-4 text-yellow-900 outline-none focus:border-yellow-500 focus:bg-white focus:ring-2 focus:ring-yellow-200 transition shadow-inner text-base">{{ client.notes or '' }}</textarea>
-
-        <div class="mt-3 flex justify-end">
-            <button type="submit" class="w-full sm:w-auto justify-center rounded-lg bg-yellow-500 px-6 py-3 sm:py-2 font-bold text-white hover:bg-yellow-600 shadow-sm transition flex items-center gap-2">
-                💾 Enregistrer la note
+            <button @click="modalContratOuverte = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-1.5 rounded-full transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
+
+            <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                </div>
+                Lier un contrat
+            </h3>
+
+            <form action="/ajouter_contrat/{{ client.id }}" method="POST">
+
+                <div class="mb-5">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Type de service</label>
+                    <div class="relative">
+                        <select name="service_id" required class="block w-full appearance-none rounded-xl border border-gray-300 bg-gray-50 py-3 pl-4 pr-10 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm cursor-pointer transition">
+                            {% for service in services %}
+                            <option value="{{ service.id }}">{{ service.nom_service }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Numéro de Contrat / Police</label>
+                    <input type="text" name="numero_contrat" required placeholder="Ex: 123456789" class="block w-full rounded-xl border border-gray-300 bg-white py-3 px-4 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition shadow-sm font-mono" />
+                </div>
+
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Titulaire du contrat (Nom sur la facture)</label>
+                    <input type="text" name="nom_proprietaire" required value="{{ client.nom }} {{ client.prenom }}" class="block w-full rounded-xl border border-gray-300 bg-white py-3 px-4 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition shadow-sm capitalize" />
+                    <p class="mt-1.5 text-xs text-gray-500">Modifiez-le si le contrat n'est pas au nom exact du client.</p>
+                </div>
+
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-100">
+                    <button type="button" @click="modalContratOuverte = false" class="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        Annuler
+                    </button>
+                    <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm transition-colors">
+                        Ajouter ce contrat
+                    </button>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
+
+    <div x-show="modalOperationOuverte" class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" style="display: none;">
+        <div @click.outside="modalOperationOuverte = false" class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl transform transition-all relative">
+
+            <button @click="modalOperationOuverte = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-1.5 rounded-full transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+
+            <div class="text-center mb-6 mt-2">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg leading-6 font-bold text-gray-900">Démarrer une opération</h3>
+                <p class="text-sm text-gray-500 mt-2">Le client <strong class="uppercase">{{ client.nom }}</strong> vous a-t-il laissé une avance ?</p>
+            </div>
+
+            <form action="/nouvelle_operation/{{ client.id }}" method="POST">
+
+                <div class="mb-6 relative">
+                    <input type="number" step="0.01" name="montant_avance" placeholder="0.00" class="block w-full rounded-xl border-gray-300 py-4 pl-4 pr-12 text-3xl font-black text-center text-gray-900 focus:border-green-500 focus:ring-green-500 bg-gray-50 transition border shadow-inner" />
+                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                        <span class="text-gray-400 font-bold text-lg">DH</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <button type="submit" class="w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                        Créer l'opération
+                    </button>
+                    <button type="button" @click="modalOperationOuverte = false" class="w-full flex justify-center items-center px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 <script>

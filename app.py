@@ -221,7 +221,11 @@ def supprimer_client(id_client):
 def fiche_client(id_client):
     client_actuel = Client.query.get_or_404(id_client)
     tous_les_services = Service.query.all()
-    return render_template('fiche_client.html', client=client_actuel, services=tous_les_services)
+    
+    # NOUVEAU : On récupère toutes les opérations de ce client précis, de la plus récente à la plus ancienne
+    historique_client = Operation.query.filter_by(client_id=id_client).order_by(Operation.date_operation.desc()).all()
+    
+    return render_template('fiche_client.html', client=client_actuel, services=tous_les_services, historique=historique_client)
 
 @app.route('/maj_notes/<int:id_client>', methods=['POST'])
 def maj_notes(id_client):

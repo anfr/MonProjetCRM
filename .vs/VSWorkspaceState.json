@@ -1,9 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\instance",
-    "\\static",
-    "\\static\\images"
+    "\\templates"
   ],
+  "SelectedNode": "\\templates\\toutes_les_cartes.html",
   "PreviewInSolutionExplorer": false
 }

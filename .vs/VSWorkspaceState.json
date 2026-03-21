@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\templates"
+    "\\static",
+    "\\static\\uploads"
   ],
-  "SelectedNode": "\\templates\\toutes_les_cartes.html",
+  "SelectedNode": "\\serveur.py",
   "PreviewInSolutionExplorer": false
 }

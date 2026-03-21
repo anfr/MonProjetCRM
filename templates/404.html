@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-[70vh] flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 text-center">
+
+    <div class="relative mb-8">
+        <h1 class="text-[120px] sm:text-[180px] font-black text-gray-100 leading-none select-none tracking-tighter">404</h1>
+
+        <div class="absolute inset-0 flex items-center justify-center animate-bounce">
+            <div class="bg-white p-4 rounded-full shadow-xl border-4 border-indigo-50">
+                <svg class="w-16 h-16 sm:w-20 sm:h-20 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mb-4 tracking-tight">
+        Erreur 404 : Reçu illisible
+    </h2>
+    <p class="text-base sm:text-lg text-gray-500 mb-8 max-w-lg mx-auto font-medium leading-relaxed">
+        La page que vous cherchez s'est définitivement égarée dans les archives du Kiosque. Pas de panique, l'essentiel est en sécurité dans la caisse. Regagnons le tableau de bord avant que l'inspecteur n'arrive !
+    </p>
+
+    <a href="/" class="inline-flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 hover:-translate-y-0.5">
+        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+        </svg>
+        Retourner au tableau de bord
+    </a>
+
+    <p class="mt-8 text-xs text-gray-400 font-medium">
+        Ne vous inquiétez pas, aucun reçu n'a été maltraité pendant cette erreur.
+    </p>
+
+</div>
+{% endblock %}

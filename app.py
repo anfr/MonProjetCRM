@@ -502,6 +502,14 @@ def archiver_inactifs():
     db.session.commit()
     return redirect('/parametres')
 
+# ==========================================
+# 🚨 GESTION DES ERREURS
+# ==========================================
+@app.errorhandler(404)
+def page_introuvable(e):
+    # On renvoie vers notre belle page 404 avec le code d'erreur officiel (404)
+    return render_template('404.html'), 404
+
 
 # ==========================================
 # 🚀 MOTEUR DE DÉMARRAGE

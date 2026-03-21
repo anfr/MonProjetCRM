@@ -82,6 +82,7 @@ class Contrat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     numero_contrat = db.Column(db.String(100), nullable=False)
     nom_proprietaire = db.Column(db.String(150), nullable=False)
+    notes = db.Column(db.Text, nullable=True) # <--- NOUVEAU CHAMP : Notes sur le contrat
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
 
@@ -137,17 +138,52 @@ def logout():
 # 📊 TABLEAU DE BORD PRINCIPAL
 # ==========================================
 
+# ==========================================
+# 📊 TABLEAU DE BORD PRINCIPAL
+# ==========================================
+
 @app.route('/')
 def accueil():
+    # 1. Les données de base
     operations_en_cours = Operation.query.filter_by(statut='En attente').all()
     total_clients = Client.query.filter_by(archive=False).count()
     total_attente = Operation.query.filter_by(statut='En attente').count()
     operations_terminees = Operation.query.filter_by(statut='Terminé').all()
-    chiffre_affaires = sum(op.montant_total for op in operations_terminees if op.montant_total is not None)
     
+    # 2. Les dates utiles pour les stats
+    aujourd_hui = datetime.now().date()
+    debut_mois = aujourd_hui.replace(day=1)
+    
+    # 3. Calculs des Statistiques (Aujourd'hui, Mois, Total)
+    chiffre_affaires_total = 0
+    ca_jour = 0
+    ca_mois = 0
+    ops_jour_count = 0
+    
+    for op in operations_terminees:
+        if op.montant_total is not None:
+            chiffre_affaires_total += op.montant_total
+            op_date = op.date_operation.date()
+            
+            # Si c'est ce mois-ci
+            if op_date >= debut_mois:
+                ca_mois += op.montant_total
+            
+            # Si c'est aujourd'hui
+            if op_date == aujourd_hui:
+                ca_jour += op.montant_total
+                ops_jour_count += 1
+                
+    # 4. Calcul des dettes (L'Alerte Rouge !)
+    operations_dettes = Operation.query.filter(Operation.statut == 'Terminé', Operation.montant_total > Operation.montant_avance).all()
+    total_dettes = sum((op.montant_total - op.montant_avance) for op in operations_dettes if op.montant_total is not None)
+    
+    # 5. Mini-historique : Les 5 dernières opérations terminées
+    dernieres_operations = Operation.query.filter_by(statut='Terminé').order_by(Operation.date_operation.desc()).limit(5).all()
+    
+    # 6. Données pour le Graphique (inchangé)
     labels_jours = []
     donnees_ca = []
-    aujourd_hui = datetime.now().date()
     
     for i in range(6, -1, -1):
         jour_cible = aujourd_hui - timedelta(days=i)
@@ -165,7 +201,18 @@ def accueil():
         ca_du_jour = sum(op.montant_total for op in ops_du_jour if op.montant_total is not None)
         donnees_ca.append(ca_du_jour)
         
-    return render_template('dashboard.html', operations=operations_en_cours, total_clients=total_clients, total_attente=total_attente, chiffre_affaires=chiffre_affaires, labels_jours=labels_jours, donnees_ca=donnees_ca)
+    return render_template('dashboard.html', 
+                           operations=operations_en_cours, 
+                           total_clients=total_clients, 
+                           total_attente=total_attente, 
+                           chiffre_affaires=chiffre_affaires_total, 
+                           ca_jour=ca_jour,
+                           ca_mois=ca_mois,
+                           ops_jour_count=ops_jour_count,
+                           total_dettes=total_dettes,
+                           dernieres_operations=dernieres_operations,
+                           labels_jours=labels_jours, 
+                           donnees_ca=donnees_ca)
 
 
 # ==========================================
@@ -222,7 +269,7 @@ def fiche_client(id_client):
     client_actuel = Client.query.get_or_404(id_client)
     tous_les_services = Service.query.all()
     
-    # NOUVEAU : On récupère toutes les opérations de ce client précis, de la plus récente à la plus ancienne
+    # On récupère toutes les opérations de ce client précis, de la plus récente à la plus ancienne
     historique_client = Operation.query.filter_by(client_id=id_client).order_by(Operation.date_operation.desc()).all()
     
     return render_template('fiche_client.html', client=client_actuel, services=tous_les_services, historique=historique_client)
@@ -244,6 +291,7 @@ def ajouter_contrat(id_client):
     nouveau_contrat = Contrat(
         numero_contrat=request.form.get('numero_contrat'), 
         nom_proprietaire=request.form.get('nom_proprietaire'), 
+        notes=request.form.get('notes'), # <--- NOUVEAU : Enregistrement de la note
         client_id=id_client, 
         service_id=request.form.get('service_id')
     )
@@ -273,7 +321,6 @@ def nouvelle_operation(id_client):
         file = request.files['photo_recu']
         
         if file and file.filename != '':
-            # NOUVEAU : On utilise la compression !
             nom_fichier_photo = f"{uuid.uuid4().hex}_recu.jpg"
             chemin_sauvegarde = os.path.join(app.config['UPLOAD_FOLDER'], nom_fichier_photo)
             compresser_et_sauvegarder_image(file, chemin_sauvegarde)
@@ -300,7 +347,6 @@ def cloturer_operation(id_op):
     if 'photo_recu' in request.files:
         file = request.files['photo_recu']
         if file and file.filename != '':
-            # NOUVEAU : On utilise la compression !
             nom_fichier_photo = f"{uuid.uuid4().hex}_recu.jpg"
             chemin_sauvegarde = os.path.join(app.config['UPLOAD_FOLDER'], nom_fichier_photo)
             compresser_et_sauvegarder_image(file, chemin_sauvegarde)
@@ -507,7 +553,6 @@ def archiver_inactifs():
 # ==========================================
 @app.errorhandler(404)
 def page_introuvable(e):
-    # On renvoie vers notre belle page 404 avec le code d'erreur officiel (404)
     return render_template('404.html'), 404
 
 

@@ -138,10 +138,6 @@ def logout():
 # 📊 TABLEAU DE BORD PRINCIPAL
 # ==========================================
 
-# ==========================================
-# 📊 TABLEAU DE BORD PRINCIPAL
-# ==========================================
-
 @app.route('/')
 def accueil():
     # 1. Les données de base
@@ -283,7 +279,7 @@ def maj_notes(id_client):
 
 
 # ==========================================
-# 📄 GESTION DES CONTRATS & OPÉRATIONS
+# 📄 GESTION DES CONTRATS & OPÉRATIONS (TERMINAL EXPRESS)
 # ==========================================
 
 @app.route('/ajouter_contrat/<int:id_client>', methods=['POST'])
@@ -312,29 +308,39 @@ def supprimer_contrat(id_contrat):
 
 @app.route('/nouvelle_operation/<int:id_client>', methods=['POST'])
 def nouvelle_operation(id_client):
+    mode = request.form.get('mode_operation') # 'attente' ou 'immediat'
+    
     avance = request.form.get('montant_avance')
     if not avance: avance = 0.0
     
-    nom_fichier_photo = None
-    
-    if 'photo_recu' in request.files:
-        file = request.files['photo_recu']
-        
-        if file and file.filename != '':
-            nom_fichier_photo = f"{uuid.uuid4().hex}_recu.jpg"
-            chemin_sauvegarde = os.path.join(app.config['UPLOAD_FOLDER'], nom_fichier_photo)
-            compresser_et_sauvegarder_image(file, chemin_sauvegarde)
-
     nouvelle_op = Operation(
         client_id=id_client, 
         montant_avance=float(avance),
-        utilisateur_id=session.get('user_id'),
-        photo_recu=nom_fichier_photo
+        utilisateur_id=session.get('user_id')
     )
-    
+
+    # Si c'est une clôture immédiate (Le client est devant nous)
+    if mode == 'immediat':
+        total = request.form.get('montant_total')
+        if not total: total = 0.0
+        nouvelle_op.montant_total = float(total)
+        nouvelle_op.statut = 'Terminé'
+        
+        # Gestion de la photo
+        if 'photo_recu' in request.files:
+            file = request.files['photo_recu']
+            if file and file.filename != '':
+                nom_fichier_photo = f"{uuid.uuid4().hex}_recu.jpg"
+                chemin_sauvegarde = os.path.join(app.config['UPLOAD_FOLDER'], nom_fichier_photo)
+                compresser_et_sauvegarder_image(file, chemin_sauvegarde)
+                nouvelle_op.photo_recu = nom_fichier_photo
+    else:
+        # Si le client a juste déposé l'argent et est parti
+        nouvelle_op.statut = 'En attente'
+        
     db.session.add(nouvelle_op)
     db.session.commit()
-    return redirect('/')
+    return redirect(f'/client/{id_client}')
 
 @app.route('/cloturer_operation/<int:id_op>', methods=['POST'])
 def cloturer_operation(id_op):
@@ -354,7 +360,8 @@ def cloturer_operation(id_op):
             
     op.statut = 'Terminé'
     db.session.commit()
-    return redirect('/')
+    # On redirige vers la page d'où l'utilisateur vient (Dashboard OU Historique)
+    return redirect(request.referrer or '/')
 
 @app.route('/supprimer_operation/<int:id_op>')
 def supprimer_operation(id_op):
@@ -383,7 +390,8 @@ def regler_reste(id_op):
         op.montant_avance = op.montant_total 
     op.statut = 'Terminé'
     db.session.commit()
-    return redirect('/historique')
+    # NOUVEAU : On retourne d'où on vient (Fiche client OU page Dettes)
+    return redirect(request.referrer or '/historique')
 
 @app.route('/dettes')
 def liste_dettes():

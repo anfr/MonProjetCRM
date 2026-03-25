@@ -4,101 +4,115 @@
 
 {% if total_dettes > 0 %}
 <div class="bg-red-50 border-b border-red-200 px-4 sm:px-8 py-3 mb-0 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-inner">
-    <div class="flex items-center gap-2 text-red-800 font-medium text-sm sm:text-base">
-        <span class="relative flex h-3 w-3 shrink-0">
+    <div class="flex items-center gap-2 text-red-800 font-medium">
+        <span class="relative flex h-3 w-3 mr-1">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
         </span>
-        <span><strong>Alerte :</strong> Vous avez <span class="font-black text-red-600 bg-white px-2 py-0.5 rounded border border-red-200 shadow-sm">{{ total_dettes }} DH</span> dehors.</span>
+        <strong>Alerte Recouvrement :</strong> Vous avez <span class="font-black text-red-600 bg-white px-2 py-0.5 rounded border border-red-200 shadow-sm">{{ total_dettes }} DH</span> de dettes dehors.
     </div>
-    <a href="/dettes" class="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg shadow-sm transition-colors whitespace-nowrap w-full sm:w-auto text-center">
+    <a href="/dettes" class="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-4 py-1.5 rounded-lg shadow-sm transition-colors whitespace-nowrap">
         Consulter les dettes →
     </a>
 </div>
 {% endif %}
 
-<div class="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-5 mb-6 flex flex-col gap-4">
+<div class="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-8 py-5 mb-6 sm:mb-8 flex flex-col gap-4">
 
-    <div class="flex justify-between items-center gap-4">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 text-blue-600">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
             </svg>
-            <span class="truncate">Tableau de bord</span>
+            Tableau de bord
         </h1>
-        <div class="hidden sm:flex items-center gap-2 text-sm text-gray-500 font-medium bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">
+        <div class="flex items-center gap-2 text-sm text-gray-500 font-medium bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-gray-400">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+            </svg>
             <span id="dateJour"></span>
         </div>
     </div>
 
-    <div class="pt-2 sm:pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
-        <form action="/clients" method="GET" class="relative w-full sm:flex-1">
-            <input type="text" name="q" placeholder="Chercher un client..." class="w-full bg-gray-50 border border-gray-200 text-gray-900 text-base sm:text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block pl-10 p-3.5 sm:p-3 transition shadow-inner">
-            <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    <div class="pt-4 mt-2 border-t border-gray-100 flex flex-col lg:flex-row gap-3">
+        <form action="/clients" method="GET" class="relative flex-1">
+            <input type="text" name="q" placeholder="Rechercher un client (Nom, Tel...)" class="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block pl-10 p-3 transition shadow-inner">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
             <button type="submit" class="hidden"></button>
         </form>
 
-        <a href="/ajouter_client" class="w-full sm:w-auto flex justify-center items-center px-5 py-3.5 sm:py-3 border border-transparent text-sm font-bold rounded-xl shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
-            Nouveau Client
-        </a>
+        <div class="flex gap-3">
+            <a href="/ajouter_client" class="flex-1 lg:flex-none inline-flex justify-center items-center px-5 py-3 border border-transparent text-sm font-bold rounded-xl shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
+                Nouveau Client
+            </a>
+        </div>
     </div>
 </div>
 
-<div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-24">
+<div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
 
-        <div class="col-span-2 sm:col-span-1 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 sm:p-5 shadow-sm relative overflow-hidden group">
-            <div class="absolute -right-4 -top-4 text-blue-100 opacity-50"><svg class="w-20 h-20 sm:w-24 sm:h-24" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg></div>
-            <div class="relative z-10">
-                <span class="text-[11px] sm:text-xs font-bold text-blue-600 uppercase tracking-wider">Aujourd'hui</span>
-                <h4 class="text-2xl sm:text-3xl font-black text-gray-900 mt-1">{{ ca_jour }} <span class="text-sm sm:text-lg text-gray-500 font-bold">DH</span></h4>
+        <div class="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm relative overflow-hidden group">
+            <div class="absolute -right-6 -top-6 text-blue-100 opacity-50 group-hover:scale-110 transition-transform"><svg class="w-24 h-24" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg></div>
+            <div class="relative z-10 flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Aujourd'hui</span>
+                    <h4 class="text-3xl font-black text-gray-900 mt-1">{{ ca_jour }} <span class="text-lg text-gray-500 font-bold">DH</span></h4>
+                </div>
             </div>
-            <div class="relative z-10 mt-2 sm:mt-3 flex items-center gap-1.5 text-xs text-gray-600">
-                <span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-bold">{{ ops_jour_count }} ops</span>
-            </div>
-        </div>
-
-        <div class="col-span-2 sm:col-span-1 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-4 sm:p-5 shadow-sm relative overflow-hidden group">
-            <div class="absolute -right-4 -top-4 text-indigo-100 opacity-50"><svg class="w-20 h-20 sm:w-24 sm:h-24" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg></div>
-            <div class="relative z-10">
-                <span class="text-[11px] sm:text-xs font-bold text-indigo-600 uppercase tracking-wider">Ce Mois-ci</span>
-                <h4 class="text-2xl sm:text-3xl font-black text-gray-900 mt-1">{{ ca_mois }} <span class="text-sm sm:text-lg text-gray-500 font-bold">DH</span></h4>
-            </div>
-            <div class="relative z-10 mt-2 sm:mt-3 text-[10px] sm:text-xs text-gray-500 font-medium">
-                Total hist : <b>{{ chiffre_affaires }} DH</b>
+            <div class="relative z-10 mt-3 flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">{{ ops_jour_count }} opérations</span> traitées
             </div>
         </div>
 
-        <div class="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4 sm:p-5 shadow-sm relative overflow-hidden group">
-            <div class="absolute -right-4 -top-4 text-orange-100 opacity-50"><svg class="w-20 h-20 sm:w-24 sm:h-24" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg></div>
+        <div class="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-5 shadow-sm relative overflow-hidden group">
+            <div class="absolute -right-6 -top-6 text-indigo-100 opacity-50 group-hover:scale-110 transition-transform"><svg class="w-24 h-24" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg></div>
             <div class="relative z-10">
-                <span class="text-[11px] sm:text-xs font-bold text-orange-600 uppercase tracking-wider">Attente</span>
-                <h4 class="text-2xl sm:text-3xl font-black text-gray-900 mt-1">{{ total_attente }}</h4>
+                <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Ce Mois-ci</span>
+                <h4 class="text-3xl font-black text-gray-900 mt-1">{{ ca_mois }} <span class="text-lg text-gray-500 font-bold">DH</span></h4>
+            </div>
+            <div class="relative z-10 mt-3 text-xs text-gray-500 font-medium">
+                CA Total historique : <b>{{ chiffre_affaires }} DH</b>
             </div>
         </div>
 
-        <div class="rounded-2xl border border-green-100 bg-gradient-to-br from-green-50 to-white p-4 sm:p-5 shadow-sm relative overflow-hidden group">
-            <div class="absolute -right-4 -top-4 text-green-100 opacity-50"><svg class="w-20 h-20 sm:w-24 sm:h-24" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path></svg></div>
+        <div class="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-5 shadow-sm relative overflow-hidden group">
+            <div class="absolute -right-6 -top-6 text-orange-100 opacity-50 group-hover:scale-110 transition-transform"><svg class="w-24 h-24" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg></div>
             <div class="relative z-10">
-                <span class="text-[11px] sm:text-xs font-bold text-green-600 uppercase tracking-wider">Clients</span>
-                <h4 class="text-2xl sm:text-3xl font-black text-gray-900 mt-1">{{ total_clients }}</h4>
+                <span class="text-xs font-bold text-orange-600 uppercase tracking-wider">File d'attente</span>
+                <h4 class="text-3xl font-black text-gray-900 mt-1">{{ total_attente }}</h4>
+            </div>
+            <div class="relative z-10 mt-3 text-xs text-orange-700 font-medium flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Opérations à traiter
+            </div>
+        </div>
+
+        <div class="rounded-2xl border border-green-100 bg-gradient-to-br from-green-50 to-white p-5 shadow-sm relative overflow-hidden group">
+            <div class="absolute -right-6 -top-6 text-green-100 opacity-50 group-hover:scale-110 transition-transform"><svg class="w-24 h-24" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path></svg></div>
+            <div class="relative z-10">
+                <span class="text-xs font-bold text-green-600 uppercase tracking-wider">Base Clients</span>
+                <h4 class="text-3xl font-black text-gray-900 mt-1">{{ total_clients }}</h4>
+            </div>
+            <div class="relative z-10 mt-3 text-xs text-green-700 font-medium">
+                Clients actifs dans le Kiosque
             </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <div class="lg:col-span-2 bg-transparent md:bg-white md:rounded-2xl md:shadow-sm md:border md:border-gray-200 flex flex-col h-full overflow-hidden">
-            <div class="px-2 md:px-6 py-3 md:py-5 border-b border-gray-200 flex justify-between items-center md:bg-gray-50/80 mb-3 md:mb-0">
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col h-full overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center bg-gray-50/80">
                 <h3 class="font-bold text-lg text-gray-900 flex items-center gap-2">
                     <svg class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                     </svg>
-                    File d'attente ({{ total_attente }})
+                    Opérations en attente (À Traiter)
                 </h3>
             </div>
 
@@ -107,92 +121,81 @@
                     <thead class="hidden md:table-header-group bg-gray-50 text-gray-500 uppercase text-xs font-semibold tracking-wider border-b border-gray-200">
                         <tr>
                             <th class="py-4 px-6">Client</th>
-                            <th class="py-4 px-6">Date</th>
-                            <th class="py-4 px-6 text-center">Avance</th>
+                            <th class="py-4 px-6">Date de demande</th>
+                            <th class="py-4 px-6 text-center">Avance & Reçu</th>
                             <th class="py-4 px-6 text-right">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="block md:table-row-group space-y-3 md:space-y-0">
+                    <tbody class="block md:table-row-group divide-y divide-gray-100">
                         {% for op in operations %}
-                        <tr x-data="{ modalClotureOuverte: false }" class="block md:table-row bg-white border border-gray-200 md:border-0 md:border-b md:border-gray-100 rounded-xl md:rounded-none shadow-sm md:shadow-none p-4 md:p-0 hover:bg-slate-50 transition">
+                        <tr x-data="{ modalClotureOuverte: false }" class="block md:table-row hover:bg-slate-50 transition duration-150 p-4 md:p-0">
 
-                            <td class="block md:table-cell md:py-4 md:px-6 align-middle border-b border-gray-100 md:border-0 pb-3 md:pb-0">
-                                <div class="flex justify-between items-start md:block">
-                                    <div>
-                                        <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase block mb-1">Client</span>
-                                        <div class="font-bold text-gray-900 text-base uppercase">{{ op.client.nom }}</div>
-                                        <div class="text-gray-500 font-medium capitalize">{{ op.client.prenom }}</div>
-                                    </div>
-                                    <div class="md:hidden text-right">
-                                        <span class="text-[10px] text-gray-400 font-bold uppercase block mb-1">Date</span>
-                                        <div class="text-gray-600 font-medium text-xs">{{ op.date_operation.strftime('%d/%m à %H:%M') }}</div>
-                                    </div>
+                            <td class="block md:table-cell md:py-4 md:px-6 align-middle">
+                                <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase block mb-1">Client</span>
+                                <div class="font-bold text-gray-900 text-base uppercase">{{ op.client.nom }}</div>
+                                <div class="text-gray-500 font-medium capitalize">{{ op.client.prenom }}</div>
+                            </td>
+
+                            <td class="block md:table-cell md:py-4 md:px-6 align-middle mt-2 md:mt-0">
+                                <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase block mb-1">Date</span>
+                                <div class="flex items-center text-gray-600 font-medium text-sm">
+                                    {{ op.date_operation.strftime('%d/%m/%Y %H:%M') }}
                                 </div>
                             </td>
 
-                            <td class="hidden md:table-cell md:py-4 md:px-6 align-middle">
-                                {{ op.date_operation.strftime('%d/%m/%Y %H:%M') }}
-                            </td>
-
-                            <td class="block md:table-cell md:py-4 md:px-6 align-middle py-3 md:py-0 md:text-center">
-                                <div class="flex justify-between md:justify-center items-center">
-                                    <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase block">Avance</span>
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-bold bg-green-50 text-green-700 border border-green-100">
-                                            {{ op.montant_avance }} DH
-                                        </span>
-                                        {% if op.photo_recu %}
-                                        <a href="/static/uploads/recus/{{ op.photo_recu }}" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-[11px] font-bold hover:bg-blue-100 transition border border-blue-200">
-                                            Reçu
-                                        </a>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </td>
-
-                            <td class="block md:table-cell md:py-4 md:px-6 align-middle pt-3 md:pt-0 mt-1 md:mt-0 border-t border-gray-50 md:border-0 text-right">
-                                <div class="flex items-center justify-end gap-2 w-full">
-                                    {% if session.get('role') == 'admin' %}
-                                    <a href="/supprimer_operation/{{ op.id }}" class="p-2.5 md:p-2 text-gray-400 bg-gray-50 md:bg-transparent hover:bg-red-50 hover:text-red-600 rounded-lg md:rounded-md transition" title="Supprimer">
-                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                            <td class="block md:table-cell md:py-4 md:px-6 align-middle mt-2 md:mt-0 md:text-center">
+                                <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase block mb-1">Avance & Reçu</span>
+                                <div class="flex flex-col items-start md:items-center gap-1.5">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-bold bg-green-50 text-green-700 border border-green-100">
+                                        {{ op.montant_avance }} DH
+                                    </span>
+                                    {% if op.photo_recu %}
+                                    <a href="/static/uploads/recus/{{ op.photo_recu }}" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-[11px] font-bold hover:bg-blue-100 transition border border-blue-200">
+                                        Reçu joint
                                     </a>
                                     {% endif %}
-                                    <button @click="modalClotureOuverte = true" class="w-full md:w-auto px-4 py-2.5 md:py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg md:rounded-md shadow-sm transition">
-                                        Clôturer
-                                    </button>
+                                </div>
+                            </td>
+
+                            <td class="block md:table-cell md:py-4 md:px-6 align-middle mt-4 md:mt-0 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    {% if session.get('role') == 'admin' %}
+                                    <a href="/supprimer_operation/{{ op.id }}" class="p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 rounded-md transition" title="Supprimer"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg></a>
+                                    {% endif %}
+                                    <button @click="modalClotureOuverte = true" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition">Clôturer</button>
                                 </div>
 
-                                <div x-show="modalClotureOuverte" class="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 sm:p-0" style="display: none;" x-transition>
-                                    <div @click.outside="modalClotureOuverte = false" class="w-full max-w-sm rounded-2xl bg-white p-5 sm:p-6 shadow-2xl whitespace-normal text-left relative transform transition-all mb-4 sm:mb-0 max-h-[90vh] overflow-y-auto">
+                                <div x-show="modalClotureOuverte" class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" style="display: none;">
+                                    <div @click.outside="modalClotureOuverte = false" class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl whitespace-normal text-left relative transform transition-all">
                                         <h3 class="text-xl font-bold text-gray-900 mb-2">Clôturer l'opération</h3>
                                         <div class="mb-5 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
                                             <p class="text-sm text-gray-600 flex justify-between mb-1">Client : <strong class="text-gray-900 uppercase">{{ op.client.nom }}</strong></p>
-                                            <p class="text-sm text-gray-600 flex justify-between">Avance : <strong class="text-green-600">{{ op.montant_avance }} DH</strong></p>
+                                            <p class="text-sm text-gray-600 flex justify-between">Avance laissée : <strong class="text-green-600">{{ op.montant_avance }} DH</strong></p>
                                             {% if op.photo_recu %}
                                             <div class="mt-3 pt-3 border-t border-blue-100/50 flex justify-center"><a href="/static/uploads/recus/{{ op.photo_recu }}" target="_blank" class="text-xs font-bold text-blue-700 bg-white border border-blue-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-blue-50 shadow-sm transition">Vérifier la facture</a></div>
                                             {% endif %}
                                         </div>
                                         <form action="/cloturer_operation/{{ op.id }}" method="POST" enctype="multipart/form-data">
                                             <div class="mb-4">
-                                                <label class="mb-2 block text-sm font-semibold text-gray-700">Montant TOTAL</label>
-                                                <div class="relative"><input type="number" step="0.01" name="montant_total" required placeholder="0.00" class="block w-full rounded-xl border-gray-300 py-3 sm:py-4 pl-4 pr-12 text-xl sm:text-2xl font-black text-gray-900 focus:border-blue-500 focus:ring-blue-500 bg-gray-50 transition border" /><div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none"><span class="text-gray-400 font-bold text-lg">DH</span></div></div>
+                                                <label class="mb-2 block text-sm font-semibold text-gray-700">Montant TOTAL de la facture</label>
+                                                <div class="relative"><input type="number" step="0.01" name="montant_total" required placeholder="0.00" class="block w-full rounded-xl border-gray-300 py-4 pl-4 pr-12 text-2xl font-black text-gray-900 focus:border-blue-500 focus:ring-blue-500 bg-gray-50 transition border" /><div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none"><span class="text-gray-400 font-bold text-lg">DH</span></div></div>
                                             </div>
                                             <div class="mb-6">
                                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Scanner le Reçu Final</label>
-                                                <input type="file" name="photo_recu" accept="image/*" capture="environment" class="block w-full text-sm text-gray-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 border border-gray-300 rounded-xl bg-gray-50" />
+                                                <input type="file" name="photo_recu" accept="image/*" capture="environment" class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 border border-gray-300 rounded-xl bg-gray-50" />
                                             </div>
-                                            <div class="flex gap-3"><button type="button" @click="modalClotureOuverte = false" class="w-full px-4 py-3 sm:py-2.5 bg-white border border-gray-300 rounded-xl sm:rounded-lg text-sm font-bold text-gray-700">Annuler</button><button type="submit" class="w-full px-4 py-3 sm:py-2.5 bg-blue-600 rounded-xl sm:rounded-lg text-sm font-bold text-white">Valider</button></div>
+                                            <div class="flex gap-3"><button type="button" @click="modalClotureOuverte = false" class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700">Annuler</button><button type="submit" class="w-full px-4 py-2.5 bg-blue-600 rounded-lg text-sm font-medium text-white">Valider</button></div>
                                         </form>
                                     </div>
                                 </div>
                             </td>
                         </tr>
                         {% else %}
-                        <tr class="bg-white rounded-xl border border-gray-200 md:border-0">
+                        <tr>
                             <td colspan="4" class="px-6 py-12 text-center text-gray-500 font-medium block md:table-cell">
                                 <div class="flex flex-col items-center justify-center">
-                                    <svg class="w-12 h-12 text-gray-200 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12" /></svg>
-                                    <p>Tout est à jour !</p>
+                                    <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12" /></svg>
+                                    <p>Tout est à jour ! Aucune opération en attente.</p>
                                 </div>
                             </td>
                         </tr>
@@ -202,7 +205,7 @@
             </div>
         </div>
 
-        <div class="lg:col-span-1 flex flex-col gap-6 h-full mt-4 lg:mt-0">
+        <div class="lg:col-span-1 flex flex-col gap-6 h-full">
 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1">
                 <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
@@ -210,38 +213,38 @@
                         <svg class="w-4 h-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         Activité récente
                     </h3>
-                    <a href="/historique" class="text-xs font-bold text-blue-600 hover:underline px-2 py-1 rounded hover:bg-blue-50">Tout voir</a>
+                    <a href="/historique" class="text-xs font-bold text-blue-600 hover:underline">Tout voir</a>
                 </div>
                 <div class="p-0 overflow-y-auto max-h-[300px] flex-1">
-                    <ul class="divide-y divide-gray-50">
+                    <ul class="divide-y divide-gray-100">
                         {% for op in dernieres_operations %}
-                        <li class="p-4 hover:bg-gray-50 transition flex justify-between items-center gap-2">
-                            <div class="min-w-0 flex-1">
+                        <li class="p-4 hover:bg-gray-50 transition flex justify-between items-center">
+                            <div>
                                 <p class="text-sm font-bold text-gray-900 truncate uppercase">{{ op.client.nom }} {{ op.client.prenom[0] }}.</p>
                                 <p class="text-[10px] text-gray-500 font-medium">{{ op.date_operation.strftime('%d/%m à %H:%M') }}</p>
                             </div>
-                            <div class="text-right shrink-0">
+                            <div class="text-right">
                                 <p class="text-sm font-black text-gray-900">{{ op.montant_total }} DH</p>
                                 {% set reste = (op.montant_total or 0) - op.montant_avance %}
                                 {% if reste > 0 %}
-                                <span class="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">Manque {{ reste }} DH</span>
+                                <span class="text-[10px] font-bold text-red-600">Manque {{ reste }} DH</span>
                                 {% elif reste < 0 %}
-                                <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Rendre {{ reste|abs }} DH</span>
+                                <span class="text-[10px] font-bold text-amber-600">Rendre {{ reste|abs }} DH</span>
                                 {% else %}
-                                <span class="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">Soldé</span>
+                                <span class="text-[10px] font-bold text-green-600">Soldé</span>
                                 {% endif %}
                             </div>
                         </li>
                         {% else %}
-                        <li class="p-6 text-center text-xs text-gray-400 italic">Aucune opération clôturée récemment.</li>
+                        <li class="p-5 text-center text-xs text-gray-400 italic">Aucune opération clôturée récemment.</li>
                         {% endfor %}
                     </ul>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-5 shrink-0 hidden sm:block">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 shrink-0">
                 <h3 class="font-bold text-gray-800 text-sm mb-3">Évolution 7 Jours</h3>
-                <div class="relative h-32 sm:h-40 w-full">
+                <div class="relative h-40 w-full">
                     <canvas id="graphiqueCA" class="w-full h-full"></canvas>
                 </div>
             </div>
@@ -253,41 +256,36 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Afficher la date proprement
+    // Afficher la date
     const optionsDate = { weekday: 'long', day: 'numeric', month: 'long' };
-    const dateStr = new Date().toLocaleDateString('fr-FR', optionsDate);
-    const dateEl = document.getElementById('dateJour');
-    if(dateEl) dateEl.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+    document.getElementById('dateJour').textContent = new Date().toLocaleDateString('fr-FR', optionsDate).replace(/^\w/, (c) => c.toUpperCase());
 
-    // Le Graphique (Ne se charge que s'il existe dans le DOM)
-    const canvasEl = document.getElementById('graphiqueCA');
-    if (canvasEl) {
-        const ctx = canvasEl.getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: {{ labels_jours | safe }},
-                datasets: [{
-                    data: {{ donnees_ca | safe }},
-                    backgroundColor: 'rgba(59, 130, 246, 0.85)',
-                    hoverBackgroundColor: 'rgba(37, 99, 235, 1)',
-                    borderRadius: 4
-                }]
+    // Le Graphique plus minimaliste
+    const ctx = document.getElementById('graphiqueCA').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ labels_jours | safe }},
+            datasets: [{
+                data: {{ donnees_ca | safe }},
+                backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                hoverBackgroundColor: 'rgba(37, 99, 235, 1)',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { display: false, beginAtZero: true }, // On cache l'axe Y pour faire plus propre
+                x: { grid: { display: false }, ticks: { font: {size: 10} } }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { display: false, beginAtZero: true },
-                    x: { grid: { display: false }, ticks: { font: {size: 10} } }
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { label: function(context) { return context.parsed.y + ' DH'; } } }
-                }
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function(context) { return context.parsed.y + ' DH'; } } }
             }
-        });
-    }
+        }
+    });
 </script>
 
 {% endblock %}

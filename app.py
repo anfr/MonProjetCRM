@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, Response
+from flask import Flask, render_template, request, redirect, session, Response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 
@@ -107,6 +107,42 @@ def verifier_connexion():
     if request.path not in pages_publiques and not request.path.startswith('/static'):
         if not session.get('connecte'):
             return redirect('/login')
+
+# ==========================================
+# 🔔 NOTIFICATIONS GLOBALES (POUR TOUTES LES PAGES)
+# ==========================================
+@app.context_processor
+def injecter_notifications():
+    # Si l'utilisateur n'est pas connecté, on n'affiche rien
+    if not session.get('connecte'):
+        return dict(notifs=[], nb_notifs=0)
+
+    notifs = []
+    
+    # Alerte 1 : Opérations en attente (Oubli de clôture ?)
+    nb_attente = Operation.query.filter_by(statut='En attente').count()
+    if nb_attente > 0:
+        notifs.append({
+            'titre': 'Opérations en attente',
+            'message': f'Vous avez {nb_attente} client(s) en file d\'attente.',
+            'lien': '/',
+            'couleur': 'orange',
+            'icone': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />'
+        })
+
+    # Alerte 2 : Trou dans la caisse (Dettes)
+    ops_dettes = Operation.query.filter(Operation.statut == 'Terminé', Operation.montant_total > Operation.montant_avance).all()
+    total_dettes = sum((op.montant_total - op.montant_avance) for op in ops_dettes if op.montant_total is not None)
+    if total_dettes > 0:
+        notifs.append({
+            'titre': 'Recouvrement',
+            'message': f'Attention, vous avez {total_dettes} DH de dettes dehors.',
+            'lien': '/dettes',
+            'couleur': 'red',
+            'icone': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'
+        })
+
+    return dict(notifs=notifs, nb_notifs=len(notifs))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -562,6 +598,36 @@ def archiver_inactifs():
 @app.errorhandler(404)
 def page_introuvable(e):
     return render_template('404.html'), 404
+
+# ==========================================
+# 🔍 API RECHERCHE UNIVERSELLE (COMMAND PALETTE)
+# ==========================================
+@app.route('/api/recherche')
+def api_recherche():
+    if not session.get('connecte'):
+        return jsonify([])
+        
+    q = request.args.get('q', '').lower()
+    if not q or len(q) < 2:
+        return jsonify([])
+        
+    # On fouille la base de données en direct (Max 8 résultats pour que ce soit ultra rapide)
+    clients = Client.query.filter(
+        Client.archive == False,
+        ((Client.nom.contains(q)) | (Client.prenom.contains(q)) | (Client.telephone.contains(q)))
+    ).limit(8).all()
+    
+    resultats = []
+    for c in clients:
+        resultats.append({
+            'id': c.id,
+            'titre': f"{c.prenom.capitalize()} {c.nom.upper()}",
+            'sous_titre': c.telephone,
+            'url': f"/client/{c.id}",
+            'icone': '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />'
+        })
+        
+    return jsonify(resultats)
 
 
 # ==========================================

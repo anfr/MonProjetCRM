@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, Response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
+from flask_migrate import Migrate
 
 import csv
 import io
@@ -45,7 +46,9 @@ app.secret_key = "cle_secrete_super_robuste"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ma_base.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+
 db = SQLAlchemy(app)
+migrate = Migrate(app, db) # <-- NOUVEAU : On connecte l'outil de migration
 
 # ==========================================
 # 🗄️ NOS TABLEAUX (MODÈLES) - AVEC RÔLES !
@@ -92,6 +95,8 @@ class Operation(db.Model):
     montant_avance = db.Column(db.Float, default=0.0)
     montant_total = db.Column(db.Float, nullable=True)
     statut = db.Column(db.String(20), default='En attente')
+    # NOUVEAU : Le suivi du travail (CRM)
+    statut_dossier = db.Column(db.String(50), default='Dossier déposé')
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=False) 
     photo_recu = db.Column(db.String(255), nullable=True) 
@@ -434,6 +439,20 @@ def liste_dettes():
     operations_dettes = Operation.query.filter(Operation.statut == 'Terminé', Operation.montant_total > Operation.montant_avance).all()
     total_dettes = sum((op.montant_total - op.montant_avance) for op in operations_dettes if op.montant_total is not None)
     return render_template('dettes.html', operations=operations_dettes, total_dettes=total_dettes)
+
+@app.route('/maj_statut_dossier/<int:id_op>', methods=['POST'])
+def maj_statut_dossier(id_op):
+    op = Operation.query.get_or_404(id_op)
+    nouveau_statut = request.form.get('statut_dossier')
+    
+    # On vérifie que c'est un tag autorisé
+    tags_autorises = ['Dossier déposé', 'En cours de traitement', 'Validé', 'Bloqué / Problème']
+    if nouveau_statut in tags_autorises:
+        op.statut_dossier = nouveau_statut
+        db.session.commit()
+        
+    # On retourne d'où on vient (Fiche client)
+    return redirect(request.referrer or '/')
 
 
 # ==========================================

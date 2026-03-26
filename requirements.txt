@@ -3,3 +3,4 @@ gunicorn
 sqlmodel
 python-multipart
 python-multipartpython-multipart
+Flask-Migrate==4.0.5

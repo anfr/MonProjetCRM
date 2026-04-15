@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket #{{ ticket.lettre }}{{ "%03d" | format(ticket.numero) }}</title>
+    <style>
+        /* Supprime les marges du navigateur pour l'imprimante */
+        @page {
+            margin: 0;
+        }
+
+        body {
+            /* Police style "Caisse enregistreuse" */
+            font-family: 'Courier New', Courier, monospace;
+            width: 58mm; /* Taille standard des petites imprimantes (Change en 80mm si la tienne est large) */
+            margin: 0 auto;
+            padding: 5mm;
+            text-align: center;
+            color: #000;
+            background: #fff;
+        }
+
+        .header {
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 5px;
+        }
+
+        .nom-kiosque {
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .ticket-info {
+            margin: 15px 0;
+        }
+
+        .service {
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .numero {
+            font-size: 45px;
+            font-weight: bold;
+            margin: 5px 0;
+            line-height: 1;
+        }
+
+        .footer {
+            margin-top: 15px;
+            border-top: 1px dashed #000;
+            padding-top: 10px;
+            font-size: 11px;
+        }
+
+        .date {
+            font-size: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body onload="window.print(); setTimeout(function(){ window.close(); }, 500);">
+
+    <div class="header">
+        <div class="nom-kiosque">{{ tv_config.ticket_nom_kiosque if tv_config and tv_config.ticket_nom_kiosque else 'KIOSQUE PRO' }}</div>
+        <div style="font-size: 10px; margin-top: 3px;">{{ tv_config.ticket_sous_titre if tv_config else 'Espace Multiservices' }}</div>
+    </div>
+
+    <div class="ticket-info">
+        <div class="service">{{ ticket.service }}</div>
+        <div class="numero">#{{ ticket.lettre }}{{ "%03d" | format(ticket.numero) }}</div>
+    </div>
+
+    <div class="footer">
+        {{ (tv_config.ticket_message | replace('\n', '<br>')) | safe if tv_config and tv_config.ticket_message else 'Merci de patienter<br><strong>Votre tour arrive bientôt !</strong>' }}
+        <div class="date">{{ ticket.date_creation.strftime('%d/%m/%Y à %H:%M') }}</div>
+    </div>
+
+</body>
+</html>

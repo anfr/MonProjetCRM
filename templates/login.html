@@ -4,36 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion - Mon CRM Kiosque</title>
-    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 
     <style>
         body {
             font-family: 'Inter', sans-serif;
         }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
     </style>
 </head>
 
 <body class="bg-gradient-to-br from-blue-200 via-blue-100 to-pink-100 min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8 relative selection:bg-blue-300 selection:text-blue-900">
 
-    <div class="sm:mx-auto sm:w-full sm:max-w-md relative z-10 mb-8 animate-fade-in">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md relative z-10 mb-8">
         <div class="mx-auto h-16 w-16 bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 flex items-center justify-center mb-6 transform transition-transform hover:scale-105 cursor-default">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8 text-blue-600">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
@@ -43,7 +27,7 @@
         <p class="mt-2 text-center text-sm text-gray-700 font-medium">Veuillez vous identifier pour accéder à votre espace</p>
     </div>
 
-    <div class="sm:mx-auto sm:w-full sm:max-w-[420px] relative z-10 animate-fade-in" style="animation-delay: 0.1s; opacity: 0;">
+    <div class="sm:mx-auto sm:w-full sm:max-w-[420px] relative z-10">
         <div class="bg-white/95 backdrop-blur-md py-10 px-6 shadow-2xl shadow-blue-900/10 sm:rounded-3xl sm:px-12 border border-white">
 
             {% if erreur %}
@@ -84,7 +68,7 @@
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-md text-base font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all gap-2 group">
+                    <button type="submit" class="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-md text-base font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all gap-2 group cursor-pointer">
                         Se connecter
                         <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75" />

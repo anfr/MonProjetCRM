@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Affiche A4 Paysage - Kiosque</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========================================= */
+        /* CORRECTION POUR L'IMPRESSION NATIVE (Ctrl+P) */
+        /* ========================================= */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            body {
+                background-color: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            #barre-controle, .h-16 {
+                display: none !important;
+            }
+
+            .page-wrapper {
+                padding: 0 !important;
+                display: block !important;
+            }
+
+            #zone-impression {
+                width: 100vw !important;
+                height: 100vh !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                page-break-inside: avoid !important;
+                transform: none !important;
+            }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+        }
+
+        .font-arabe {
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .a4-landscape {
+            width: 1123px;
+            height: 794px;
+            background-color: white;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        .preview-shadow {
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+            margin: 40px auto;
+        }
+
+        .page-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col py-10">
+
+    <div id="barre-controle" class="fixed top-0 left-0 w-full bg-slate-900 border-b border-slate-700 p-4 flex justify-center z-50 shadow-xl">
+        <button onclick="genererPDF()" class="bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-500 hover:to-blue-400 text-white px-8 py-3 rounded-xl font-black text-lg flex items-center gap-3 transition-transform active:scale-95 shadow-[0_0_20px_rgba(79,70,229,0.3)]">
+            <i class="ph-bold ph-printer text-2xl"></i>
+            Télécharger le PDF (A4 Paysage)
+        </button>
+    </div>
+
+    <div class="h-16 shrink-0"></div>
+
+    <div class="page-wrapper">
+        <div id="zone-impression" class="a4-landscape preview-shadow flex rounded-2xl border border-slate-300">
+
+            <div class="w-[60%] p-14 flex flex-col justify-between relative bg-slate-50">
+                <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-indigo-600 to-cyan-500"></div>
+
+                <div class="mb-8 mt-4">
+                    <h1 class="text-5xl font-black text-slate-800 tracking-tight leading-tight uppercase">
+                        Votre ticket en <span class="text-indigo-600">1 clic</span>
+                    </h1>
+                    <h2 class="font-arabe text-4xl font-black text-slate-700 mt-2" dir="rtl">
+                        تذكرتك بضغطة <span class="text-indigo-600">زر واحدة</span>
+                    </h2>
+                </div>
+
+                <div class="flex-1 flex flex-col justify-center gap-8 relative">
+                    <div class="absolute left-8 top-10 bottom-10 w-1 bg-indigo-100 z-0"></div>
+
+                    <div class="flex items-center gap-6 relative z-10">
+                        <div class="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-3xl font-black shrink-0 border-4 border-slate-50 shadow-md">1</div>
+                        <div class="flex-1 grid grid-cols-2 gap-4 items-center bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                            <div>
+                                <i class="ph-duotone ph-qr-code text-indigo-500 text-3xl mb-1"></i>
+                                <h3 class="font-black text-slate-800 text-lg">Scannez le code</h3>
+                                <p class="text-slate-500 text-sm font-medium">Ouvrez l'appareil photo de votre smartphone.</p>
+                            </div>
+                            <div class="text-right border-l border-slate-100 pl-4" dir="rtl">
+                                <h3 class="font-arabe font-black text-slate-800 text-xl">امسح الرمز</h3>
+                                <p class="font-arabe text-slate-500 text-sm mt-1 font-bold">افتح كاميرا هاتفك وامسح الرمز.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-6 relative z-10">
+                        <div class="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-3xl font-black shrink-0 border-4 border-slate-50 shadow-md">2</div>
+                        <div class="flex-1 grid grid-cols-2 gap-4 items-center bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                            <div>
+                                <i class="ph-duotone ph-hand-pointing text-indigo-500 text-3xl mb-1"></i>
+                                <h3 class="font-black text-slate-800 text-lg">Choisissez</h3>
+                                <p class="text-slate-500 text-sm font-medium">Sélectionnez votre service sur votre téléphone.</p>
+                            </div>
+                            <div class="text-right border-l border-slate-100 pl-4" dir="rtl">
+                                <h3 class="font-arabe font-black text-slate-800 text-xl">اختر الخدمة</h3>
+                                <p class="font-arabe text-slate-500 text-sm mt-1 font-bold">اختر الخدمة المطلوبة من شاشة هاتفك.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-6 relative z-10">
+                        <div class="w-16 h-16 bg-emerald-500 text-white rounded-full flex items-center justify-center text-3xl font-black shrink-0 border-4 border-slate-50 shadow-md">3</div>
+                        <div class="flex-1 grid grid-cols-2 gap-4 items-center bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                            <div>
+                                <i class="ph-duotone ph-coffee text-emerald-500 text-3xl mb-1"></i>
+                                <h3 class="font-black text-slate-800 text-lg">Patientez libéré !</h3>
+                                <p class="text-slate-500 text-sm font-medium">Suivez l'avancée de la file en direct.</p>
+                            </div>
+                            <div class="text-right border-l border-slate-100 pl-4" dir="rtl">
+                                <h3 class="font-arabe font-black text-slate-800 text-xl">انتظر براحة !</h3>
+                                <p class="font-arabe text-slate-500 text-sm mt-1 font-bold">تابع تقدم طابور الانتظار مباشرة.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-[40%] bg-indigo-900 flex flex-col items-center justify-center p-12 relative overflow-hidden">
+                <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#4f46e5 2px, transparent 2px); background-size: 30px 30px;"></div>
+
+                <div class="relative z-10 flex flex-col items-center w-full">
+                    <div class="bg-indigo-800/80 backdrop-blur-sm border border-indigo-500/30 px-8 py-3 rounded-2xl mb-8 shadow-lg text-center w-full">
+                        <p class="text-indigo-200 font-black tracking-widest uppercase text-lg">Caméra du téléphone</p>
+                        <p class="font-arabe text-white text-2xl mt-1">كاميرا الهاتف</p>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative">
+                        <div class="absolute -top-4 -left-4 w-12 h-12 border-t-8 border-l-8 border-cyan-400 rounded-tl-2xl"></div>
+                        <div class="absolute -top-4 -right-4 w-12 h-12 border-t-8 border-r-8 border-cyan-400 rounded-tr-2xl"></div>
+                        <div class="absolute -bottom-4 -left-4 w-12 h-12 border-b-8 border-l-8 border-cyan-400 rounded-bl-2xl"></div>
+                        <div class="absolute -bottom-4 -right-4 w-12 h-12 border-b-8 border-r-8 border-cyan-400 rounded-br-2xl"></div>
+
+                        <div id="boite-qrcode" class="w-[280px] h-[280px] flex items-center justify-center"></div>
+                    </div>
+
+                    <div class="mt-10 text-center">
+                        <p class="text-cyan-400 font-black uppercase tracking-widest text-sm mb-1"><i class="ph-fill ph-check-circle"></i> 100% Gratuit</p>
+                        <p class="text-indigo-200 font-medium text-sm">Aucune application à installer</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 1. Génération du QR Code local
+        window.onload = function() {
+            new QRCode(document.getElementById("boite-qrcode"), {
+                text: "{{ url_portail }}",
+                width: 280,
+                height: 280,
+                colorDark : "#1e293b",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            setTimeout(() => {
+                let canvas = document.querySelector("#boite-qrcode canvas");
+                if(canvas) {
+                    let imageVeritable = canvas.toDataURL("image/png");
+                    document.getElementById("boite-qrcode").innerHTML = '<img src="' + imageVeritable + '" alt="QR Code" style="width:280px; height:280px; display:block; margin:auto;">';
+                }
+            }, 500);
+        };
+
+        // 2. Génération PDF - La méthode douce et infaillible
+        function genererPDF() {
+            const element = document.getElementById('zone-impression');
+            const barreControle = document.getElementById('barre-controle');
+            const wrapper = document.querySelector('.page-wrapper');
+
+            // On cache la barre de téléchargement
+            barreControle.style.display = 'none';
+
+            // On retire la décoration (ombres et bords ronds)
+            element.classList.remove('preview-shadow', 'rounded-2xl', 'border', 'border-slate-300');
+
+            // 🚨 LE SECRET : On annule le centrage du conteneur proprement
+            // L'affiche va se coller au pixel 0,0 naturellement, sans forcer.
+            wrapper.style.display = 'block';
+            wrapper.style.padding = '0';
+            document.body.style.margin = '0';
+
+            // On s'assure que l'écran est tout en haut à gauche
+            window.scrollTo(0, 0);
+
+            const opt = {
+                margin: 0,
+                filename: 'Affiche_Borne_A4_Paysage.pdf',
+                image: { type: 'jpeg', quality: 1.0 },
+                html2canvas: {
+                    scale: 2, // Qualité HD
+                    useCORS: true,
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0
+                },
+                jsPDF: {
+                    unit: 'mm',
+                    format: 'a4',
+                    orientation: 'landscape'
+                }
+            };
+
+            // On lance la capture PDF
+            html2pdf().set(opt).from(element).save().then(() => {
+                // 🚨 FINI : On remet le centrage et la décoration !
+                element.classList.add('preview-shadow', 'rounded-2xl', 'border', 'border-slate-300');
+                wrapper.style.display = 'flex';
+                wrapper.style.padding = '20px';
+                document.body.style.margin = '';
+                barreControle.style.display = 'flex';
+            }).catch(erreur => {
+                alert("Erreur lors de la création du PDF : " + erreur);
+                barreControle.style.display = 'flex';
+            });
+        }
+    </script>
+</body>
+</html>

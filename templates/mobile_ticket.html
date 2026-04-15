@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votre Ticket</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <meta http-equiv="refresh" content="10">
+</head>
+<body class="bg-indigo-600 min-h-screen p-6 flex flex-col items-center justify-center font-sans">
+
+    <div class="w-full max-w-sm bg-white rounded-[2rem] p-8 text-center shadow-2xl relative overflow-hidden">
+
+        {% if ticket.statut == 'appele' %}
+        <div class="absolute top-0 left-0 w-full bg-emerald-500 text-white text-xs font-black py-2 uppercase tracking-widest animate-pulse">
+            C'est à votre tour !
+        </div>
+        {% elif ticket.statut == 'en_attente' %}
+        <div class="absolute top-0 left-0 w-full bg-amber-400 text-amber-900 text-xs font-black py-2 uppercase tracking-widest">
+            En attente
+        </div>
+        {% endif %}
+
+        <p class="text-slate-400 font-bold uppercase tracking-widest text-xs mt-6">{{ ticket.service }}</p>
+        <h1 class="text-7xl font-black text-slate-800 tracking-tighter my-4">#{{ ticket.lettre }}{{ "%03d" | format(ticket.numero) }}</h1>
+
+        <div class="h-px w-full bg-dashed border-t-2 border-slate-200 border-dashed my-6"></div>
+
+        {% if ticket.statut == 'en_attente' %}
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+            <p class="text-slate-500 text-sm font-medium mb-1">Personnes avant vous</p>
+            <p class="text-3xl font-black text-indigo-600">{{ personnes_avant }}</p>
+            <p class="text-xs text-slate-400 mt-2">Ce ticket s'actualise en temps réel. Vous pouvez aller prendre un café ! ☕</p>
+        </div>
+        {% elif ticket.statut == 'appele' %}
+        <div class="bg-emerald-50 rounded-2xl p-6 border border-emerald-100">
+            <p class="text-emerald-600 text-sm font-bold uppercase tracking-widest mb-2">Présentez-vous au</p>
+            <p class="text-4xl font-black text-emerald-600">Guichet {{ ticket.guichet }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>

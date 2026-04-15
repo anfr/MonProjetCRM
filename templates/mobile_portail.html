@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prendre un ticket</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="bg-slate-50 min-h-screen p-6 flex flex-col font-sans">
+
+    <div class="text-center mb-8 mt-4">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 text-white rounded-2xl mb-4 shadow-lg">
+            <i class="ph-bold ph-ticket text-3xl"></i>
+        </div>
+        <h1 class="text-2xl font-black text-slate-800 tracking-tight">Kiosque Pro</h1>
+        <p class="text-slate-500 text-sm mt-2 font-medium">Sélectionnez le motif de votre visite pour obtenir votre ticket numérique.</p>
+    </div>
+
+    <div class="space-y-3 flex-1">
+        {% for bouton in boutons %}
+        <a href="{{ url_for('queue.mobile_generer', service_nom=bouton.nom_service) }}"
+           class="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-sm active:scale-95 active:bg-indigo-50 transition-all group">
+            <div class="flex items-center gap-4">
+                <span class="w-10 h-10 bg-indigo-50 text-indigo-600 font-black rounded-xl flex items-center justify-center">{{ bouton.lettre }}</span>
+                <span class="font-bold text-slate-700 text-lg">{{ bouton.nom_service }}</span>
+            </div>
+            <i class="ph-bold ph-caret-right text-slate-300 group-hover:text-indigo-500"></i>
+        </a>
+        {% else %}
+        <div class="text-center p-6 text-slate-500 bg-white rounded-2xl border border-slate-200">
+            <i class="ph-fill ph-warning-circle text-3xl mb-2 text-slate-300"></i>
+            <p>Aucun bouton rapide n'est configuré pour le moment.</p>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

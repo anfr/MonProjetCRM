@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV - Kiosque Multiservices</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617; /* Slate 950 */
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0.1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0.1) 0, transparent 50%);
+        }
+
+        .font-arabe {
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(100vw);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .animate-marquee {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee linear infinite;
+        }
+
+        /* Nouvelle animation d'appel beaucoup plus élégante (Glow effect) */
+        @keyframes glowFlash {
+            0%, 100% {
+                box-shadow: 0 0 0px rgba(99, 102, 241, 0);
+                transform: scale(1);
+            }
+
+            10%, 30%, 50% {
+                box-shadow: 0 0 80px rgba(99, 102, 241, 0.6);
+                transform: scale(1.03);
+            }
+
+            20%, 40% {
+                box-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
+                transform: scale(1.01);
+            }
+        }
+
+        .pulse-appel {
+            animation: glowFlash 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Effet de verre doux */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6); /* Slate 900 transparent */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="text-white h-screen w-screen overflow-hidden flex flex-col selection:bg-transparent"
+      x-data="{
+      // LOGIQUE ALPINEJS INTACTE
+      appelActuel: {
+      lettre: '{{ ticket.lettre if ticket else "-" }}' ,
+      numero: '{{ "{:03d}".format(ticket.numero) if ticket else "ATTENTE" }}' ,
+      guichet: '{{ ticket.guichet|replace("G", "")|replace("Caisse ", "") if ticket else "-" }}'
+      },
+      tempsAttente: {{ temps_attente if temps_attente is defined else 15 }} ,
+      historique: [],
+      meteo: [],
+      urgencesEnVue: [],
+      nouveau: false,
+      demarre: false,
+      dateJour: '' ,
+      heureActuelle: '--:--' ,
+      sonnette: new Audio('https://actions.google.com/sounds/v1/alarms/ding.ogg'),
+      async fetchMeteo() {
+      try {
+      const res=await fetch('https://api.open-meteo.com/v1/forecast?latitude=34.2257&longitude=-3.3536&hourly=temperature_2m,weathercode&timezone=Africa%2FCasablanca&forecast_days=2');
+      const data=await res.json();
+      const maintenant=new Date().getTime();
+      const getIcon=(code, hour)=>
+    {
+    let isNight = hour >= 19 || hour <= 6;
+    if(code <= 1) return isNight ? '🌙' : '☀️';
+    if(code <= 3) return isNight ? '☁️' : '⛅';
+    if(code <= 49) return '☁️';
+    if(code <= 69) return '🌧️';
+    return '⛈️';
+    };
+    let tempMeteo = [];
+    for (let i = 0; i < data.hourly.time.length; i++) {
+    let dateAPI = new Date(data.hourly.time[i]);
+    if (dateAPI.getTime() >= maintenant - 3600000) {
+    tempMeteo.push({
+    id: i, heure: dateAPI.getHours() + 'h',
+    temp: Math.round(data.hourly.temperature_2m[i]) + '°',
+    icone: getIcon(data.hourly.weathercode[i], dateAPI.getHours())
+    });
+    }
+    }
+    this.meteo = tempMeteo.slice(0, 7);
+    } catch(e) { console.error('Erreur API Météo:', e); }
+    },
+
+    async fetchTemps() {
+    try {
+    const res = await fetch('/api/temps_attente');
+    const data = await res.json();
+    this.tempsAttente = data.temps;
+    } catch(e) {}
+    },
+
+    majHeure() { this.heureActuelle = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); },
+
+    init() {
+    const options = { weekday: 'long', day: 'numeric', month: 'long' };
+    this.dateJour = new Date().toLocaleDateString('fr-FR', options);
+    this.majHeure(); setInterval(() => this.majHeure(), 1000);
+    this.fetchMeteo(); setInterval(() => this.fetchMeteo(), 3600000);
+    this.fetchTemps();
+
+    const socket = io();
+    socket.on('connect', () => { document.getElementById('status-wifi').classList.replace('text-red-500', 'text-emerald-500'); });
+    socket.on('disconnect', () => { document.getElementById('status-wifi').classList.replace('text-emerald-500', 'text-red-500'); });
+    socket.on('reset_tv', () => { location.reload(); });
+    socket.on('ticket_maj', () => { this.fetchTemps(); });
+
+    socket.on('afficher_urgence_tv', (data) => {
+    let fullNum = data.lettre + data.numero;
+    if (!this.urgencesEnVue.some(u => u.fullNum === fullNum)) {
+    this.urgencesEnVue.push({ fullNum: fullNum });
+    this.sonnette.play().catch(e => console.log('Son bloqué'));
+    }
+    });
+
+    const traiterAppel = (lettre, numeroStr, numeroInt, guichet) => {
+    if (this.appelActuel.numero !== 'ATTENTE') {
+    this.historique.unshift({ ...this.appelActuel });
+    if (this.historique.length > 5) this.historique.pop();
+    }
+    this.appelActuel = { lettre: lettre, numero: numeroStr, guichet: guichet };
+
+    // Relancer l'animation
+    this.nouveau = false;
+    setTimeout(() => this.nouveau = true, 50);
+
+    this.sonnette.play().catch(e => console.log('Son bloqué'));
+
+    if ('speechSynthesis' in window && this.demarre) {
+    setTimeout(() => {
+    let message = new SpeechSynthesisUtterance(`Numéro ${lettre}, ${numeroInt}, au {{ tv_config.label_guichet if tv_config else 'Guichet' }} ${guichet}`);
+    message.lang = 'fr-FR'; message.rate = 0.85; message.pitch = 1.1;
+    window.speechSynthesis.speak(message);
+    }, 1200);
+    }
+    };
+
+    socket.on('nouveau_ticket_affiche', (data) => {
+    let l = data.lettre || String(data.numero).charAt(0);
+    let nStr = data.lettre ? String(data.numero) : String(data.numero).substring(1);
+    let fullNum = l + nStr;
+    this.urgencesEnVue = this.urgencesEnVue.filter(u => u.fullNum !== fullNum);
+    traiterAppel(l, nStr, parseInt(nStr, 10), data.guichet);
+    });
+    },
+
+    demarrerTV() {
+    this.demarre = true;
+    try { document.documentElement.requestFullscreen(); } catch(e) {}
+    this.sonnette.load();
+    let unlockMsg = new SpeechSynthesisUtterance(''); window.speechSynthesis.speak(unlockMsg);
+    }
+    }">
+
+    <div x-show="!demarre" class="fixed inset-0 bg-slate-950/80 backdrop-blur-2xl z-50 flex flex-col items-center justify-center text-white transition-opacity duration-700">
+        <div class="w-24 h-24 bg-indigo-500 rounded-full flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(99,102,241,0.5)]">
+            <i class="ph-fill ph-monitor-play text-5xl text-white"></i>
+        </div>
+        <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-8 text-center">Écran d'Attente Public</h1>
+        <button @click="demarrerTV()" class="px-10 py-5 bg-white text-indigo-600 rounded-[2rem] text-xl font-black hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)] transition-all duration-300">
+            Démarrer la diffusion
+        </button>
+    </div>
+
+    <header class="flex justify-between items-center px-8 py-5 glass-panel z-10">
+        <div class="flex items-center gap-5">
+            <div class="relative">
+                <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full blur opacity-40"></div>
+                <div class="bg-slate-900 p-3 rounded-full relative border border-slate-700">
+                    <div class="absolute top-0 right-0 bg-slate-900 rounded-full p-0.5"><svg id="status-wifi" class="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /></svg></div>
+                    <i class="ph-fill ph-buildings text-3xl text-indigo-400"></i>
+                </div>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black tracking-tight text-white uppercase letter-spacing-wide">Kiosque Pro</h1>
+                <p class="text-slate-400 font-medium text-sm capitalize" x-text="dateJour"></p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 px-6 py-2 rounded-[2rem] bg-slate-800/50 border border-slate-700/50 overflow-x-auto max-w-[400px] hide-scrollbar">
+            <template x-for="m in meteo" :key="m.id">
+                <div class="flex flex-col items-center justify-center min-w-[40px] opacity-80 hover:opacity-100 transition-opacity">
+                    <span class="text-[9px] font-bold text-slate-400" x-text="m.heure"></span>
+                    <span class="text-lg my-1" x-text="m.icone"></span>
+                    <span class="text-xs font-bold text-white" x-text="m.temp"></span>
+                </div>
+            </template>
+        </div>
+
+        <div class="flex items-center gap-8">
+            <div class="hidden xl:flex flex-col items-end">
+                <p class="text-xs text-indigo-300 font-bold uppercase tracking-widest mb-1">Attente estimée</p>
+                <div class="bg-indigo-500/20 border border-indigo-500/30 px-4 py-1.5 rounded-full">
+                    <span class="text-white font-black text-lg">~<span x-text="tempsAttente">{{ temps_attente if temps_attente is defined else 0 }}</span> min</span>
+                </div>
+            </div>
+            <div class="text-5xl font-black text-white tracking-tighter tabular-nums drop-shadow-lg" x-text="heureActuelle"></div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex gap-6 p-6 overflow-hidden relative z-0">
+
+        <div class="flex-[1.8] xl:flex-[2.2] relative rounded-[2rem] overflow-hidden shadow-2xl border border-slate-800/60 bg-black group">
+            <iframe class="w-full h-full pointer-events-none scale-[1.02]"
+                    src="https://www.youtube.com/embed/{{ tv_config.youtube_id if tv_config and tv_config.youtube_id else '5qap5aO4i9A' }}?autoplay=1&mute=1&loop=1&playlist={{ tv_config.youtube_id if tv_config and tv_config.youtube_id else '5qap5aO4i9A' }}&controls=0&showinfo=0&rel=0"
+                    frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
+            </iframe>
+            <div class="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.6)] pointer-events-none"></div>
+
+            <div class="absolute bottom-8 left-8 z-20 flex items-center gap-4 glass-panel p-3 rounded-2xl shadow-xl">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://wa.me/{{ tv_config.whatsapp|replace(' ', '') if tv_config else '212600000000' }}" class="w-14 h-14 rounded-xl bg-white p-1.5">
+                <div class="pr-2">
+                    <p class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Contactez-nous</p>
+                    <p class="text-base font-black text-emerald-400">WhatsApp</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col gap-6 relative z-10">
+
+            <div class="glass-panel border-indigo-500/30 rounded-[2.5rem] flex flex-col items-center justify-center p-8 relative overflow-hidden transition-all"
+                 :class="nouveau ? 'pulse-appel bg-indigo-900/20' : 'bg-slate-900/60'">
+
+                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none"></div>
+
+                <h2 class="text-sm font-bold text-indigo-300 mb-6 uppercase tracking-[0.2em] relative z-10">Appel en cours</h2>
+
+                <div class="flex justify-center items-center gap-4 mb-8 relative z-10">
+                    <div class="bg-gradient-to-br from-indigo-400 to-indigo-600 text-white w-24 h-32 flex items-center justify-center rounded-2xl text-6xl font-black shadow-xl">
+                        <span x-text="appelActuel.lettre">{{ ticket.lettre if ticket else "-" }}</span>
+                    </div>
+                    <div class="bg-white text-slate-900 px-6 h-32 flex items-center justify-center rounded-2xl font-black shadow-xl">
+                        <span x-text="appelActuel.numero" class="tracking-tighter" :class="appelActuel.numero === 'ATTENTE' ? 'text-4xl text-slate-400' : 'text-7xl'">
+                            {{ "{:03d}".format(ticket.numero) if ticket else "ATTENTE" }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="relative z-10 flex flex-col items-center">
+                    <p class="text-[11px] text-slate-400 uppercase tracking-widest mb-3">Veuillez vous présenter au</p>
+                    <div class="bg-slate-800/80 border border-slate-600 text-white px-8 py-3 rounded-[1.5rem] shadow-lg">
+                        <span class="text-2xl font-bold uppercase tracking-wider text-slate-300">
+                            {{ tv_config.label_guichet if tv_config else 'GUICHET' }}
+                            <span x-text="String(appelActuel.guichet).replace(/\D/g, '')" class="text-emerald-400 font-black text-3xl ml-2">
+                                {{ ticket.guichet|replace('G', '')|replace('Caisse ', '') if ticket else "-" }}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 glass-panel rounded-[2rem] flex flex-col overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-700/50 bg-slate-800/30">
+                    <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em]">Derniers Appels</h3>
+                </div>
+                <div class="flex-1 p-4 space-y-3 overflow-hidden">
+                    <template x-for="(item, index) in historique" :key="index">
+                        <div class="bg-slate-800/40 hover:bg-slate-800/80 border border-slate-700/50 p-4 rounded-2xl flex justify-between items-center transition-colors">
+                            <div class="flex items-center gap-4">
+                                <span class="w-12 h-12 flex items-center justify-center bg-slate-900 text-indigo-400 border border-slate-700 rounded-xl text-2xl font-black shadow-inner" x-text="item.lettre"></span>
+                                <span class="text-3xl font-black text-white tracking-tight" x-text="item.numero"></span>
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-[9px] text-slate-400 uppercase tracking-widest mb-0.5">{{ tv_config.label_guichet if tv_config else 'GUICHET' }}</span>
+                                <span class="text-xl font-black text-emerald-400" x-text="String(item.guichet).replace(/\D/g, '')"></span>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="historique.length === 0" class="h-full flex items-center justify-center">
+                        <p class="text-sm text-slate-500 font-medium italic">L'historique s'affichera ici.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="bg-indigo-600 h-[70px] shrink-0 flex relative overflow-hidden shadow-[0_-10px_30px_rgba(79,70,229,0.3)] z-20">
+        <div class="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20 z-10 pointer-events-none"></div>
+        <div class="flex items-center w-full h-full relative z-0">
+            <div class="animate-marquee font-medium text-2xl text-white tracking-wide" style="animation-duration: {{ tv_config.vitesse_defilement if tv_config else 20 }}s;">
+                <span class="mx-16 text-indigo-300 opacity-50">✦</span>
+                <span class="font-arabe text-3xl font-bold">{{ tv_config.texte_arabe if tv_config else 'مرحباً بكم' }}</span>
+                <span class="mx-16 text-indigo-300 opacity-50">✦</span>
+                <span class="font-bold">{{ tv_config.texte_francais if tv_config else 'Bienvenue' }}</span>
+                <span class="mx-16 text-indigo-300 opacity-50">✦</span>
+                <span class="font-arabe text-3xl font-bold">{{ tv_config.texte_arabe if tv_config else 'مرحباً بكم' }}</span>
+                <span class="mx-16 text-indigo-300 opacity-50">✦</span>
+                <span class="font-bold">{{ tv_config.texte_francais if tv_config else 'Bienvenue' }}</span>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

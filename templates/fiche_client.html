@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+    {% extends "base.html" %}
 
 {% block content %}
 <div x-data="{ modalContratOuverte: false, modalOperationOuverte: false, modalHistoriqueOuvert: false }">
@@ -17,28 +17,20 @@
         </div>
 
         <div class="flex flex-col sm:flex-row flex-wrap justify-end gap-2.5 w-full lg:w-auto mt-4 sm:mt-0">
-            <a href="/clients" class="inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all w-full sm:w-auto">
-                <svg class="w-5 h-5 mr-2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-                </svg>
-                Retour
-            </a>
-            <button @click="modalHistoriqueOuvert = true" class="inline-flex items-center justify-center px-4 py-2.5 border border-purple-200 shadow-sm text-sm font-bold rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all w-full sm:w-auto">
-                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Historique ({{ historique|length }})
-            </button>
-            <a href="/carte_client/{{ client.id }}" target="_blank" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all w-full sm:w-auto">
+            <a href="{{ url_for('clients.carte_client', id_client=client.id) }}" target="_blank" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all w-full sm:w-auto">
                 <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
                 </svg>
                 Imprimer Carte
             </a>
-            <button @click="modalOperationOuverte = true" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all w-full sm:w-auto">
-                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+
+            <button @click="modalHistoriqueOuvert = true" class="inline-flex items-center justify-center px-4 py-2.5 border border-purple-200 shadow-sm text-sm font-bold rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 transition-all w-full sm:w-auto">
+                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Historique ({{ historique|length }})
+            </button>
+
+            <button @click="modalOperationOuverte = true" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-all w-full sm:w-auto">
+                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Nouvelle Opération
             </button>
         </div>
@@ -169,7 +161,7 @@
             </svg>
             Notes Internes Privées
         </h3>
-        <form action="/maj_notes/{{ client.id }}" method="POST">
+        <form action="{{ url_for('clients.maj_notes', id_client=client.id) }}" method="POST">
             <div class="relative">
                 <textarea name="notes" rows="4" placeholder="Ajoutez ici des informations confidentielles sur le client (comportement de paiement, détails spécifiques...)" class="w-full rounded-xl border border-amber-200 bg-white py-3 px-4 text-gray-700 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition shadow-sm text-sm sm:text-base resize-y">{{ client.notes or '' }}</textarea>
             </div>
@@ -254,17 +246,7 @@
                             <span class="text-gray-400 font-bold text-lg">DH</span>
                         </div>
                     </div>
-                    <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                            </svg>
-                            Photo du reçu / Facture
-                        </label>
-                        <input type="file" name="photo_recu" accept="image/*" capture="environment" class="block w-full text-sm text-gray-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-xl bg-gray-50 transition shadow-sm" />
-                        <p class="mt-2 text-xs text-gray-500">Optionnel. La photo s'ouvrira directement sur mobile.</p>
-                    </div>
+                    
                     <div class="flex flex-col gap-3">
                         <button type="submit" class="w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">Créer l'opération</button>
                         <button type="button" @click="modalOperationOuverte = false" class="w-full flex justify-center items-center px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Annuler</button>
@@ -325,7 +307,7 @@
                                         {% set reste = (op.montant_total or 0) - op.montant_avance %}
                                         {% if reste > 0 %}
                                         <div class="px-3 py-2 bg-red-50 border border-red-200 rounded-lg inline-block shadow-sm">
-                                            <span class="block text-[10px] text-red-500 font-bold uppercase tracking-widest mb-1">Client Débiteur (Dette)</span>
+                                            <span class="block text-[10px] text-red-500 font-bold uppercase tracking-wider mb-1">Client Débiteur (Dette)</span>
                                             <div class="flex items-center gap-3">
                                                 <span class="font-black text-red-700 text-base">{{ reste }} DH</span>
                                                 <a href="/regler_reste/{{ op.id }}" onclick="return confirm('Confirmer le paiement de la dette de {{ reste }} DH ?');" class="text-[10px] font-bold bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded shadow-sm transition">
@@ -335,7 +317,7 @@
                                         </div>
                                         {% elif reste < 0 %}
                                         <div class="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg inline-block shadow-sm">
-                                            <span class="block text-[10px] text-amber-600 font-bold uppercase tracking-widest mb-1">Client Créditeur (À Rendre)</span>
+                                            <span class="block text-[10px] text-amber-600 font-bold uppercase tracking-wider mb-1">Client Créditeur (À Rendre)</span>
                                             <div class="flex items-center gap-3">
                                                 <span class="font-black text-amber-700 text-base">{{ reste|abs }} DH</span>
                                                 <a href="/regler_reste/{{ op.id }}" onclick="return confirm('Confirmer la restitution de {{ reste|abs }} DH au client ?');" class="text-[10px] font-bold bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded shadow-sm transition">
@@ -354,92 +336,52 @@
                                         {% endif %}
                                     </td>
                                     <td class="px-5 py-4">
-                                        <form action="/maj_statut_dossier/{{ op.id }}" method="POST" class="m-0" x-data="{ open: false }">
-                                            <div class="relative">
-                                                <button type="button" @click="open = !open" @click.outside="open = false"
-                                                        class="inline-flex items-center gap-2 text-[11px] font-bold px-3 py-2 rounded-lg border shadow-sm transition-all w-full min-w-[170px] justify-between outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500
-                {% if op.statut_dossier == 'Dossier déposé' %} bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100
-                {% elif op.statut_dossier == 'En cours de traitement' %} bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100
-                {% elif op.statut_dossier == 'Validé' %} bg-green-50 text-green-700 border-green-200 hover:bg-green-100
-                {% elif op.statut_dossier == 'Bloqué / Problème' %} bg-red-50 text-red-700 border-red-200 hover:bg-red-100
-                {% else %} bg-slate-50 text-slate-700 border-slate-200 {% endif %}">
+                                        {% set reste = (op.montant_total or 0) - (op.montant_avance or 0) %}
 
-                                                    <div class="flex items-center gap-2">
-                                                        {% if op.statut_dossier == 'Dossier déposé' %}
-                                                        <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>
-                                                        {% elif op.statut_dossier == 'En cours de traitement' %}
-                                                        <svg class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
-                                                        {% elif op.statut_dossier == 'Validé' %}
-                                                        <svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                        {% elif op.statut_dossier == 'Bloqué / Problème' %}
-                                                        <svg class="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                                        {% endif %}
-                                                        <span class="whitespace-nowrap">{{ op.statut_dossier }}</span>
-                                                    </div>
-
-                                                    <svg class="w-3 h-3 opacity-50 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" /></svg>
-                                                </button>
-
-                                                <div x-show="open"
-                                                     x-transition:enter="transition ease-out duration-100"
-                                                     x-transition:enter-start="opacity-0 scale-95 translate-y-1"
-                                                     x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                                     x-transition:leave="transition ease-in duration-75"
-                                                     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                                                     x-transition:leave-end="opacity-0 scale-95 translate-y-1"
-                                                     class="absolute z-[1000] mt-1.5 w-[220px] bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-200 overflow-hidden right-0"
-                                                     style="display: none;">
-
-                                                    <input type="hidden" name="statut_dossier" x-ref="inputStatut" value="{{ op.statut_dossier }}">
-
-                                                    <div class="p-1.5 flex flex-col gap-0.5">
-                                                        <button type="button" @click="$refs.inputStatut.value = 'Dossier déposé'; $el.closest('form').submit()"
-                                                                class="flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-slate-50 text-slate-700 transition-colors w-full text-left">
-                                                            <div class="flex items-center justify-center w-7 h-7 rounded-md bg-slate-100 text-slate-500 shrink-0">
-                                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>
-                                                            </div>
-                                                            Dossier déposé
-                                                        </button>
-
-                                                        <button type="button" @click="$refs.inputStatut.value = 'En cours de traitement'; $el.closest('form').submit()"
-                                                                class="flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-blue-50 text-blue-700 transition-colors w-full text-left">
-                                                            <div class="flex items-center justify-center w-7 h-7 rounded-md bg-blue-100 text-blue-500 shrink-0">
-                                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
-                                                            </div>
-                                                            En cours de traitement
-                                                        </button>
-
-                                                        <button type="button" @click="$refs.inputStatut.value = 'Validé'; $el.closest('form').submit()"
-                                                                class="flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-green-50 text-green-700 transition-colors w-full text-left">
-                                                            <div class="flex items-center justify-center w-7 h-7 rounded-md bg-green-100 text-green-500 shrink-0">
-                                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                            </div>
-                                                            Validé
-                                                        </button>
-
-                                                        <button type="button" @click="$refs.inputStatut.value = 'Bloqué / Problème'; $el.closest('form').submit()"
-                                                                class="flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-red-50 text-red-700 transition-colors w-full text-left">
-                                                            <div class="flex items-center justify-center w-7 h-7 rounded-md bg-red-100 text-red-500 shrink-0">
-                                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                                            </div>
-                                                            Bloqué / Problème
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                        {% if op.statut == 'En attente' %}
+                                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 text-slate-700 border border-slate-200 text-[11px] font-bold w-full min-w-[170px] shadow-sm">
+                                            <div class="bg-slate-200 p-1 rounded-md text-slate-500 shrink-0">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                             </div>
-                                        </form>
+                                            Dossier déposé
+                                        </span>
+
+                                        {% elif op.statut == 'Terminé' and reste > 0 %}
+                                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200 text-[11px] font-bold w-full min-w-[170px] shadow-sm">
+                                            <div class="bg-red-100 p-1 rounded-md text-red-500 shrink-0">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                            </div>
+                                            Facture (Impayé)
+                                        </span>
+
+                                        {% elif op.statut == 'Terminé' and reste < 0 %}
+                                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold w-full min-w-[170px] shadow-sm">
+                                            <div class="bg-amber-100 p-1 rounded-md text-amber-500 shrink-0">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                            </div>
+                                            En attente (Monnaie)
+                                        </span>
+
+                                        {% else %}
+                                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 text-green-700 border border-green-200 text-[11px] font-bold w-full min-w-[170px] shadow-sm">
+                                            <div class="bg-green-100 p-1 rounded-md text-green-600 shrink-0">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                            </div>
+                                            Dossier Validé
+                                        </span>
+                                        {% endif %}
                                     </td>
                                     <td class="px-5 py-4 text-right">
-                                        {% if op.photo_recu %}
-                                        <a href="/static/uploads/recus/{{ op.photo_recu }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-bold hover:bg-blue-100 transition border border-blue-200 shadow-sm">
-                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                                            </svg>
-                                            Voir
+                                        {% if op.photos %}
+                                        {% for photo in op.photos %}
+                                        <a href="/static/uploads/recus/{{ photo.nom_fichier }}" target="_blank"
+                                           class="p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-indigo-100 hover:text-indigo-600 transition"
+                                           title="Voir reçu {{ loop.index }}">
+                                            <i class="ph-bold ph-file-image text-lg"></i>
                                         </a>
+                                        {% endfor %}
                                         {% else %}
-                                        <span class="text-[11px] text-gray-400 italic">Pas de reçu</span>
+                                        <span class="text-[10px] text-slate-400">Pas de reçu</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -477,6 +419,33 @@
             catch (err) { console.error('Erreur de copie:', err); }
             document.body.removeChild(textArea);
         }
+    }
+    function appelerClient(id) {
+        // On change le texte du bouton temporairement pour donner un feedback
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "Appel en cours...";
+        btn.disabled = true;
+
+        fetch(`/appeler_client/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Succès : on remet le bouton avec une petite animation verte
+                    btn.classList.replace('from-orange-500', 'from-green-500');
+                    btn.innerHTML = "Appelé !";
+                    setTimeout(() => {
+                        btn.classList.replace('from-green-500', 'from-orange-500');
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            })
+            .catch(err => {
+                console.error("Erreur d'appel:", err);
+                btn.innerHTML = "Erreur !";
+                btn.disabled = false;
+            });
     }
 </script>
 {% endblock %}

@@ -1,673 +1,568 @@
-from flask import Flask, render_template, request, redirect, session, Response, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timedelta
-from flask_migrate import Migrate
-
-import csv
-import io
-import os      # Indispensable pour créer des dossiers et chemins
-import uuid    # Indispensable pour générer des noms de fichiers uniques
+import os
+import urllib.parse
 from werkzeug.utils import secure_filename
 from PIL import Image
 
+from sqlalchemy import func
+from datetime import datetime, timedelta
+from flask import Flask, render_template, request, redirect, session, url_for, jsonify
+from flask_migrate import Migrate
+from flask_socketio import SocketIO
+from models import db, Utilisateur, Client, Operation, Service, Ticket, ParametreTV, BoutonRapide, PhotoRecu
+
 app = Flask(__name__)
+# --- NOUVEAU : Mémoire pour les déconnexions globales ---
+sessions_versions = {}
 
 # ==========================================
-# 📂 CONFIGURATION DES DOSSIERS
+# CONFIGURATION DE L'APPLICATION
 # ==========================================
-# On définit le dossier où seront rangées les photos
-UPLOAD_FOLDER = 'static/uploads/recus'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-def compresser_et_sauvegarder_image(file, chemin_sauvegarde):
-    """
-    Prend une image lourde, la redimensionne si elle est immense,
-    et la compresse intelligemment avant de la sauvegarder.
-    """
-    # 1. Ouvrir l'image envoyée par le téléphone
-    img = Image.open(file)
-    
-    # 2. Convertir en mode RGB (nécessaire si l'image est un PNG transparent)
-    if img.mode in ("RGBA", "P"):
-        img = img.convert("RGB")
-        
-    # 3. Réduire la taille maximale (ex: 1200px de large maximum)
-    # C'est largement suffisant pour lire du texte sur un reçu, et ça tue le poids !
-    taille_max = (1200, 1200)
-    img.thumbnail(taille_max, Image.Resampling.LANCZOS)
-    
-    # 4. Sauvegarder l'image optimisée (format JPEG, qualité 80% = invisible à l'œil nu)
-    img.save(chemin_sauvegarde, format='JPEG', optimize=True, quality=80)
-
-# On s'assure que le dossier existe, sinon on le crée
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
 app.secret_key = "cle_secrete_super_robuste"
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ma_base.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///base.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-
-db = SQLAlchemy(app)
-migrate = Migrate(app, db) # <-- NOUVEAU : On connecte l'outil de migration
+app.config['UPLOAD_FOLDER'] = 'static/uploads/recus'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # ==========================================
-# 🗄️ NOS TABLEAUX (MODÈLES) - AVEC RÔLES !
+# INITIALISATION (Base de données & WebSockets)
 # ==========================================
-
-class Utilisateur(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    nom = db.Column(db.String(100))        # NOUVEAU
-    prenom = db.Column(db.String(100))     # NOUVEAU
-    email = db.Column(db.String(120))      # NOUVEAU
-    telephone = db.Column(db.String(20))   # NOUVEAU
-    password = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(20), default='caissier')
-    operations_faites = db.relationship('Operation', backref='caissier', lazy=True)
-
-class Client(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nom = db.Column(db.String(100), nullable=False)
-    prenom = db.Column(db.String(100), nullable=False)
-    telephone = db.Column(db.String(20), nullable=False)
-    adresse = db.Column(db.String(200))
-    notes = db.Column(db.Text, nullable=True)
-    archive = db.Column(db.Boolean, default=False)
-    contrats = db.relationship('Contrat', backref='client', lazy=True, cascade="all, delete")
-    operations = db.relationship('Operation', backref='client', lazy=True, cascade="all, delete")
-
-class Service(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nom_service = db.Column(db.String(50), nullable=False)
-    contrats = db.relationship('Contrat', backref='service', lazy=True, cascade="all, delete")
-
-class Contrat(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    numero_contrat = db.Column(db.String(100), nullable=False)
-    nom_proprietaire = db.Column(db.String(150), nullable=False)
-    notes = db.Column(db.Text, nullable=True) # <--- NOUVEAU CHAMP : Notes sur le contrat
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
-
-class Operation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    date_operation = db.Column(db.DateTime, default=datetime.now)
-    montant_avance = db.Column(db.Float, default=0.0)
-    montant_total = db.Column(db.Float, nullable=True)
-    statut = db.Column(db.String(20), default='En attente')
-    # NOUVEAU : Le suivi du travail (CRM)
-    statut_dossier = db.Column(db.String(50), default='Dossier déposé')
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=False) 
-    photo_recu = db.Column(db.String(255), nullable=True) 
-
+db.init_app(app)
+migrate = Migrate(app, db)
+# Modifie cette ligne vers le haut du fichier
+socketio = SocketIO(app, 
+                    cors_allowed_origins="*", 
+                    async_mode='threading', 
+                    ping_timeout=60, 
+                    ping_interval=25)
+app.socketio = socketio # Attache socketio à l'app pour y accéder depuis les blueprints
 
 # ==========================================
-# 🔒 SÉCURITÉ GLOBALE
+# IMPORT & ENREGISTREMENT DES MODULES (Blueprints)
 # ==========================================
+from routes.clients import clients_bp
+from routes.queue import queue_bp
+app.register_blueprint(clients_bp)
+app.register_blueprint(queue_bp)
 
+# --- CRÉATION SÉCURISÉE DES TABLES MANQUANTES ---
+# Ce code va juste vérifier s'il manque une table et la créer sans toucher au reste
+with app.app_context():
+    db.create_all()
+
+# ==========================================
+# SÉCURITÉ GLOBALE (Vérification de connexion)
+# ==========================================
 @app.before_request
 def verifier_connexion():
-    pages_publiques = ['/login']
-    if request.path not in pages_publiques and not request.path.startswith('/static'):
+    # 1. On liste TOUTES les pages qui n'ont pas besoin de mot de passe
+    pages_publiques = [
+        'login', 
+        'static', 
+        'queue.public_view',      # L'écran TV
+        'queue.borne_qr',         # L'affiche du QR Code
+        'queue.mobile_portail',   # Le menu sur le téléphone du client
+        'queue.mobile_generer',   # Le clic pour générer le ticket
+        'queue.mobile_ticket'     # Le ticket virtuel sur le téléphone
+    ]
+
+    # 2. Si la page demandée n'est pas publique
+    if request.endpoint and request.endpoint not in pages_publiques:
+        # Si pas connecté du tout -> Dehors
         if not session.get('connecte'):
-            return redirect('/login')
+            return redirect(url_for('login'))
+            
+        # --- NOUVEAU : Vérification de la version (Déconnexion réseau) ---
+        user_id = session.get('user_id')
+        version_navigateur = session.get('auth_version')
+        version_serveur = sessions_versions.get(user_id, 1)
+        
+        # Si le numéro de version ne correspond plus (déconnecté depuis un autre PC)
+        if version_navigateur != version_serveur:
+            session.clear()
+            return redirect(url_for('login', expire='1')) # expire=1 affiche le message d'erreur !
 
 # ==========================================
-# 🔔 NOTIFICATIONS GLOBALES (POUR TOUTES LES PAGES)
+# NOTIFICATIONS GLOBALES (En-tête)
+# ==========================================
+
+# ==========================================
+# VARIABLES GLOBALES (Notifications & Menus)
 # ==========================================
 @app.context_processor
-def injecter_notifications():
-    # Si l'utilisateur n'est pas connecté, on n'affiche rien
+def injecter_variables_globales():
     if not session.get('connecte'):
-        return dict(notifs=[], nb_notifs=0)
-
-    notifs = []
+        # On essaie quand même de récupérer tv_config pour les pages publiques comme la Borne
+        return dict(notifs=[], nb_notifs=0, liste_boutons=BoutonRapide.query.all(), tv_config=ParametreTV.query.first())
     
-    # Alerte 1 : Opérations en attente (Oubli de clôture ?)
-    nb_attente = Operation.query.filter_by(statut='En attente').count()
-    if nb_attente > 0:
-        notifs.append({
-            'titre': 'Opérations en attente',
-            'message': f'Vous avez {nb_attente} client(s) en file d\'attente.',
-            'lien': '/',
-            'couleur': 'orange',
-            'icone': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />'
-        })
+    try:
+        nb_attente = Operation.query.filter_by(statut='En attente').count()
+        notifs_list = []
+        if nb_attente > 0:
+            notifs_list.append({'titre': 'Opérations', 'message': f'{nb_attente} en attente', 'lien': '/', 'couleur': 'orange'})
+            
+        return dict(
+            notifs=notifs_list, 
+            nb_notifs=len(notifs_list), 
+            liste_boutons=BoutonRapide.query.all(),
+            tv_config=ParametreTV.query.first() # 👈 Ajout crucial : disponible pour TOUTES les pages
+        )
+    except Exception:
+        return dict(notifs=[], nb_notifs=0, liste_boutons=[], tv_config=None)
 
-    # Alerte 2 : Trou dans la caisse (Dettes)
-    ops_dettes = Operation.query.filter(Operation.statut == 'Terminé', Operation.montant_total > Operation.montant_avance).all()
-    total_dettes = sum((op.montant_total - op.montant_avance) for op in ops_dettes if op.montant_total is not None)
-    if total_dettes > 0:
-        notifs.append({
-            'titre': 'Recouvrement',
-            'message': f'Attention, vous avez {total_dettes} DH de dettes dehors.',
-            'lien': '/dettes',
-            'couleur': 'red',
-            'icone': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'
-        })
+# --- AJOUTER UN BOUTON RAPIDE ---
+@app.route('/ajouter_bouton_rapide', methods=['POST'])
+def ajouter_bouton_rapide():
+    if session.get('role') == 'admin':
+        lettre = request.form.get('lettre', 'A').upper()[:1] # On récupère 1 seule lettre majuscule
+        nom = request.form.get('nom_bouton')
+        if nom:
+            nouveau = BoutonRapide(nom_service=nom, lettre=lettre)
+            db.session.add(nouveau)
+            db.session.commit()
+    return redirect(url_for('parametres'))
 
-    return dict(notifs=notifs, nb_notifs=len(notifs))
+# --- BAGUETTE MAGIQUE POUR METTRE A JOUR LA TABLE (SANS SUPPRIMER LES CLIENTS) ---
+@app.route('/maj_table')
+def maj_table():
+    if session.get('role') == 'admin':
+        # On supprime UNIQUEMENT la petite table des boutons (qui est vide ou presque)
+        BoutonRapide.__table__.drop(db.engine)
+        # On la recrée immédiatement avec la nouvelle colonne "lettre"
+        db.create_all()
+        return redirect(url_for('parametres'))
+    return "Accès refusé"
 
+# --- SUPPRIMER UN BOUTON RAPIDE ---
+@app.route('/supprimer_bouton_rapide/<int:id_bouton>')
+def supprimer_bouton_rapide(id_bouton):
+    if session.get('role') == 'admin':
+        bouton = BoutonRapide.query.get_or_404(id_bouton)
+        db.session.delete(bouton)
+        db.session.commit()
+    return redirect(url_for('parametres'))
+
+
+
+# ==========================================
+# TABLEAU DE BORD (Accueil)
+# ==========================================
+@app.route('/')
+@app.route('/dashboard')
+def accueil():
+    aujourdhui = datetime.now().date()
+    labels_jours = []
+    donnees_ca = []
+    
+    for i in range(6, -1, -1):
+        date_cible = aujourdhui - timedelta(days=i)
+        labels_jours.append(date_cible.strftime('%a %d'))
+        ca_du_jour = db.session.query(func.sum(Operation.montant_avance)).filter(
+            func.date(Operation.date_operation) == date_cible
+        ).scalar() or 0
+        donnees_ca.append(float(ca_du_jour))
+
+    ops_en_attente = Operation.query.filter_by(statut='En attente').order_by(Operation.date_operation.asc()).all()
+    ops_du_jour = Operation.query.filter(func.date(Operation.date_operation) == aujourdhui).all()
+    ca_jour = sum((op.montant_avance or 0) for op in ops_du_jour)
+    ops_jour_count = len(ops_du_jour)
+    
+    total_clients = Client.query.count()
+    total_attente = len(ops_en_attente)
+    ca_total = db.session.query(func.sum(Operation.montant_avance)).scalar() or 0
+    
+    # 🚀 L'OPTIMISATION EST ICI : On demande à SQL de faire le calcul, pas à Python !
+    total_dettes = db.session.query(
+        func.sum(Operation.montant_total - Operation.montant_avance)
+    ).filter(
+        Operation.montant_total > Operation.montant_avance
+    ).scalar() or 0
+
+    dernieres_ops = Operation.query.filter_by(statut='Terminé').order_by(Operation.date_operation.desc()).limit(5).all()
+
+    return render_template('dashboard.html', 
+                           operations=ops_en_attente, total_clients=total_clients,
+                           total_attente=total_attente, ca_jour=ca_jour,
+                           ops_jour_count=ops_jour_count, ca_mois=ca_jour,
+                           chiffre_affaires=ca_total, total_dettes=round(total_dettes, 2),
+                           dernieres_operations=dernieres_ops, labels_jours=labels_jours, 
+                           donnees_ca=donnees_ca)
+
+# ==========================================
+# AUTHENTIFICATION & PROFIL
+# ==========================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     erreur = None
+    
+    # Message si on a été déconnecté par un autre PC
+    if request.args.get('expire'):
+        erreur = "Votre session a été fermée depuis un autre appareil."
+        
     if request.method == 'POST':
-        username_saisi = request.form.get('username', 'admin')
-        mdp_saisi = request.form.get('password')
+        username_saisi = request.form.get('username', '').strip()
+        password_saisi = request.form.get('password', '')
         
         user = Utilisateur.query.filter_by(username=username_saisi).first()
         
-        if user and mdp_saisi == user.password:
-            session['connecte'] = True
-            session['user_id'] = user.id
-            session['role'] = user.role
-            session['username'] = user.username
-            return redirect('/')
+        if user and user.password == password_saisi:
+            # On donne la version actuelle à l'appareil qui se connecte (1 par défaut)
+            version_actuelle = sessions_versions.get(user.id, 1)
+            
+            session.update({
+                'connecte': True, 
+                'user_id': user.id, 
+                'username': user.username, 
+                'role': user.role,
+                'guichet': getattr(user, 'guichet', '1'),
+                'auth_version': version_actuelle  # 👈 La clé magique !
+            })
+            return redirect(url_for('accueil'))
         else:
-            erreur = "Identifiants incorrects !"
+            erreur = "Identifiant ou mot de passe incorrect."
             
     return render_template('login.html', erreur=erreur)
 
 @app.route('/logout')
 def logout():
+    # --- NOUVEAU : Le Kill Switch pour les autres PC ---
+    user_id = session.get('user_id')
+    if user_id:
+        # On passe à la version supérieure. Tous les autres PC ont l'ancienne version !
+        sessions_versions[user_id] = sessions_versions.get(user_id, 1) + 1
+
+    # 1. On vide la session locale de ce PC
     session.clear()
-    return redirect('/login')
-
-
-# ==========================================
-# 📊 TABLEAU DE BORD PRINCIPAL
-# ==========================================
-
-@app.route('/')
-def accueil():
-    # 1. Les données de base
-    operations_en_cours = Operation.query.filter_by(statut='En attente').all()
-    total_clients = Client.query.filter_by(archive=False).count()
-    total_attente = Operation.query.filter_by(statut='En attente').count()
-    operations_terminees = Operation.query.filter_by(statut='Terminé').all()
     
-    # 2. Les dates utiles pour les stats
-    aujourd_hui = datetime.now().date()
-    debut_mois = aujourd_hui.replace(day=1)
+    # 2. On prépare la redirection
+    reponse = redirect(url_for('login'))
     
-    # 3. Calculs des Statistiques (Aujourd'hui, Mois, Total)
-    chiffre_affaires_total = 0
-    ca_jour = 0
-    ca_mois = 0
-    ops_jour_count = 0
+    # 3. Anti-cache (pour être sûr que la page login s'affiche bien)
+    reponse.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    reponse.headers["Pragma"] = "no-cache"
+    reponse.headers["Expires"] = "0"
     
-    for op in operations_terminees:
-        if op.montant_total is not None:
-            chiffre_affaires_total += op.montant_total
-            op_date = op.date_operation.date()
-            
-            # Si c'est ce mois-ci
-            if op_date >= debut_mois:
-                ca_mois += op.montant_total
-            
-            # Si c'est aujourd'hui
-            if op_date == aujourd_hui:
-                ca_jour += op.montant_total
-                ops_jour_count += 1
-                
-    # 4. Calcul des dettes (L'Alerte Rouge !)
-    operations_dettes = Operation.query.filter(Operation.statut == 'Terminé', Operation.montant_total > Operation.montant_avance).all()
-    total_dettes = sum((op.montant_total - op.montant_avance) for op in operations_dettes if op.montant_total is not None)
-    
-    # 5. Mini-historique : Les 5 dernières opérations terminées
-    dernieres_operations = Operation.query.filter_by(statut='Terminé').order_by(Operation.date_operation.desc()).limit(5).all()
-    
-    # 6. Données pour le Graphique (inchangé)
-    labels_jours = []
-    donnees_ca = []
-    
-    for i in range(6, -1, -1):
-        jour_cible = aujourd_hui - timedelta(days=i)
-        labels_jours.append(jour_cible.strftime('%d/%m'))
-        
-        debut_jour = datetime.combine(jour_cible, datetime.min.time())
-        fin_jour = datetime.combine(jour_cible, datetime.max.time())
-        
-        ops_du_jour = Operation.query.filter(
-            Operation.statut == 'Terminé',
-            Operation.date_operation >= debut_jour,
-            Operation.date_operation <= fin_jour
-        ).all()
-        
-        ca_du_jour = sum(op.montant_total for op in ops_du_jour if op.montant_total is not None)
-        donnees_ca.append(ca_du_jour)
-        
-    return render_template('dashboard.html', 
-                           operations=operations_en_cours, 
-                           total_clients=total_clients, 
-                           total_attente=total_attente, 
-                           chiffre_affaires=chiffre_affaires_total, 
-                           ca_jour=ca_jour,
-                           ca_mois=ca_mois,
-                           ops_jour_count=ops_jour_count,
-                           total_dettes=total_dettes,
-                           dernieres_operations=dernieres_operations,
-                           labels_jours=labels_jours, 
-                           donnees_ca=donnees_ca)
-
-
-# ==========================================
-# 👥 GESTION DES CLIENTS
-# ==========================================
-
-@app.route('/clients')
-def liste_clients():
-    mot_cle = request.args.get('q')
-    if mot_cle:
-        tous_les_clients = Client.query.filter(Client.archive == False, ((Client.nom.contains(mot_cle)) | (Client.prenom.contains(mot_cle)) | (Client.telephone.contains(mot_cle)))).all()
-    else:
-        tous_les_clients = Client.query.filter_by(archive=False).all()
-    return render_template('clients.html', clients=tous_les_clients)
-
-@app.route('/ajouter_client', methods=['GET', 'POST'])
-def ajouter_client():
-    if request.method == 'POST':
-        nouveau_client = Client(
-            nom=request.form.get('nom'), 
-            prenom=request.form.get('prenom'), 
-            telephone=request.form.get('telephone'), 
-            adresse=request.form.get('adresse')
-        )
-        db.session.add(nouveau_client)
-        db.session.commit()
-        return redirect('/clients')
-    return render_template('ajouter_client.html')
-
-@app.route('/modifier_client/<int:id_client>', methods=['GET', 'POST'])
-def modifier_client(id_client):
-    client_a_modifier = Client.query.get_or_404(id_client)
-    if request.method == 'POST':
-        client_a_modifier.nom = request.form.get('nom')
-        client_a_modifier.prenom = request.form.get('prenom')
-        client_a_modifier.telephone = request.form.get('telephone')
-        client_a_modifier.adresse = request.form.get('adresse')
-        db.session.commit()
-        return redirect('/clients')
-    return render_template('modifier_client.html', client=client_a_modifier)
-
-@app.route('/supprimer_client/<int:id_client>')
-def supprimer_client(id_client):
-    if session.get('role') != 'admin':
-        return redirect('/clients')
-        
-    client_a_supprimer = Client.query.get_or_404(id_client)
-    db.session.delete(client_a_supprimer)
-    db.session.commit()
-    return redirect('/clients')
-
-@app.route('/client/<int:id_client>')
-def fiche_client(id_client):
-    client_actuel = Client.query.get_or_404(id_client)
-    tous_les_services = Service.query.all()
-    
-    # On récupère toutes les opérations de ce client précis, de la plus récente à la plus ancienne
-    historique_client = Operation.query.filter_by(client_id=id_client).order_by(Operation.date_operation.desc()).all()
-    
-    return render_template('fiche_client.html', client=client_actuel, services=tous_les_services, historique=historique_client)
-
-@app.route('/maj_notes/<int:id_client>', methods=['POST'])
-def maj_notes(id_client):
-    client_actuel = Client.query.get_or_404(id_client)
-    client_actuel.notes = request.form.get('notes')
-    db.session.commit()
-    return redirect(f'/client/{id_client}')
-
-
-# ==========================================
-# 📄 GESTION DES CONTRATS & OPÉRATIONS (TERMINAL EXPRESS)
-# ==========================================
-
-@app.route('/ajouter_contrat/<int:id_client>', methods=['POST'])
-def ajouter_contrat(id_client):
-    nouveau_contrat = Contrat(
-        numero_contrat=request.form.get('numero_contrat'), 
-        nom_proprietaire=request.form.get('nom_proprietaire'), 
-        notes=request.form.get('notes'), # <--- NOUVEAU : Enregistrement de la note
-        client_id=id_client, 
-        service_id=request.form.get('service_id')
-    )
-    db.session.add(nouveau_contrat)
-    db.session.commit()
-    return redirect(f'/client/{id_client}')
-
-@app.route('/supprimer_contrat/<int:id_contrat>')
-def supprimer_contrat(id_contrat):
-    if session.get('role') != 'admin':
-        return redirect('/')
-        
-    contrat_a_supprimer = Contrat.query.get_or_404(id_contrat)
-    id_du_client = contrat_a_supprimer.client_id
-    db.session.delete(contrat_a_supprimer)
-    db.session.commit()
-    return redirect(f'/client/{id_du_client}')
-
-@app.route('/nouvelle_operation/<int:id_client>', methods=['POST'])
-def nouvelle_operation(id_client):
-    mode = request.form.get('mode_operation') # 'attente' ou 'immediat'
-    
-    avance = request.form.get('montant_avance')
-    if not avance: avance = 0.0
-    
-    nouvelle_op = Operation(
-        client_id=id_client, 
-        montant_avance=float(avance),
-        utilisateur_id=session.get('user_id')
-    )
-
-    # Si c'est une clôture immédiate (Le client est devant nous)
-    if mode == 'immediat':
-        total = request.form.get('montant_total')
-        if not total: total = 0.0
-        nouvelle_op.montant_total = float(total)
-        nouvelle_op.statut = 'Terminé'
-        
-        # Gestion de la photo
-        if 'photo_recu' in request.files:
-            file = request.files['photo_recu']
-            if file and file.filename != '':
-                nom_fichier_photo = f"{uuid.uuid4().hex}_recu.jpg"
-                chemin_sauvegarde = os.path.join(app.config['UPLOAD_FOLDER'], nom_fichier_photo)
-                compresser_et_sauvegarder_image(file, chemin_sauvegarde)
-                nouvelle_op.photo_recu = nom_fichier_photo
-    else:
-        # Si le client a juste déposé l'argent et est parti
-        nouvelle_op.statut = 'En attente'
-        
-    db.session.add(nouvelle_op)
-    db.session.commit()
-    return redirect(f'/client/{id_client}')
-
-@app.route('/cloturer_operation/<int:id_op>', methods=['POST'])
-def cloturer_operation(id_op):
-    op = Operation.query.get_or_404(id_op)
-    
-    total = request.form.get('montant_total')
-    if not total: total = 0.0
-    op.montant_total = float(total)
-    
-    if 'photo_recu' in request.files:
-        file = request.files['photo_recu']
-        if file and file.filename != '':
-            nom_fichier_photo = f"{uuid.uuid4().hex}_recu.jpg"
-            chemin_sauvegarde = os.path.join(app.config['UPLOAD_FOLDER'], nom_fichier_photo)
-            compresser_et_sauvegarder_image(file, chemin_sauvegarde)
-            op.photo_recu = nom_fichier_photo
-            
-    op.statut = 'Terminé'
-    db.session.commit()
-    # On redirige vers la page d'où l'utilisateur vient (Dashboard OU Historique)
-    return redirect(request.referrer or '/')
-
-@app.route('/supprimer_operation/<int:id_op>')
-def supprimer_operation(id_op):
-    if session.get('role') != 'admin':
-        return redirect(request.referrer or '/')
-        
-    op_a_supprimer = Operation.query.get_or_404(id_op)
-    db.session.delete(op_a_supprimer)
-    db.session.commit()
-    return redirect(request.referrer or '/')
-
-
-# ==========================================
-# 💰 HISTORIQUE & DETTES
-# ==========================================
-
-@app.route('/historique')
-def historique():
-    operations_terminees = Operation.query.filter_by(statut='Terminé').order_by(Operation.date_operation.desc()).all()
-    return render_template('historique.html', operations=operations_terminees)
-
-@app.route('/regler_reste/<int:id_op>')
-def regler_reste(id_op):
-    op = Operation.query.get_or_404(id_op)
-    if op.montant_total is not None:
-        op.montant_avance = op.montant_total 
-    op.statut = 'Terminé'
-    db.session.commit()
-    # NOUVEAU : On retourne d'où on vient (Fiche client OU page Dettes)
-    return redirect(request.referrer or '/historique')
-
-@app.route('/dettes')
-def liste_dettes():
-    operations_dettes = Operation.query.filter(Operation.statut == 'Terminé', Operation.montant_total > Operation.montant_avance).all()
-    total_dettes = sum((op.montant_total - op.montant_avance) for op in operations_dettes if op.montant_total is not None)
-    return render_template('dettes.html', operations=operations_dettes, total_dettes=total_dettes)
-
-@app.route('/maj_statut_dossier/<int:id_op>', methods=['POST'])
-def maj_statut_dossier(id_op):
-    op = Operation.query.get_or_404(id_op)
-    nouveau_statut = request.form.get('statut_dossier')
-    
-    # On vérifie que c'est un tag autorisé
-    tags_autorises = ['Dossier déposé', 'En cours de traitement', 'Validé', 'Bloqué / Problème']
-    if nouveau_statut in tags_autorises:
-        op.statut_dossier = nouveau_statut
-        db.session.commit()
-        
-    # On retourne d'où on vient (Fiche client)
-    return redirect(request.referrer or '/')
-
-
-# ==========================================
-# ⚙️ PARAMÈTRES & ÉQUIPE
-# ==========================================
-
-@app.route('/parametres')
-def parametres():
-    if session.get('role') != 'admin':
-        return redirect('/')
-        
-    tous_les_services = Service.query.all()
-    tous_les_utilisateurs = Utilisateur.query.all()
-    
-    return render_template('parametres.html', services=tous_les_services, utilisateurs=tous_les_utilisateurs)
-
-@app.route('/ajouter_service', methods=['POST'])
-def ajouter_service():
-    if session.get('role') != 'admin': return redirect('/')
-    nouveau_nom = request.form.get('nom_service')
-    if nouveau_nom:
-        db.session.add(Service(nom_service=nouveau_nom))
-        db.session.commit()
-    return redirect('/parametres')
-
-@app.route('/supprimer_service/<int:id_service>')
-def supprimer_service(id_service):
-    if session.get('role') != 'admin': return redirect('/')
-    service_a_supprimer = Service.query.get_or_404(id_service)
-    db.session.delete(service_a_supprimer)
-    db.session.commit()
-    return redirect('/parametres')
+    return reponse
 
 @app.route('/profil', methods=['GET', 'POST'])
 def profil():
-    if not session.get('connecte'): return redirect('/login')
-    
-    user = Utilisateur.query.get(session.get('user_id'))
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    user = Utilisateur.query.filter_by(username=session['username']).first()
+    if not user:
+        return "Utilisateur introuvable", 404
+
     erreur = None
     succes = None
-    
+
     if request.method == 'POST':
-        user.username = request.form.get('username')
-        user.nom = request.form.get('nom')
-        user.prenom = request.form.get('prenom')
-        user.email = request.form.get('email')
-        user.telephone = request.form.get('telephone')
+        nouveau_username = request.form.get('username')
         
-        ancien_mdp = request.form.get('ancien_mdp')
-        nouveau_mdp = request.form.get('nouveau_mdp')
-        confirmer_mdp = request.form.get('confirmer_mdp')
-        
-        if ancien_mdp or nouveau_mdp or confirmer_mdp:
-            if user.password != ancien_mdp:
-                erreur = "L'ancien mot de passe est incorrect."
-            elif nouveau_mdp != confirmer_mdp:
-                erreur = "Les deux nouveaux mots de passe ne correspondent pas."
+        if nouveau_username != user.username:
+            existant = Utilisateur.query.filter_by(username=nouveau_username).first()
+            if existant:
+                erreur = "Ce nom d'utilisateur est déjà utilisé par un autre compte."
             else:
-                user.password = nouveau_mdp
-                succes = "Profil et mot de passe mis à jour avec succès !"
-        else:
-            succes = "Profil mis à jour avec succès !"
-            
+                user.username = nouveau_username
+                session['username'] = nouveau_username
+        
         if not erreur:
-            db.session.commit()
-            session['username'] = user.username
+            user.prenom = request.form.get('prenom')
+            user.nom = request.form.get('nom')
+            user.telephone = request.form.get('telephone')
+            user.email = request.form.get('email')
+
+            ancien_mdp = request.form.get('ancien_mdp')
+            nouveau_mdp = request.form.get('nouveau_mdp')
+            confirmer_mdp = request.form.get('confirmer_mdp')
+
+            if ancien_mdp or nouveau_mdp or confirmer_mdp:
+                if ancien_mdp != user.password:
+                    erreur = "L'ancien mot de passe est incorrect."
+                elif nouveau_mdp != confirmer_mdp:
+                    erreur = "Les nouveaux mots de passe ne correspondent pas."
+                elif len(nouveau_mdp) < 4:
+                    erreur = "Le nouveau mot de passe est trop court."
+                else:
+                    user.password = nouveau_mdp
+                    succes = "Profil et mot de passe mis à jour avec succès !"
+
+            if not erreur and not succes:
+                succes = "Profil mis à jour avec succès !"
             
+            if not erreur:
+                db.session.commit()
+
     return render_template('profil.html', user=user, erreur=erreur, succes=succes)
+
+# ==========================================
+# ADMINISTRATION (Paramètres, TV, Équipe, Services)
+# ==========================================
+@app.route('/parametres', methods=['GET', 'POST'])
+def parametres():
+    if session.get('role') != 'admin':
+        return redirect(url_for('accueil'))
+    
+    tv_config = ParametreTV.query.first()
+    if not tv_config:
+        tv_config = ParametreTV()
+        db.session.add(tv_config)
+        db.session.commit()
+
+    if request.method == 'POST' and 'sauvegarder_tv' in request.form:
+        tv_config.whatsapp = request.form.get('whatsapp')
+        tv_config.texte_arabe = request.form.get('texte_arabe')
+        tv_config.texte_francais = request.form.get('texte_francais')
+        tv_config.vitesse_defilement = int(request.form.get('vitesse_defilement', 20))
+        tv_config.label_guichet = request.form.get('label_guichet', 'GUICHET')
+        tv_config.youtube_id = request.form.get('youtube_id', '5qap5aO4i9A')
+        tv_config.service_rapide_id = request.form.get('service_rapide_id')
+        tv_config.msg_whatsapp_dette = request.form.get('msg_whatsapp_dette')
+        tv_config.msg_whatsapp_monnaie = request.form.get('msg_whatsapp_monnaie')
+        tv_config.msg_whatsapp_recu = request.form.get('msg_whatsapp_recu')
+        # 👇 NOUVEAU : Sauvegarde des paramètres de la borne
+        tv_config.borne_titre_fr = request.form.get('borne_titre_fr')
+        tv_config.borne_titre_ar = request.form.get('borne_titre_ar')
+        tv_config.borne_sous_titre_fr = request.form.get('borne_sous_titre_fr')
+        tv_config.borne_sous_titre_ar = request.form.get('borne_sous_titre_ar')
+        tv_config.borne_active_qr = 'borne_active_qr' in request.form
+        tv_config.borne_active_impression = 'borne_active_impression' in request.form
+        # 👇 AJOUTE CES LIGNES POUR LA BORNE 👇
+        tv_config.borne_titre_fr = request.form.get('borne_titre_fr')
+        tv_config.borne_titre_ar = request.form.get('borne_titre_ar')
+        tv_config.borne_sous_titre_fr = request.form.get('borne_sous_titre_fr')
+        tv_config.borne_sous_titre_ar = request.form.get('borne_sous_titre_ar')
+        tv_config.borne_active_qr = 'borne_active_qr' in request.form
+        tv_config.borne_active_impression = 'borne_active_impression' in request.form
+
+        db.session.commit()
+        return redirect(url_for('parametres'))
+
+    return render_template('parametres.html', 
+                           services=Service.query.all(), 
+                           utilisateurs=Utilisateur.query.all(),
+                           tv_config=tv_config)
 
 @app.route('/ajouter_caissier', methods=['POST'])
 def ajouter_caissier():
-    if session.get('role') != 'admin': return redirect('/')
-    username = request.form.get('username')
-    password = request.form.get('password')
-    
-    existant = Utilisateur.query.filter_by(username=username).first()
-    if not existant and username and password:
-        nouveau_caissier = Utilisateur(username=username, password=password, role='caissier')
+    if session.get('role') == 'admin':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        guichet = request.form.get('guichet')
+        
+        utilisateur_existant = Utilisateur.query.filter_by(username=username).first()
+        if utilisateur_existant:
+            print(f"Erreur : L'utilisateur {username} existe déjà !")
+            return redirect(url_for('parametres'))
+        
+        nouveau_caissier = Utilisateur(
+            username=username, 
+            password=password, 
+            role='caissier', 
+            guichet=guichet
+        )
         db.session.add(nouveau_caissier)
         db.session.commit()
-    return redirect('/parametres')
+        
+    return redirect(url_for('parametres'))
 
-@app.route('/supprimer_caissier/<int:id_user>')
-def supprimer_caissier(id_user):
-    if session.get('role') != 'admin': return redirect('/')
-    user_a_supprimer = Utilisateur.query.get_or_404(id_user)
-    
-    if user_a_supprimer.role != 'admin':
-        db.session.delete(user_a_supprimer)
+@app.route('/supprimer_caissier/<int:id>')
+def supprimer_caissier(id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('accueil'))
+
+    utilisateur = Utilisateur.query.get_or_404(id)
+    if utilisateur.role != 'admin':
+        db.session.delete(utilisateur)
         db.session.commit()
-    return redirect('/parametres')
+        
+    return redirect(url_for('parametres'))
+
+@app.route('/ajouter_service', methods=['POST'])
+def ajouter_service():
+    if session.get('role') == 'admin':
+        nom = request.form.get('nom_service')
+        lettre = request.form.get('lettre', 'A').upper()[:1]
+        if nom:
+            existant = Service.query.filter_by(lettre=lettre).first()
+            if not existant:
+                db.session.add(Service(nom_service=nom, lettre=lettre))
+                db.session.commit()
+                
+    return redirect(url_for('parametres'))
+
+@app.route('/supprimer_service/<int:id_service>')
+def supprimer_service(id_service):
+    if session.get('role') == 'admin':
+        try:
+            service = Service.query.get_or_404(id_service)
+            db.session.delete(service)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+    return redirect(url_for('parametres'))
+
+# ==========================================
+# OPÉRATIONS & RECHERCHE API
+# ==========================================
+@app.route('/cloturer_operation/<int:id_op>', methods=['POST'])
+def cloturer_operation(id_op):
+    op = Operation.query.get_or_404(id_op)
+    montant_final = request.form.get('montant_total')
+
+    if montant_final:
+        op.montant_total = float(montant_final)
+        op.statut = 'Terminé'
+
+        # On récupère tous les fichiers envoyés
+        files = request.files.getlist('photo_recu')
+        
+        # Correction du bug : On utilise enumerate pour l'index i et on définit bien 'file'
+        for i, file in enumerate(files):
+            if file and file.filename != '':
+                # Nouveau nom : FA_AAAAMMJJ_IDUSER_IDOP_INDEX.jpg
+                date_str = datetime.now().strftime('%Y%m%d')
+                user_id = session.get('user_id', 0)
+                nom_fichier = f"FA_{date_str}_{user_id}_{op.id}_{i}.jpg"
+                
+                chemin_complet = os.path.join(app.config['UPLOAD_FOLDER'], nom_fichier)
+                
+                try:
+                    img = Image.open(file)
+                    if img.mode in ("RGBA", "P"): img = img.convert("RGB")
+                    img.thumbnail((1200, 1200), Image.Resampling.LANCZOS)
+                    img.save(chemin_complet, "JPEG", optimize=True, quality=60)
+                    
+                    # Enregistrement dans la table PhotoRecu
+                    nouvelle_photo = PhotoRecu(nom_fichier=nom_fichier, operation_id=op.id)
+                    db.session.add(nouvelle_photo)
+                except Exception as e:
+                    print(f"Erreur compression : {e}")
+
+        db.session.commit()
+    return redirect(url_for('accueil'))
+
+@app.route('/api/recherche')
+def api_recherche():
+    q = request.args.get('q', '').lower()
+    if len(q) < 2: return jsonify([])
+    resultats = Client.query.filter(
+        (Client.nom.ilike(f'%{q}%')) | 
+        (Client.prenom.ilike(f'%{q}%')) | 
+        (Client.telephone.ilike(f'%{q}%'))
+    ).limit(10).all()
+    return jsonify([{'titre': f"{c.nom.upper()} {c.prenom.capitalize()} ({c.telephone or 'Sans tel'})", 
+                     'url': url_for('clients.fiche_client', id_client=c.id)} for c in resultats])
+
+# --- 1. ROUTE DE MISE À JOUR DE LA BASE (À utiliser une seule fois) ---
+@app.route('/maj_whatsapp_db')
+def maj_whatsapp_db():
+    if session.get('role') == 'admin':
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(db.text('ALTER TABLE parametre_tv ADD COLUMN msg_whatsapp_dette TEXT'))
+                conn.execute(db.text('ALTER TABLE parametre_tv ADD COLUMN msg_whatsapp_monnaie TEXT'))
+                conn.execute(db.text('ALTER TABLE parametre_tv ADD COLUMN msg_whatsapp_recu TEXT'))
+                conn.commit()
+            return "Base de données mise à jour avec succès ! Tu peux retourner à l'accueil."
+        except Exception as e:
+            return f"Erreur ou colonnes déjà existantes : {e}"
+    return "Accès refusé"
+
+# --- 2. LE MOTEUR D'ENVOI WHATSAPP INTELLIGENT ---
+@app.route('/generer_whatsapp/<type_msg>/<int:id_op>')
+def generer_whatsapp(type_msg, id_op):
+    op = Operation.query.get_or_404(id_op)
+    if not op.client.telephone:
+        return redirect(request.referrer)
+
+    tv_config = ParametreTV.query.first()
+    
+    # Modèles par défaut ultra-pro
+    def_dette = "Bonjour [PRENOM], il reste un solde de [MONTANT] DH sur votre dossier du [DATE]. Merci de passer au kiosque ! 🙏"
+    def_monnaie = "Bonjour [PRENOM], votre monnaie de [MONTANT] DH est prête au Kiosque. 😊"
+    def_recu = "Bonjour [PRENOM], vos [NB_RECUS] factures d'un montant total de [MONTANT] DH ont bien été payées le [DATE]. Merci de votre confiance ! ✨"
+
+    if type_msg == 'dette':
+        texte_brut = tv_config.msg_whatsapp_dette or def_dette
+        montant = abs(op.reste_a_payer)
+    elif type_msg == 'monnaie':
+        texte_brut = tv_config.msg_whatsapp_monnaie or def_monnaie
+        montant = abs(op.reste_a_payer)
+    elif type_msg == 'recu':
+        texte_brut = tv_config.msg_whatsapp_recu or def_recu
+        montant = op.montant_total or 0
+    else:
+        return redirect(request.referrer)
+
+    # Remplacements intelligents
+    texte_final = texte_brut.replace('[PRENOM]', op.client.prenom.capitalize())
+    texte_final = texte_final.replace('[NOM]', op.client.nom.upper())
+    texte_final = texte_final.replace('[MONTANT]', str(round(montant, 2)))
+    texte_final = texte_final.replace('[DATE]', op.date_operation.strftime('%d/%m/%Y'))
+    texte_final = texte_final.replace('[NB_RECUS]', str(len(op.photos))) # 👈 Nouvelle variable !
+
+    # Formatage du téléphone
+    telephone = op.client.telephone.replace(' ', '').replace('+', '')
+    if not telephone.startswith('212'):
+        telephone = '212' + telephone[1:] if telephone.startswith('0') else '212' + telephone
+
+    return redirect(f"https://wa.me/{telephone}?text={urllib.parse.quote(texte_final)}")
+
+#==================route temporaire ================================
+@app.route('/maj_ticket_db')
+def maj_ticket_db():
+    if session.get('role') == 'admin':
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(db.text('ALTER TABLE parametre_tv ADD COLUMN ticket_nom_kiosque VARCHAR(100)'))
+                conn.execute(db.text('ALTER TABLE parametre_tv ADD COLUMN ticket_sous_titre VARCHAR(100)'))
+                conn.execute(db.text('ALTER TABLE parametre_tv ADD COLUMN ticket_message TEXT'))
+                conn.commit()
+            return "Base de données TICKET mise à jour avec succès !"
+        except Exception as e:
+            return f"Erreur ou colonnes déjà existantes : {e}"
+    return "Accès refusé"
 
 
 # ==========================================
-# 🗂️ OUTILS AVANCÉS (EXPORTS & CARTES)
+# ROUTE TEMPORAIRE : MISE À JOUR STUDIO BORNE
 # ==========================================
+@app.route('/force_synchro_db')
+def force_synchro_db():
+    if session.get('role') == 'admin':
+        try:
+            with db.engine.connect() as conn:
+                # Création manuelle de la table PhotoRecu si elle n'existe pas
+                conn.execute(db.text('''
+                    CREATE TABLE IF NOT EXISTS photo_recu (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        nom_fichier VARCHAR(255) NOT NULL,
+                        operation_id INTEGER NOT NULL,
+                        FOREIGN KEY(operation_id) REFERENCES operation (id)
+                    )
+                '''))
+                conn.commit()
+            return "✅ Table PhotoRecu créée ! Les prochains reçus s'afficheront."
+        except Exception as e:
+            return f"❌ Erreur : {e}"
+    return "Accès refusé"
 
-@app.route('/carte_client/<int:id_client>')
-def carte_client(id_client):
-    client_actuel = Client.query.get_or_404(id_client)
-    return render_template('carte_client.html', client=client_actuel)
+#=================gérer les pages 404 ========================
 
-@app.route('/exporter_donnees')
-def exporter_donnees():
-    if session.get('role') != 'admin': return redirect('/')
-    
-    output = io.StringIO()
-    writer = csv.writer(output, delimiter=';')
-    writer.writerow(['ID Operation', 'Date', 'Nom Client', 'Telephone', 'Montant Avance (DH)', 'Montant Total (DH)', 'Statut', 'Encaissé par'])
-    
-    operations = Operation.query.all()
-    for op in operations:
-        date_op = op.date_operation.strftime('%d/%m/%Y %H:%M')
-        client_nom = f"{op.client.prenom} {op.client.nom}"
-        caissier = op.caissier.username if op.caissier else "Inconnu"
-        writer.writerow([op.id, date_op, client_nom, op.client.telephone, op.montant_avance, op.montant_total, op.statut, caissier])
-    
-    csv_data = output.getvalue().encode('utf-8-sig')
-    return Response(csv_data, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=sauvegarde_kiosque.csv"})
-
-@app.route('/exporter_clients')
-def exporter_clients():
-    if session.get('role') != 'admin': return redirect('/')
-    
-    output = io.StringIO()
-    writer = csv.writer(output, delimiter=';')
-    writer.writerow(['ID Client', 'Nom', 'Prénom', 'Téléphone', 'Adresse', 'Notes privées', 'Nombre de contrats'])
-    
-    tous_les_clients = Client.query.all()
-    for c in tous_les_clients:
-        nb_contrats = len(c.contrats)
-        adresse = c.adresse if c.adresse else ""
-        notes = c.notes if c.notes else ""
-        writer.writerow([c.id, c.nom, c.prenom, c.telephone, adresse, notes, nb_contrats])
-    
-    csv_data = output.getvalue().encode('utf-8-sig')
-    return Response(csv_data, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=mes_clients.csv"})
-
-@app.route('/imprimer_toutes_cartes')
-def imprimer_toutes_cartes():
-    if session.get('role') != 'admin': return redirect('/')
-    clients_actifs = Client.query.filter_by(archive=False).all()
-    return render_template('toutes_les_cartes.html', clients=clients_actifs)
-
-@app.route('/archiver_inactifs')
-def archiver_inactifs():
-    if session.get('role') != 'admin': return redirect('/')
-    six_mois = datetime.now() - timedelta(days=180)
-    tous_les_clients = Client.query.filter_by(archive=False).all()
-    
-    for c in tous_les_clients:
-        derniere_op = Operation.query.filter_by(client_id=c.id).order_by(Operation.date_operation.desc()).first()
-        if derniere_op and derniere_op.date_operation < six_mois:
-            c.archive = True
-            
-    db.session.commit()
-    return redirect('/parametres')
-
-# ==========================================
-# 🚨 GESTION DES ERREURS
-# ==========================================
 @app.errorhandler(404)
-def page_introuvable(e):
+def page_non_trouvee(e):
+    # e contient le message d'erreur original, mais on l'ignore pour afficher notre page
     return render_template('404.html'), 404
 
 # ==========================================
-# 🔍 API RECHERCHE UNIVERSELLE (COMMAND PALETTE)
+# LANCEMENT DU SERVEUR
 # ==========================================
-@app.route('/api/recherche')
-def api_recherche():
-    if not session.get('connecte'):
-        return jsonify([])
-        
-    q = request.args.get('q', '').lower()
-    if not q or len(q) < 2:
-        return jsonify([])
-        
-    # On fouille la base de données en direct (Max 8 résultats pour que ce soit ultra rapide)
-    clients = Client.query.filter(
-        Client.archive == False,
-        ((Client.nom.contains(q)) | (Client.prenom.contains(q)) | (Client.telephone.contains(q)))
-    ).limit(8).all()
-    
-    resultats = []
-    for c in clients:
-        resultats.append({
-            'id': c.id,
-            'titre': f"{c.prenom.capitalize()} {c.nom.upper()}",
-            'sous_titre': c.telephone,
-            'url': f"/client/{c.id}",
-            'icone': '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />'
-        })
-        
-    return jsonify(resultats)
-
-
-# ==========================================
-# 🚀 MOTEUR DE DÉMARRAGE
-# ==========================================
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        
-        if Service.query.count() == 0:
-            db.session.add_all([
-                Service(nom_service='Eau'), 
-                Service(nom_service='Électricité'), 
-                Service(nom_service='Internet / Mobile'), 
-                Service(nom_service='Impôts & Taxes')
-            ])
-            db.session.commit()
-            
-        if Utilisateur.query.count() == 0:
-            db.session.add(Utilisateur(username='admin', password='admin123', role='admin'))
-            db.session.commit()
-            
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    
+    # use_reloader=False pour éviter le crash sous Windows avec SocketIO
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False, allow_unsafe_werkzeug=True)
+
+

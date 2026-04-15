@@ -1,172 +1,423 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto space-y-6 sm:space-y-8">
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<style>
+    /* Ajustement de l'éditeur pour coller à ton design Tailwind */
+    .ql-toolbar.ql-snow {
+        border-radius: 0.75rem 0.75rem 0 0;
+        border-color: #e2e8f0;
+        background: #f8fafc;
+    }
 
-    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                <div class="p-2 bg-indigo-100 text-indigo-600 rounded-xl shadow-inner">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                </div>
-                Administration du Kiosque
-            </h1>
-            <p class="text-sm text-slate-500 font-medium mt-2">Gérez vos accès, vos services et exportez votre comptabilité en toute sécurité.</p>
-        </div>
-        <div class="flex gap-2">
-            <span class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 shadow-sm">
-                {{ utilisateurs|length }} Utilisateurs
-            </span>
-            <span class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 shadow-sm">
-                {{ services|length }} Services
-            </span>
+    .ql-container.ql-snow {
+        border-radius: 0 0 0.75rem 0.75rem;
+        border-color: #e2e8f0;
+        background: #ffffff;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.875rem;
+    }
+
+    .ql-editor {
+        min-height: 120px;
+    }
+
+    .arabe-editor .ql-editor {
+        font-family: 'Tajawal', sans-serif;
+        font-size: 1.125rem;
+        text-align: right;
+        direction: rtl;
+    }
+</style>
+
+<div class="max-w-7xl mx-auto pb-12" x-data="{ tab: 'tv' }">
+
+    <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 mb-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+            <div>
+                <h1 class="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                    <span class="p-2.5 bg-indigo-100 text-indigo-600 rounded-xl">
+                        <i class="ph-fill ph-sliders-horizontal text-3xl"></i>
+                    </span>
+                    Administration
+                </h1>
+                <p class="text-slate-500 font-medium mt-1 text-sm">Gérez les paramètres de votre Kiosque Pro</p>
+            </div>
+
+            <nav class="flex flex-wrap gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+                <button @click="tab = 'tv'" :class="tab === 'tv' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+                    <i class="ph-fill ph-monitor-play text-lg"></i> Affichage TV
+                </button>
+                <button @click="tab = 'equipe'" :class="tab === 'equipe' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+                    <i class="ph-fill ph-users-three text-lg"></i> Équipe & Services
+                </button>
+                <button @click="tab = 'borne'" :class="tab === 'borne' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+                    <i class="ph-fill ph-device-tablet-speaker text-lg"></i> Borne Interactive
+                </button>
+                <button @click="tab = 'whatsapp'" :class="tab === 'whatsapp' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+                    <i class="ph-fill ph-whatsapp-logo text-lg"></i> Messages WhatsApp
+                </button>
+                <button @click="tab = 'systeme'" :class="tab === 'systeme' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+                    <i class="ph-fill ph-gear text-lg"></i> Maintenance
+                </button>
+            </nav>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-            <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
-                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
-                    Équipe & Accès
-                </h3>
+    <div x-show="tab === 'tv'" x-transition style="display: none;" class="space-y-6">
+        <form action="{{ url_for('parametres') }}" method="POST" class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <input type="hidden" name="sauvegarder_tv" value="1">
+            <div class="px-8 py-5 border-b border-slate-100 bg-slate-50">
+                <h3 class="font-black text-slate-800 flex items-center gap-3 italic">Configuration de l'Écran Public</h3>
             </div>
+            <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div class="space-y-6">
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5 font-mono">NUMÉRO WHATSAPP TV</label>
+                        <input type="text" name="whatsapp" value="{{ tv_config.whatsapp if tv_config else '' }}" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none">
 
-            <div class="p-0 overflow-y-auto max-h-[300px] flex-1">
-                <ul class="divide-y divide-slate-100">
+                        <label class="block text-sm font-bold text-slate-700 mt-4 mb-1.5 font-mono uppercase">Label Guichet</label>
+                        <input type="text" name="label_guichet" value="{{ tv_config.label_guichet if tv_config else 'GUICHET' }}" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none">
+                    </div>
+                    <div class="bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5 font-mono uppercase">ID Vidéo YouTube</label>
+                        <input type="text" name="youtube_id" value="{{ tv_config.youtube_id if tv_config else '5qap5aO4i9A' }}" class="w-full bg-white border border-indigo-200 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none">
+                    </div>
+                </div>
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Message Arabe</label>
+                        <input type="text" name="texte_arabe" dir="rtl" value="{{ tv_config.texte_arabe if tv_config else '' }}" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-arabe text-lg outline-none mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Message Français</label>
+                        <input type="text" name="texte_francais" value="{{ tv_config.texte_francais if tv_config else '' }}" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none">
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-slate-200">
+                        <label class="block text-sm font-bold text-slate-700 mb-3 flex items-center justify-between">
+                            Vitesse de défilement
+                            <span class="bg-slate-200 text-slate-700 font-bold text-xs px-2 py-1 rounded-lg"><span id="vitesse_val">{{ tv_config.vitesse_defilement if tv_config else 20 }}</span>s</span>
+                        </label>
+                        <input type="range" name="vitesse_defilement" min="5" max="50" step="1" value="{{ tv_config.vitesse_defilement if tv_config else 20 }}" oninput="document.getElementById('vitesse_val').innerText = this.value" class="w-full h-2 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    </div>
+                </div>
+            </div>
+            <div class="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-black py-2.5 px-8 rounded-xl transition-all shadow-md">ENREGISTRER L'AFFICHAGE</button>
+            </div>
+        </form>
+    </div>
+
+    <div x-show="tab === 'equipe'" x-transition style="display: none;" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col h-[550px] shadow-sm">
+            <div class="px-8 py-5 border-b border-slate-100 bg-blue-50 font-black text-slate-800 flex items-center gap-3">
+                <i class="ph-fill ph-users-three text-blue-500 text-2xl"></i> Équipe & Accès
+            </div>
+            <div class="overflow-y-auto flex-1 p-2">
+                <ul class="space-y-1">
                     {% for u in utilisateurs %}
-                    <li class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors group">
+                    <li class="p-4 rounded-xl flex items-center justify-between hover:bg-slate-50 transition-colors group">
                         <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-tr {% if u.role == 'admin' %}from-indigo-600 to-blue-500{% else %}from-slate-400 to-slate-500{% endif %} flex items-center justify-center text-white font-black shadow-inner shadow-black/20">
+                            <div class="w-12 h-12 rounded-xl {% if u.role == 'admin' %}bg-indigo-100 text-indigo-600{% else %}bg-slate-100 text-slate-600{% endif %} flex items-center justify-center font-black text-lg">
                                 {{ u.username[0] | upper }}
                             </div>
                             <div>
-                                <p class="text-sm font-bold text-slate-800 capitalize">{{ u.username }}</p>
-                                {% if u.role == 'admin' %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 mt-1 uppercase tracking-wider">Admin</span>
-                                {% else %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 mt-1 uppercase tracking-wider">Caissier</span>
-                                {% endif %}
+                                <p class="text-base font-bold text-slate-800 capitalize leading-tight">{{ u.username }}</p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    {% if u.role == 'admin' %}
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-500 uppercase border border-indigo-100">Admin</span>
+                                    {% else %}
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 uppercase border border-slate-200">Caissier</span>
+                                    {% endif %}
+                                    <span class="text-xs font-bold text-slate-400">Guichet {{ u.guichet }}</span>
+                                </div>
                             </div>
                         </div>
 
                         {% if u.role != 'admin' %}
-                        <a href="/supprimer_caissier/{{ u.id }}" onclick="return confirm('Retirer définitivement cet accès ?');" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                        <a href="/supprimer_caissier/{{ u.id }}" onclick="return confirm('Retirer définitivement cet accès ?');" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100">
+                            <i class="ph-bold ph-trash text-xl"></i>
                         </a>
                         {% endif %}
                     </li>
                     {% endfor %}
                 </ul>
             </div>
-
-            <div class="p-5 bg-slate-50 border-t border-slate-200 mt-auto">
-                <form action="/ajouter_caissier" method="POST" class="flex flex-col gap-3">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Créer un accès Caissier</p>
-                    <div class="flex gap-2">
-                        <input type="text" name="username" placeholder="Identifiant" required class="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                        <input type="password" name="password" placeholder="Mot de passe" required class="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-md">
-                        Ajouter l'utilisateur
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-            <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
-                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" /></svg>
-                    Catalogue des Services
-                </h3>
-            </div>
-
-            <div class="p-0 overflow-y-auto max-h-[300px] flex-1">
-                <ul class="divide-y divide-slate-100">
-                    {% for service in services %}
-                    <li class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors group">
-                        <div class="flex items-center gap-3">
-                            <div class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
-                            <span class="text-sm font-bold text-slate-700">{{ service.nom_service }}</span>
-                        </div>
-
-                        <a href="/supprimer_service/{{ service.id }}" onclick="return confirm('Attention : Cela supprimera aussi tous les contrats liés à ce service ! Continuer ?');" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                        </a>
-                    </li>
-                    {% else %}
-                    <li class="px-6 py-8 text-center text-sm text-slate-400 italic">Aucun service défini.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-
-            <div class="p-5 bg-slate-50 border-t border-slate-200 mt-auto">
-                <form action="/ajouter_service" method="POST" class="flex flex-col gap-3">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Ajouter un service au catalogue</p>
-                    <div class="flex gap-2">
-                        <input type="text" name="nom_service" placeholder="Ex: Abonnement Netflix..." required class="flex-1 bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-colors shadow-md shadow-emerald-600/20">
-                            Ajouter
+            <div class="p-6 bg-slate-50 border-t border-slate-100">
+                <form action="/ajouter_caissier" method="POST">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Nouvel accès caisse</p>
+                    <div class="flex items-center gap-2">
+                        <input type="text" name="username" placeholder="Identifiant" required class="w-1/3 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none">
+                        <select name="guichet" class="bg-white border border-slate-200 rounded-xl px-2 py-2.5 text-sm outline-none font-bold text-slate-700">
+                            <option value="G1">G1</option>
+                            <option value="G2">G2</option>
+                            <option value="G3">G3</option>
+                            <option value="G4">G4</option>
+                        </select>
+                        <input type="password" name="password" placeholder="Mot de passe" required class="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none">
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2.5 rounded-xl transition-colors">
+                            <i class="ph-bold ph-plus text-lg"></i>
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
-    </div>
-
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 mt-8">
-        <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-            Outils & Sauvegardes
-        </h3>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <a href="/exporter_donnees" class="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-white hover:border-indigo-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-center">
-                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-                </div>
-                <span class="font-bold text-slate-800">Caisse & Opérations</span>
-                <span class="text-xs text-slate-500 mt-1">Export Excel / CSV</span>
-            </a>
-
-            <a href="/exporter_clients" class="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-white hover:border-indigo-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-center">
-                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
-                </div>
-                <span class="font-bold text-slate-800">Base Clients</span>
-                <span class="text-xs text-slate-500 mt-1">Export Excel / CSV</span>
-            </a>
-
-            <a href="/imprimer_toutes_cartes" target="_blank" class="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-white hover:border-slate-400 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-center">
-                <div class="w-12 h-12 bg-slate-200 text-slate-700 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.728 3.478a.75.75 0 00-.598.758v1.066h11.74V4.236a.75.75 0 00-.598-.758A14.928 14.928 0 0012 3c-1.895 0-3.715.215-5.272.478z" /><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 9.75c0-1.242 1.008-2.25 2.25-2.25h10.5c1.242 0 2.25 1.008 2.25 2.25v4.5A2.25 2.25 0 0117.25 16.5h-1.066v2.25a2.25 2.25 0 01-2.25 2.25H10.066a2.25 2.25 0 01-2.25-2.25v-2.25H6.75A2.25 2.25 0 014.5 14.25v-4.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M10.066 18h3.868v-4.5h-3.868v4.5z" /></svg>
-                </div>
-                <span class="font-bold text-slate-800">Imprimer les Cartes</span>
-                <span class="text-xs text-slate-500 mt-1">Ouvrir le PDF généré</span>
-            </a>
-        </div>
-    </div>
-
-    <div class="mt-12 rounded-2xl border-2 border-red-200 bg-red-50 p-6 sm:p-8">
-        <h3 class="text-lg font-black text-red-700 mb-2 flex items-center gap-2">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-            Zone de Danger
-        </h3>
-        <p class="text-sm text-red-900/80 mb-6 font-medium">Les actions effectuées ici sont irréversibles ou impactent l'ensemble de votre base de données Kiosque. Procédez avec prudence.</p>
-
-        <div class="bg-white border border-red-100 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-            <div>
-                <h4 class="font-bold text-slate-900">Archiver les clients inactifs</h4>
-                <p class="text-xs text-slate-500 mt-1">Désactive automatiquement les clients n'ayant fait aucune opération depuis 6 mois.</p>
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col h-[550px] shadow-sm">
+            <div class="px-8 py-5 border-b border-slate-100 bg-emerald-50 font-black text-slate-800 flex items-center gap-3">
+                <i class="ph-fill ph-tag text-emerald-500 text-2xl"></i> Catalogue des Services
             </div>
-            <a href="/archiver_inactifs" onclick="return confirm('Êtes-vous sûr de vouloir archiver en masse les clients inactifs ?');" class="px-5 py-2.5 bg-red-100 hover:bg-red-600 text-red-700 hover:text-white font-bold text-sm rounded-lg transition-colors whitespace-nowrap border border-red-200 hover:border-red-600">
-                Lancer l'archivage
+            <div class="overflow-y-auto flex-1 p-2">
+                <ul class="space-y-1">
+                    {% for service in services %}
+                    <li class="p-4 rounded-xl flex items-center justify-between hover:bg-slate-50 transition-colors group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 font-black flex items-center justify-center text-xl border border-emerald-100">
+                                {{ service.lettre }}
+                            </div>
+                            <div>
+                                <span class="text-base font-bold text-slate-800">{{ service.nom_service }}</span>
+                                <p class="text-xs font-medium text-slate-400 mt-0.5">Série {{ service.lettre }}</p>
+                            </div>
+                        </div>
+                        <a href="/supprimer_service/{{ service.id }}" onclick="return confirm('Attention : Cela supprimera aussi tous les contrats liés ! Continuer ?');" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100">
+                            <i class="ph-bold ph-trash text-xl"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="px-6 py-12 text-center flex flex-col items-center">
+                        <i class="ph-fill ph-leaf text-4xl text-slate-200 mb-3"></i>
+                        <p class="text-sm font-bold text-slate-400">Le catalogue est vide.</p>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="p-6 bg-slate-50 border-t border-slate-100">
+                <form action="/ajouter_service" method="POST">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Nouveau service</p>
+                    <div class="flex gap-2">
+                        <input type="text" name="lettre" placeholder="Lettre (Ex: A)" required maxlength="1" class="w-24 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-base focus:border-emerald-500 outline-none uppercase text-center font-black text-emerald-700">
+                        <input type="text" name="nom_service" placeholder="Nom du service..." required class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:border-emerald-500 outline-none">
+                        <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-5 py-2.5 rounded-xl transition-colors">
+                            <i class="ph-bold ph-plus text-lg"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col shadow-sm">
+            <div class="px-8 py-5 border-b border-slate-100 bg-amber-50">
+                <h3 class="text-xl font-black text-slate-800 flex items-center gap-3">
+                    <i class="ph-fill ph-lightning text-amber-500 text-2xl"></i> Boutons Ticket Rapide
+                </h3>
+            </div>
+            <div class="overflow-y-auto p-4 max-h-[300px]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for b in liste_boutons %}
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 group hover:border-amber-200 transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 font-black flex items-center justify-center text-sm border border-amber-200">
+                                {{ b.lettre }}
+                            </div>
+                            <span class="font-bold text-slate-700">{{ b.nom_service }}</span>
+                        </div>
+                        <a href="/supprimer_bouton_rapide/{{ b.id }}" class="text-slate-300 hover:text-red-500 transition-colors">
+                            <i class="ph-bold ph-trash text-lg"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="p-6 bg-white border-t border-slate-100">
+                <form action="/ajouter_bouton_rapide" method="POST" class="flex flex-col sm:flex-row gap-2">
+                    <input type="text" name="lettre" placeholder="Ex: B" required maxlength="1" class="w-full sm:w-24 bg-slate-50 border border-slate-200 rounded-xl px-2 py-3 text-center font-black text-amber-600 outline-none focus:border-amber-500 uppercase shadow-sm">
+                    <input type="text" name="nom_bouton" placeholder="Nom du bouton (ex: Facturation)" required class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-amber-500 outline-none">
+                    <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-3 rounded-xl transition-all shadow-md">Ajouter un bouton</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <div x-show="tab === 'borne'" x-transition style="display: none;" class="space-y-6">
+        <form id="form-borne" action="{{ url_for('parametres') }}" method="POST" class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <input type="hidden" name="sauvegarder_tv" value="1">
+
+            <div class="px-8 py-5 border-b border-slate-100 bg-indigo-50">
+                <h3 class="font-black text-slate-800 flex items-center gap-3">Personnalisation de la Borne</h3>
+            </div>
+
+            <div class="p-8 space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <label class="flex items-center p-4 bg-slate-50 rounded-2xl border border-slate-200 cursor-pointer hover:bg-white transition-all group">
+                        <input type="checkbox" name="borne_active_qr" class="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" {% if tv_config and tv_config.borne_active_qr %}checked{% endif %}>
+                        <div class="ml-4">
+                            <span class="block font-bold text-slate-800">Activer le Ticket Mobile (QR Code)</span>
+                            <span class="text-xs text-slate-500 italic">Permet aux clients de scanner pour suivre sur mobile.</span>
+                        </div>
+                    </label>
+                    <label class="flex items-center p-4 bg-slate-50 rounded-2xl border border-slate-200 cursor-pointer hover:bg-white transition-all group">
+                        <input type="checkbox" name="borne_active_impression" class="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" {% if tv_config and tv_config.borne_active_impression %}checked{% endif %}>
+                        <div class="ml-4">
+                            <span class="block font-bold text-slate-800">Activer l'Impression Papier</span>
+                            <span class="text-xs text-slate-500 italic">Affiche les boutons d'impression thermique.</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-4 border-t border-slate-100">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-black text-indigo-600 uppercase tracking-widest">Textes en Français</h4>
+                        <input type="text" name="borne_titre_fr" value="{{ tv_config.borne_titre_fr if tv_config else '' }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold outline-none focus:border-indigo-500" placeholder="Titre principal">
+                        <div>
+                            <div id="editor-fr">{{ tv_config.borne_sous_titre_fr | safe if tv_config else '' }}</div>
+                            <input type="hidden" name="borne_sous_titre_fr" id="input-fr">
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-black text-indigo-600 uppercase tracking-widest text-left">Textes en Arabe</h4>
+                        <input type="text" name="borne_titre_ar" value="{{ tv_config.borne_titre_ar if tv_config else '' }}" dir="rtl" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold font-arabe text-xl outline-none focus:border-indigo-500" placeholder="العنوان الرئيسي">
+                        <div class="arabe-editor">
+                            <div id="editor-ar">{{ tv_config.borne_sous_titre_ar | safe if tv_config else '' }}</div>
+                            <input type="hidden" name="borne_sous_titre_ar" id="input-ar">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 px-8 rounded-xl transition-all shadow-md">ENREGISTRER LA BORNE</button>
+            </div>
+        </form>
+    </div>
+
+    <div x-show="tab === 'whatsapp'" x-transition style="display: none;">
+        <form action="{{ url_for('parametres') }}" method="POST" class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <input type="hidden" name="sauvegarder_tv" value="1">
+            <div class="px-8 py-5 border-b border-slate-100 bg-emerald-50 text-emerald-800 font-black italic uppercase tracking-wider flex items-center gap-3">
+                <i class="ph-fill ph-whatsapp-logo text-2xl"></i> Modèles de Communications WhatsApp
+            </div>
+            <div class="p-8">
+                <div class="mb-6 bg-slate-50 p-5 rounded-xl border border-slate-200 text-sm text-slate-700 shadow-inner">
+                    <p class="font-bold text-slate-800 mb-3">💡 Mots Magiques autorisés :</p>
+                    <div class="flex flex-wrap gap-3">
+                        <span class="bg-white px-3 py-1.5 rounded-lg border border-slate-200 font-mono text-indigo-600 font-bold shadow-sm">[PRENOM]</span>
+                        <span class="bg-white px-3 py-1.5 rounded-lg border border-slate-200 font-mono text-indigo-600 font-bold shadow-sm">[NOM]</span>
+                        <span class="bg-white px-3 py-1.5 rounded-lg border border-slate-200 font-mono text-emerald-600 font-bold shadow-sm">[MONTANT]</span>
+                        <span class="bg-white px-3 py-1.5 rounded-lg border border-slate-200 font-mono text-blue-600 font-bold shadow-sm">[DATE]</span>
+                    </div>
+                    <p class="mt-3 text-xs text-slate-500">Insérez ces mots dans vos textes, le système les remplacera automatiquement par les vraies informations du client lors du clic.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2 text-red-600">Relance (Dette)</label>
+                        <textarea name="msg_whatsapp_dette" rows="6" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-500 outline-none resize-y" placeholder="Bonjour [PRENOM]...">{{ tv_config.msg_whatsapp_dette if tv_config and tv_config.msg_whatsapp_dette else 'Bonjour [PRENOM], sauf erreur de notre part, il reste un solde de [MONTANT] DH sur votre opération du [DATE]. Merci de passer au kiosque dès que possible ! 🙏' }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2 text-amber-600">Monnaie Oubliée</label>
+                        <textarea name="msg_whatsapp_monnaie" rows="6" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-500 outline-none resize-y" placeholder="Bonjour [PRENOM]...">{{ tv_config.msg_whatsapp_monnaie if tv_config and tv_config.msg_whatsapp_monnaie else 'Bonjour [PRENOM], vous avez oublié votre monnaie de [MONTANT] DH lors de votre passage le [DATE]. Elle vous attend au Kiosque ! 😊' }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2 text-emerald-600">Reçu de Paiement</label>
+                        <textarea name="msg_whatsapp_recu" rows="6" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-500 outline-none resize-y" placeholder="Bonjour [PRENOM]...">{{ tv_config.msg_whatsapp_recu if tv_config and tv_config.msg_whatsapp_recu else 'Bonjour [PRENOM], votre paiement de [MONTANT] DH a bien été effectué au Kiosque le [DATE]. Merci de votre confiance !' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2.5 px-8 rounded-xl transition-all shadow-md">SAUVEGARDER LES MODÈLES</button>
+            </div>
+        </form>
+    </div>
+
+    <div x-show="tab === 'systeme'" x-transition style="display: none;" class="space-y-8">
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+            <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                <i class="ph-fill ph-hard-drives text-slate-400 text-2xl"></i> Sauvegardes & Exports
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <a href="/exporter_donnees" class="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-indigo-50 hover:border-indigo-200 transition-colors group text-center">
+                    <i class="ph-fill ph-file-csv text-indigo-400 text-5xl mb-3 group-hover:text-indigo-600 transition-colors"></i>
+                    <span class="font-bold text-slate-800 text-base">Caisse & Opérations</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Export CSV</span>
+                </a>
+                <a href="/exporter_clients" class="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-blue-50 hover:border-blue-200 transition-colors group text-center">
+                    <i class="ph-fill ph-users-three text-blue-400 text-5xl mb-3 group-hover:text-blue-600 transition-colors"></i>
+                    <span class="font-bold text-slate-800 text-base">Base Clients CRM</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Export CSV</span>
+                </a>
+                <a href="/toutes_les_cartes" target="_blank" class="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-slate-100 transition-colors group text-center">
+                    <i class="ph-fill ph-file-pdf text-slate-400 text-5xl mb-3 group-hover:text-slate-600 transition-colors"></i>
+                    <span class="font-bold text-slate-800 text-base">Cartes Clients</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Générer PDF</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+            <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                <i class="ph-fill ph-printer text-slate-400 text-2xl"></i> Périphériques
+            </h3>
+            <a href="{{ url_for('queue.admin_ticket') }}" class="inline-flex items-center gap-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl hover:bg-indigo-50 transition-all">
+                <div class="bg-white p-3 rounded-xl shadow-sm">
+                    <i class="ph-bold ph-receipt text-3xl text-indigo-500"></i>
+                </div>
+                <div>
+                    <div class="font-bold text-slate-800">Configuration du Ticket Papier</div>
+                    <p class="text-xs text-slate-500 font-medium">Design, en-tête, message et découpe papier.</p>
+                </div>
             </a>
         </div>
+
+        <div class="rounded-2xl border border-red-200 bg-red-50 p-8">
+            <h3 class="text-xl font-black text-red-700 mb-2 flex items-center gap-3">
+                <i class="ph-fill ph-warning-octagon text-2xl"></i> Zone de Danger
+            </h3>
+            <p class="text-sm text-red-800 mb-6 font-medium max-w-2xl">Les actions effectuées ici modifient votre base de données de manière massive. Procédez avec prudence.</p>
+            <div class="bg-white border border-red-100 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                <div>
+                    <h4 class="text-base font-bold text-slate-900">Archiver les clients inactifs</h4>
+                    <p class="text-sm text-slate-500 mt-1">Désactive automatiquement les clients n'ayant fait aucune opération depuis 6 mois.</p>
+                </div>
+                <a href="/archiver_inactifs" onclick="return confirm('Êtes-vous sûr de vouloir archiver en masse les clients inactifs ?');" class="px-6 py-2.5 bg-red-100 hover:bg-red-500 text-red-700 hover:text-white font-bold text-sm rounded-xl transition-colors whitespace-nowrap">
+                    Lancer l'archivage
+                </a>
+            </div>
+        </div>
+
     </div>
 
 </div>
+<script>
+    const toolbarOptions = [
+        ['bold', 'italic', 'underline'],
+        [{ 'color': [] }],
+        [{ 'size': ['small', false, 'large'] }],
+        ['clean']
+    ];
+
+    const quillFr = new Quill('#editor-fr', {
+        theme: 'snow',
+        modules: { toolbar: toolbarOptions },
+        placeholder: 'Tapez votre message ici...'
+    });
+
+    const quillAr = new Quill('#editor-ar', {
+        theme: 'snow',
+        modules: { toolbar: toolbarOptions },
+        placeholder: 'اكتب رسالتك هنا...'
+    });
+
+    // Écouteur spécifique pour le formulaire de la borne
+    const formBorne = document.getElementById('form-borne');
+    if (formBorne) {
+        formBorne.addEventListener('submit', function () {
+            document.getElementById('input-fr').value = quillFr.root.innerHTML;
+            document.getElementById('input-ar').value = quillAr.root.innerHTML;
+        });
+    }
+</script>
 {% endblock %}

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Kiosque Pad</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: none;
+            overscroll-behavior: none;
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .bg-hardware {
+            background-color: #09090b;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .screen-inset {
+            box-shadow: inset 0 10px 30px rgba(0,0,0,0.8), inset 0 1px 3px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.05);
+        }
+    </style>
+</head>
+<body class="bg-hardware text-zinc-300 h-[100dvh] w-screen overflow-hidden flex flex-col landscape:flex-row">
+
+    <div class="flex justify-between items-center px-5 py-4 shrink-0 landscape:hidden bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800/50">
+        <div class="flex items-center gap-2">
+            <i class="ph-fill ph-game-controller text-cyan-500 text-2xl drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"></i>
+            <span class="font-black text-white tracking-tight uppercase text-sm">Deck Pro</span>
+        </div>
+        <a href="{{ url_for('queue.gestion_file') }}" class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 active:scale-90 transition-transform">
+            <i class="ph-bold ph-x text-sm"></i>
+        </a>
+    </div>
+
+    <div class="flex flex-col flex-1 p-4 landscape:p-6 landscape:border-r landscape:border-zinc-800/50 relative">
+
+        <div class="hidden landscape:flex justify-between items-center mb-6 shrink-0">
+            <div class="flex items-center gap-2">
+                <i class="ph-fill ph-game-controller text-cyan-500 text-2xl drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"></i>
+                <span class="font-black text-white tracking-tight uppercase text-sm">Deck Pro</span>
+            </div>
+            <a href="{{ url_for('queue.gestion_file') }}" class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 active:scale-90 transition-transform">
+                <i class="ph-bold ph-x text-sm"></i>
+            </a>
+        </div>
+
+        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
+            <i class="ph-fill ph-monitor-play text-cyan-500"></i> Affiché au Guichet
+        </p>
+
+        <div class="flex-1 bg-black rounded-[2rem] p-6 flex flex-col justify-center items-center text-center relative screen-inset border border-zinc-800/30">
+            {% if ticket_actuel %}
+            <div class="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]"></span>
+                <span class="text-[9px] text-cyan-400 font-black uppercase tracking-widest">En cours</span>
+            </div>
+
+            <button onclick="lancerImpression({{ ticket_actuel.id }})"
+                    class="absolute top-3 right-3 w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-emerald-400 active:scale-90 transition-transform border border-zinc-700 shadow-lg cursor-pointer">
+                <i class="ph-bold ph-printer text-sm"></i>
+            </button>
+
+            <h2 class="text-6xl font-black text-white tracking-tighter mt-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                #{{ ticket_actuel.lettre }}{{ "%03d" | format(ticket_actuel.numero) }}
+            </h2>
+            <p class="text-sm text-zinc-400 font-bold uppercase tracking-widest mt-2">{{ ticket_actuel.service }}</p>
+
+            <a href="{{ url_for('queue.mettre_en_pause', id_ticket=ticket_actuel.id) }}"
+               class="absolute bottom-5 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 active:scale-95 transition-transform shadow-lg">
+                <i class="ph-fill ph-pause-circle text-amber-500 text-lg"></i> Suspendre
+            </a>
+            {% else %}
+            <i class="ph-duotone ph-coffee text-5xl text-zinc-700 mb-2"></i>
+            <p class="text-xs text-zinc-500 font-bold uppercase tracking-widest">Poste Libre</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="flex flex-col flex-1 p-4 landscape:p-6 relative bg-zinc-950/30">
+
+        <div class="flex gap-3 mb-4 shrink-0">
+            <div class="flex-1 bg-zinc-900 rounded-2xl p-3 flex justify-between items-center border-b-2 border-zinc-800">
+                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">En File</span>
+                <span class="text-xl font-black text-white">{{ en_attente }}</span>
+            </div>
+            <div class="flex-1 bg-zinc-900 rounded-2xl p-3 flex justify-between items-center border-b-2 border-zinc-800">
+                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">En Pause</span>
+                <span class="text-xl font-black text-white">{{ en_pause }}</span>
+            </div>
+        </div>
+
+        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-2 mt-2">
+            <i class="ph-fill ph-arrow-fat-line-right text-emerald-500"></i> Suivant dans la file
+        </p>
+
+        <div class="bg-black rounded-3xl p-5 mb-5 text-center relative flex flex-col justify-center screen-inset border border-zinc-800/30 min-h-[120px]">
+            {% if prochain %}
+            {% if prochain.is_priority %}
+            <div class="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-red-950/50 px-3 py-1 rounded-full border border-red-900/50">
+                <i class="ph-fill ph-warning text-red-500"></i>
+                <span class="text-[9px] text-red-500 font-black uppercase tracking-widest">VIP / Urgence</span>
+            </div>
+            {% endif %}
+            <span class="text-4xl font-black {% if prochain.is_priority %}text-red-400 drop-shadow-[0_0_10px_rgba(248,113,113,0.3)]{% else %}text-white{% endif %} tracking-tighter mt-3">
+                #{{ prochain.lettre }}{{ "%03d" | format(prochain.numero) }}
+            </span>
+            <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-1">{{ prochain.service }}</span>
+            {% else %}
+            <i class="ph-fill ph-check-circle text-4xl text-emerald-500/20 mb-1"></i>
+            <span class="text-zinc-500 text-xs font-bold uppercase tracking-widest">Aucun client</span>
+            {% endif %}
+        </div>
+
+        <div class="flex-1 flex flex-col justify-end gap-3">
+
+            {% if prochain %}
+            <a href="{{ url_for('queue.appeler_ticket', id_ticket=prochain.id) }}"
+               class="relative w-full group outline-none block">
+                <div class="absolute inset-0 bg-emerald-700 rounded-2xl translate-y-2 group-active:translate-y-0 transition-transform duration-75"></div>
+                <div class="relative bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-2xl p-5 flex items-center justify-center gap-3 border border-emerald-300/50 group-active:translate-y-2 transition-transform duration-75">
+                    <i class="ph-fill ph-speaker-high text-3xl text-emerald-950"></i>
+                    <span class="text-2xl font-black text-emerald-950 uppercase tracking-tight">Appeler</span>
+                </div>
+            </a>
+
+            <div class="grid grid-cols-3 gap-2 mt-4">
+
+                <a href="{{ url_for('queue.prioriser_ticket', id_ticket=prochain.id) }}"
+                   class="relative w-full group outline-none block">
+                    <div class="absolute inset-0 bg-zinc-800 rounded-xl translate-y-1.5 group-active:translate-y-0 transition-transform duration-75"></div>
+                    <div class="relative bg-zinc-700 rounded-xl py-3 flex items-center justify-center gap-1.5 border border-zinc-600 group-active:translate-y-1.5 transition-transform duration-75">
+                        <i class="ph-fill ph-warning-circle text-red-400 text-lg"></i>
+                        <span class="text-[9px] font-black text-white uppercase tracking-wider">Urgence</span>
+                    </div>
+                </a>
+
+                <button onclick="lancerImpression({{ prochain.id }})"
+                        class="relative w-full group outline-none block text-left cursor-pointer">
+                    <div class="absolute inset-0 bg-zinc-800 rounded-xl translate-y-1.5 group-active:translate-y-0 transition-transform duration-75"></div>
+                    <div class="relative bg-zinc-700 rounded-xl py-3 flex items-center justify-center gap-1.5 border border-zinc-600 group-active:translate-y-1.5 transition-transform duration-75">
+                        <i class="ph-fill ph-printer text-emerald-400 text-lg"></i>
+                        <span class="text-[9px] font-black text-white uppercase tracking-wider">Imprimer</span>
+                    </div>
+                </button>
+
+                <a href="{{ url_for('queue.annoncer_urgence', id_ticket=prochain.id) }}"
+                   class="relative w-full group outline-none block">
+                    <div class="absolute inset-0 bg-zinc-800 rounded-xl translate-y-1.5 group-active:translate-y-0 transition-transform duration-75"></div>
+                    <div class="relative bg-zinc-700 rounded-xl py-3 flex items-center justify-center gap-1.5 border border-zinc-600 group-active:translate-y-1.5 transition-transform duration-75">
+                        <i class="ph-fill ph-television text-cyan-400 text-lg"></i>
+                        <span class="text-[9px] font-black text-white uppercase tracking-wider">Alerte TV</span>
+                    </div>
+                </a>
+
+            </div>
+            {% else %}
+            <div class="w-full bg-zinc-900 border-2 border-dashed border-zinc-800 rounded-2xl p-5 flex items-center justify-center gap-3 opacity-50">
+                <i class="ph-fill ph-speaker-slash text-2xl text-zinc-600"></i>
+                <span class="text-xl font-black text-zinc-600 uppercase tracking-tight">En attente</span>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+
+    <script>
+        // 1. Gestion des WebSockets (Temps réel)
+        const socket = io();
+        socket.on('ticket_maj', function () {
+            window.location.reload();
+        });
+
+        // 2. Maintien de l'écran allumé (La méthode infaillible)
+        const noSleep = new NoSleep();
+        let ecranVerrouille = false;
+
+        // Règle d'or des smartphones : le système a besoin que l'utilisateur
+        // touche l'écran AU MOINS UNE FOIS pour autoriser l'astuce.
+        document.body.addEventListener('click', function enableNoSleep() {
+            if (!ecranVerrouille) {
+                noSleep.enable(); // Active la fausse vidéo invisible
+                ecranVerrouille = true;
+                console.log("⚡ Magie activée : Le téléphone ne s'éteindra plus !");
+            }
+        }, false);
+    </script>
+
+    <script>
+        // Envoie l'ordre au PC de faire marcher l'imprimante USB
+        function lancerImpression(idTicket) {
+            // Optionnel : tu peux faire vibrer le téléphone pour confirmer l'appui
+            if (navigator.vibrate) navigator.vibrate(50);
+
+            fetch('/queue/imprimer_direct/' + idTicket, {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log("Impression réussie sur le PC !");
+                    } else {
+                        alert("Erreur d'impression sur le PC : " + data.message);
+                    }
+                });
+        }
+    </script>
+</body>
+</html>

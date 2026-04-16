@@ -2,7 +2,9 @@ import os
 import urllib.parse
 from werkzeug.utils import secure_filename
 from PIL import Image
-
+import shutil
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, session, url_for, jsonify
@@ -554,6 +556,51 @@ def force_synchro_db():
 def page_non_trouvee(e):
     # e contient le message d'erreur original, mais on l'ignore pour afficher notre page
     return render_template('404.html'), 404
+
+
+# ==========================================
+# SAUVEGARDE AUTOMATIQUE DE LA BASE DE DONNÉES
+# ==========================================
+def sauvegarder_bdd():
+    dossier_backup = 'backups'
+    os.makedirs(dossier_backup, exist_ok=True)
+    
+    # Cherche le fichier base.db (dans le dossier instance ou à la racine)
+    chemin_db = 'instance/base.db' if os.path.exists('instance/base.db') else 'base.db'
+    
+    if not os.path.exists(chemin_db):
+        print("❌ Sauvegarde échouée : base.db introuvable.")
+        return
+
+    # Créer un nom de fichier avec la date et l'heure exactes
+    date_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+    nom_backup = f"sauvegarde_{date_str}.db"
+    chemin_dest = os.path.join(dossier_backup, nom_backup)
+    
+    try:
+        shutil.copy2(chemin_db, chemin_dest)
+        print(f"✅ Sauvegarde auto réussie : {nom_backup}")
+        
+        # BONUS : Nettoyage automatique (Garder seulement les 7 dernières sauvegardes)
+        fichiers_backup = sorted([os.path.join(dossier_backup, f) for f in os.listdir(dossier_backup)])
+        while len(fichiers_backup) > 7:
+            plus_vieux = fichiers_backup.pop(0)
+            os.remove(plus_vieux)
+            print(f"🗑️ Ancienne sauvegarde supprimée : {plus_vieux}")
+            
+    except Exception as e:
+        print(f"❌ Erreur lors de la sauvegarde : {e}")
+
+# Démarrer le planificateur en arrière-plan
+scheduler = BackgroundScheduler()
+# Programmer la sauvegarde tous les jours à 23h59 (Tu peux changer l'heure)
+scheduler.add_job(func=sauvegarder_bdd, trigger="cron", hour=23, minute=59)
+scheduler.start()
+
+# Couper proprement le planificateur si on arrête le serveur manuellement
+atexit.register(lambda: scheduler.shutdown())
+
+
 
 # ==========================================
 # LANCEMENT DU SERVEUR

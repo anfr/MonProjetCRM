@@ -5,6 +5,8 @@ __pycache__/
 # Ignorer les photos des clients
 static/uploads/recus/*
 !static/uploads/recus/.gitkeep
+# Ignorer le dossier de sauvegarde
+backups/
 
 # Ignorer la base de données (optionnel, mais recommandé si elle contient de vraies données)
 instance/base.db

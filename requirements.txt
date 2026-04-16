@@ -1,6 +1,10 @@
 Flask
+Flask-Migrate==4.0.5
+Flask-SQLAlchemy
+Flask-SocketIO
+APScheduler
+Pillow
+pywin32
 gunicorn
 sqlmodel
 python-multipart
-python-multipartpython-multipart
-Flask-Migrate==4.0.5

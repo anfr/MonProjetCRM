@@ -1,152 +1,162 @@
-    {% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block content %}
-<div x-data="{ modalContratOuverte: false, modalOperationOuverte: false, modalHistoriqueOuvert: false }">
+<div x-data="{
+    modalContratOuverte: false,
+    modalOperationOuverte: false,
+    modalHistoriqueOuvert: false,
 
-    <div class="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-8 py-5 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 -mt-4 sm:-mt-6 -mx-4 sm:-mx-6 lg:-mx-10 rounded-t-none sm:rounded-b-none">
+    /* Variables pour l'édition de contrat */
+    modalEditContrat: false,
+    contratEdit: { id: null, numero: '', proprietaire: '', notes: '', service_id: null },
+
+    ouvrirEditContrat(id, numero, proprietaire, notes, serviceId) {
+        this.contratEdit = { id: id, numero: numero, proprietaire: proprietaire, notes: notes, service_id: serviceId };
+        this.modalEditContrat = true;
+    },
+
+    /* Fonction AJAX pour le Switch Apple */
+    async basculerStatut(id) {
+        try {
+            await fetch(`/api/contrat/${id}/toggle_statut`, { method: 'POST' });
+        } catch (e) {
+            console.error('Erreur lors du changement de statut:', e);
+        }
+    }
+}">
+
+    <div class="bg-white shadow-sm border-b border-slate-200 px-4 sm:px-8 py-5 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 -mt-4 sm:-mt-6 -mx-4 sm:-mx-6 lg:-mx-10 rounded-t-none sm:rounded-b-none">
         <div class="flex items-center gap-4">
-            <div class="h-14 w-14 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-xl font-bold shadow-md shrink-0">
+            <div class="h-14 w-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-xl font-black shadow-sm shrink-0">
                 {{ client.prenom[0] | upper }}{{ client.nom[0] | upper }}
             </div>
             <div>
-                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Dossier Client</p>
-                <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-                    <span class="capitalize">{{ client.prenom }}</span> <span class="uppercase text-gray-700">{{ client.nom }}</span>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Dossier Client</p>
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
+                    <span class="capitalize">{{ client.prenom }}</span> <span class="uppercase text-slate-600">{{ client.nom }}</span>
                 </h2>
             </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row flex-wrap justify-end gap-2.5 w-full lg:w-auto mt-4 sm:mt-0">
-            <a href="{{ url_for('clients.carte_client', id_client=client.id) }}" target="_blank" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all w-full sm:w-auto">
-                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
-                </svg>
-                Imprimer Carte
+        <div class="flex flex-col sm:flex-row flex-wrap justify-end gap-3 w-full lg:w-auto mt-4 sm:mt-0">
+            <a href="{{ url_for('clients.carte_client', id_client=client.id) }}" target="_blank" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 shadow-sm text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all w-full sm:w-auto">
+                <i class="ph-bold ph-printer text-lg"></i> Imprimer Carte
             </a>
 
-            <button @click="modalHistoriqueOuvert = true" class="inline-flex items-center justify-center px-4 py-2.5 border border-purple-200 shadow-sm text-sm font-bold rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 transition-all w-full sm:w-auto">
-                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Historique ({{ historique|length }})
+            <button @click="modalHistoriqueOuvert = true" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-purple-200 shadow-sm text-sm font-bold rounded-xl text-purple-700 bg-purple-50 hover:bg-purple-100 transition-all w-full sm:w-auto">
+                <i class="ph-bold ph-clock-counter-clockwise text-lg"></i> Historique ({{ historique|length }})
             </button>
 
-            <button @click="modalOperationOuverte = true" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-all w-full sm:w-auto">
-                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Nouvelle Opération
+            <button @click="modalOperationOuverte = true" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 shadow-sm text-sm font-bold rounded-xl text-white bg-emerald-500 hover:bg-emerald-600 transition-all w-full sm:w-auto">
+                <i class="ph-bold ph-plus-circle text-lg"></i> Nouvelle Opération
             </button>
         </div>
     </div>
 
-    <div class="rounded-xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm mb-6">
-        <h3 class="font-bold text-gray-900 mb-5 text-lg border-b border-gray-100 pb-3 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-            </svg>
-            Coordonnées
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm mb-6">
+        <h3 class="font-black text-slate-800 mb-5 text-lg border-b border-slate-100 pb-3 flex items-center gap-2">
+            <i class="ph-fill ph-address-book text-slate-400 text-xl"></i> Coordonnées
         </h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50/80 border border-gray-100">
-                <div class="p-2.5 bg-white rounded-lg border border-gray-200 shadow-sm text-gray-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-                    </svg>
+            <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="p-2.5 bg-white rounded-lg border border-slate-200 shadow-sm text-indigo-500">
+                    <i class="ph-bold ph-phone text-xl"></i>
                 </div>
                 <div>
-                    <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Téléphone</span>
-                    <span class="text-gray-900 font-bold text-lg">
-                        {% if client.telephone %}{{ client.telephone }}{% else %}<span class="text-gray-400 italic text-sm font-normal">Non renseigné</span>{% endif %}
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Téléphone</span>
+                    <span class="text-slate-800 font-black text-lg">
+                        {% if client.telephone %}{{ client.telephone }}{% else %}<span class="text-slate-400 italic text-sm font-medium">Non renseigné</span>{% endif %}
                     </span>
                 </div>
             </div>
-            <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50/80 border border-gray-100">
-                <div class="p-2.5 bg-white rounded-lg border border-gray-200 shadow-sm text-gray-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                    </svg>
+            <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="p-2.5 bg-white rounded-lg border border-slate-200 shadow-sm text-indigo-500">
+                    <i class="ph-bold ph-map-pin text-xl"></i>
                 </div>
                 <div>
-                    <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Adresse</span>
-                    <span class="text-gray-900 font-bold text-base leading-snug block mt-1">
-                        {% if client.adresse %}{{ client.adresse }}{% else %}<span class="text-gray-400 italic text-sm font-normal">Non renseignée</span>{% endif %}
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Adresse</span>
+                    <span class="text-slate-700 font-bold text-sm leading-snug block mt-1">
+                        {% if client.adresse %}{{ client.adresse }}{% else %}<span class="text-slate-400 italic font-medium">Non renseignée</span>{% endif %}
                     </span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="rounded-xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm mb-6">
-        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 border-b border-gray-100 pb-4 gap-4">
-            <h3 class="font-bold text-gray-900 text-lg flex items-center gap-2">
-                <svg class="w-5 h-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-                </svg>
-                Contrats et Abonnements
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm mb-6">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 border-b border-slate-100 pb-4 gap-4">
+            <h3 class="font-black text-slate-800 text-lg flex items-center gap-2">
+                <i class="ph-fill ph-file-text text-blue-500 text-2xl"></i> Contrats et Abonnements
             </h3>
-            <button @click="modalContratOuverte = true" class="inline-flex items-center justify-center px-4 py-2 border border-blue-200 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors w-full sm:w-auto">
-                <svg class="w-4 h-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Ajouter un contrat
+            <button @click="modalContratOuverte = true" class="inline-flex items-center justify-center gap-2 px-4 py-2 border border-blue-200 text-sm font-bold rounded-xl text-blue-600 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 transition-colors w-full sm:w-auto">
+                <i class="ph-bold ph-plus text-lg"></i> Ajouter un contrat
             </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {% for contrat in client.contrats %}
-            <div x-data="{ copie: false }" @click="copierEnSecurite('{{ contrat.numero_contrat }}'); copie = true; setTimeout(() => copie = false, 2000)" class="group relative bg-white border border-gray-200 rounded-2xl p-5 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer overflow-hidden">
-                <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full opacity-50 pointer-events-none transition-transform group-hover:scale-150"></div>
-                <div class="relative z-10 flex justify-between items-start mb-4">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-gray-100 text-gray-700 uppercase tracking-wider border border-gray-200 group-hover:bg-blue-100 group-hover:text-blue-800 group-hover:border-blue-200 transition-colors">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {% for contrat in client.contrats if not contrat.archive %}
+            <div x-data="{ copie: false, actif: {{ 'true' if contrat.est_actif else 'false' }} }"
+                 :class="actif ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-80'"
+                 class="group relative rounded-2xl p-5 hover:border-blue-300 transition-all cursor-pointer border">
+
+                <div class="relative z-10 flex justify-between items-center mb-4">
+                    <span :class="actif ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-slate-200 text-slate-500 border-slate-300'" class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border transition-colors">
                         {{ contrat.service.nom_service }}
                     </span>
-                    {% if session.get('role') == 'admin' %}
-                    <a href="/supprimer_contrat/{{ contrat.id }}" class="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-colors" onclick="event.stopPropagation(); return confirm('Supprimer définitivement ce contrat ?');" title="Supprimer">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                        </svg>
-                    </a>
-                    {% endif %}
+
+                    <div class="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                        <button @click.prevent="basculerStatut({{ contrat.id }}); actif = !actif"
+                                :class="actif ? 'bg-emerald-500' : 'bg-slate-300'"
+                                class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none shadow-inner mr-1" title="Activer/Désactiver">
+                            <span :class="actif ? 'translate-x-4' : 'translate-x-0.5'"
+                                  class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                        </button>
+
+                        <button @click.prevent="ouvrirEditContrat({{ contrat.id }}, '{{ contrat.numero_contrat }}', '{{ contrat.nom_proprietaire | escape }}', '{{ contrat.notes | escape }}', {{ contrat.service_id }})" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Modifier">
+                            <i class="ph-bold ph-pencil-simple text-base"></i>
+                        </button>
+
+                        {% if session.get('role') == 'admin' %}
+                        <a href="/supprimer_contrat/{{ contrat.id }}" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" onclick="event.stopPropagation(); return confirm('Supprimer définitivement ce contrat ?');" title="Supprimer">
+                            <i class="ph-bold ph-trash text-base"></i>
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
 
-                <div class="relative z-10 mb-1">
-                    <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">N° Contrat</p>
-                    <div class="flex items-center justify-between h-8">
-                        <p class="font-black text-gray-900 text-xl tracking-tight group-hover:text-blue-600 transition-colors font-mono">{{ contrat.numero_contrat }}</p>
-                        <span x-show="copie" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded-md border border-green-200 flex items-center gap-1" style="display: none;">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                            Copié
+                <div class="relative z-10 mb-3" @click="copierEnSecurite('{{ contrat.numero_contrat }}'); copie = true; setTimeout(() => copie = false, 2000)">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">N° Contrat / Police</p>
+                    <div class="flex items-center justify-between h-7">
+                        <p :class="actif ? 'text-slate-800' : 'text-slate-500 line-through'" class="font-black text-xl tracking-tight group-hover:text-blue-600 transition-colors font-mono">
+                            {{ contrat.numero_contrat }}
+                        </p>
+                        <span x-show="copie" x-transition class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded border border-emerald-200 flex items-center gap-1" style="display: none;">
+                            <i class="ph-bold ph-check"></i> Copié
                         </span>
                     </div>
                 </div>
 
-                <div class="relative z-10 mt-4 pt-4 border-t border-gray-100">
-                    <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Titulaire</p>
-                    <p class="text-sm text-gray-700 font-medium truncate" title="{{ contrat.nom_proprietaire }}">{{ contrat.nom_proprietaire }}</p>
+                <div class="relative z-10 pt-3 border-t border-slate-100">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Titulaire</p>
+                    <p class="text-sm text-slate-600 font-bold truncate" title="{{ contrat.nom_proprietaire }}">{{ contrat.nom_proprietaire }}</p>
                 </div>
 
                 {% if contrat.notes %}
-                <div class="relative z-10 mt-3 pt-3 border-t border-gray-100 bg-amber-50/50 -mx-5 px-5 -mb-5 pb-5 rounded-b-2xl">
-                    <p class="text-[10px] font-semibold text-amber-600 uppercase tracking-widest mb-1 flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>
-                        Note
+                <div class="relative z-10 mt-3 pt-3 border-t border-slate-100 bg-amber-50/50 -mx-5 px-5 -mb-5 pb-5 rounded-b-2xl">
+                    <p class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                        <i class="ph-bold ph-notebook text-sm"></i> Note
                     </p>
-                    <p class="text-xs text-gray-600 italic leading-relaxed">{{ contrat.notes }}</p>
+                    <p class="text-xs text-slate-600 font-medium leading-relaxed">{{ contrat.notes }}</p>
                 </div>
                 {% endif %}
-
-                <div class="absolute inset-x-0 bottom-0 h-1 bg-transparent group-hover:bg-blue-500 transition-colors z-20"></div>
             </div>
             {% else %}
-            <div class="col-span-full p-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                <div class="flex justify-center mb-3">
-                    <div class="bg-white p-3 rounded-full shadow-sm">
-                        <svg class="w-8 h-8 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
-                    </div>
-                </div>
-                <h4 class="text-base font-medium text-gray-900 mb-1">Aucun contrat</h4>
-                <p class="text-sm text-gray-500 mb-4">Ce client n'a pas encore de contrat ou d'abonnement rattaché à son dossier.</p>
-                <button @click="modalContratOuverte = true" class="text-sm font-medium text-blue-600 hover:text-blue-700">
+            <div class="col-span-full p-8 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                <i class="ph-fill ph-files text-4xl text-slate-300 mb-2"></i>
+                <h4 class="text-base font-bold text-slate-800 mb-1">Aucun contrat</h4>
+                <p class="text-sm text-slate-500 mb-4">Ce client n'a pas encore de contrat ou d'abonnement rattaché à son dossier.</p>
+                <button @click="modalContratOuverte = true" class="text-sm font-bold text-blue-600 hover:text-blue-700 hover:underline">
                     + Ajouter le premier contrat
                 </button>
             </div>
@@ -154,70 +164,94 @@
         </div>
     </div>
 
-    <div class="rounded-xl border border-amber-200 bg-amber-50/50 p-5 sm:p-6 shadow-sm mb-6">
-        <h3 class="font-bold text-amber-900 mb-4 flex items-center gap-2 text-lg border-b border-amber-200/50 pb-3">
-            <svg class="w-5 h-5 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-            </svg>
-            Notes Internes Privées
+    <div class="rounded-2xl border border-amber-200 bg-amber-50/50 p-5 sm:p-6 shadow-sm mb-6">
+        <h3 class="font-black text-amber-900 mb-4 flex items-center gap-2 text-lg border-b border-amber-200/50 pb-3">
+            <i class="ph-fill ph-warning-circle text-amber-500 text-xl"></i> Notes Internes Privées
         </h3>
         <form action="{{ url_for('clients.maj_notes', id_client=client.id) }}" method="POST">
-            <div class="relative">
-                <textarea name="notes" rows="4" placeholder="Ajoutez ici des informations confidentielles sur le client (comportement de paiement, détails spécifiques...)" class="w-full rounded-xl border border-amber-200 bg-white py-3 px-4 text-gray-700 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition shadow-sm text-sm sm:text-base resize-y">{{ client.notes or '' }}</textarea>
-            </div>
+            <textarea name="notes" rows="3" placeholder="Informations confidentielles sur le client..." class="w-full rounded-xl border border-amber-200 bg-white py-3 px-4 text-slate-700 font-medium outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition shadow-sm text-sm resize-y">{{ client.notes or '' }}</textarea>
             <div class="mt-4 flex justify-end">
-                <button type="submit" class="inline-flex items-center justify-center px-6 py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-lg text-amber-900 bg-amber-300 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors w-full sm:w-auto">
-                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                    </svg>
-                    Enregistrer les notes
+                <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 shadow-sm text-sm font-bold rounded-xl text-amber-900 bg-amber-300 hover:bg-amber-400 transition-colors w-full sm:w-auto">
+                    <i class="ph-bold ph-floppy-disk text-lg"></i> Enregistrer les notes
                 </button>
             </div>
         </form>
     </div>
 
     <template x-teleport="body">
-        <div x-show="modalContratOuverte" class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" style="display: none;">
-            <div @click.outside="modalContratOuverte = false" class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl transform transition-all relative">
-                <button @click="modalContratOuverte = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-1.5 rounded-full transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        <div x-show="modalContratOuverte" class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" style="display: none;" x-transition>
+            <div @click.outside="modalContratOuverte = false" class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl relative">
+                <button @click="modalContratOuverte = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 p-1.5 rounded-full transition-colors">
+                    <i class="ph-bold ph-x text-lg"></i>
                 </button>
-                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    </div>
+                <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                    <div class="bg-blue-100 p-2 rounded-xl text-blue-600"><i class="ph-bold ph-file-plus text-xl"></i></div>
                     Lier un contrat
                 </h3>
                 <form action="/ajouter_contrat/{{ client.id }}" method="POST">
-                    <div class="mb-5">
-                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Type de service</label>
-                        <div class="relative">
-                            <select name="service_id" required class="block w-full appearance-none rounded-xl border border-gray-300 bg-gray-50 py-3 pl-4 pr-10 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm cursor-pointer transition">
-                                {% for service in services %}
-                                <option value="{{ service.id }}">{{ service.nom_service }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                        </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Type de service</label>
+                        <select name="service_id" required class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 px-4 text-slate-800 font-bold outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm cursor-pointer">
+                            {% for service in services %}
+                            <option value="{{ service.id }}">{{ service.nom_service }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <div class="mb-5">
-                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Numéro de Contrat / Police</label>
-                        <input type="text" name="numero_contrat" required placeholder="Ex: 123456789" class="block w-full rounded-xl border border-gray-300 bg-white py-3 px-4 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition shadow-sm font-mono" />
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Numéro de Contrat</label>
+                        <input type="text" name="numero_contrat" required placeholder="Ex: 123456789" class="w-full rounded-xl border border-slate-200 bg-white py-3 px-4 text-slate-800 font-mono font-bold outline-none focus:border-blue-500 text-sm shadow-sm" />
                     </div>
-                    <div class="mb-5">
-                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Titulaire du contrat</label>
-                        <input type="text" name="nom_proprietaire" required value="{{ client.nom }} {{ client.prenom }}" class="block w-full rounded-xl border border-gray-300 bg-white py-3 px-4 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition shadow-sm capitalize" />
-                        <p class="mt-1.5 text-xs text-gray-500">Modifiez-le si le contrat n'est pas au nom exact du client.</p>
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Titulaire du contrat</label>
+                        <input type="text" name="nom_proprietaire" required value="{{ client.nom }} {{ client.prenom }}" class="w-full rounded-xl border border-slate-200 bg-white py-3 px-4 text-slate-800 font-bold outline-none focus:border-blue-500 text-sm shadow-sm capitalize" />
                     </div>
-                    <div class="mb-8">
-                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Notes sur le contrat (Optionnel)</label>
-                        <textarea name="notes" rows="2" placeholder="Ex: Compteur à l'intérieur..." class="block w-full rounded-xl border border-gray-300 bg-white py-3 px-4 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition shadow-sm resize-y"></textarea>
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Notes (Optionnel)</label>
+                        <textarea name="notes" rows="2" placeholder="Informations utiles..." class="w-full rounded-xl border border-slate-200 bg-white py-3 px-4 text-slate-800 text-sm outline-none focus:border-blue-500 shadow-sm resize-y"></textarea>
                     </div>
-                    <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-100">
-                        <button type="button" @click="modalContratOuverte = false" class="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Annuler</button>
-                        <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm transition-colors">Ajouter ce contrat</button>
+                    <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-slate-100">
+                        <button type="button" @click="modalContratOuverte = false" class="w-full sm:w-auto px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Annuler</button>
+                        <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-blue-600 rounded-xl text-sm font-bold text-white hover:bg-blue-700 shadow-sm transition-colors">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-show="modalEditContrat" class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" style="display: none;" x-transition>
+            <div @click.outside="modalEditContrat = false" class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl relative">
+                <button @click="modalEditContrat = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 p-1.5 rounded-full transition-colors">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+                <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                    <div class="bg-indigo-100 p-2 rounded-xl text-indigo-600"><i class="ph-bold ph-pencil-simple text-xl"></i></div>
+                    Modifier le contrat
+                </h3>
+                <form :action="'/modifier_contrat/' + contratEdit.id" method="POST">
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Type de service</label>
+                        <select name="service_id" x-model="contratEdit.service_id" required class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 px-4 text-slate-800 font-bold outline-none focus:border-indigo-500 text-sm cursor-pointer">
+                            {% for service in services %}
+                            <option value="{{ service.id }}">{{ service.nom_service }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Numéro de Contrat</label>
+                        <input type="text" name="numero_contrat" x-model="contratEdit.numero" required class="w-full rounded-xl border border-slate-200 bg-white py-3 px-4 text-slate-800 font-mono font-bold outline-none focus:border-indigo-500 text-sm shadow-sm" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Titulaire du contrat</label>
+                        <input type="text" name="nom_proprietaire" x-model="contratEdit.proprietaire" required class="w-full rounded-xl border border-slate-200 bg-white py-3 px-4 text-slate-800 font-bold outline-none focus:border-indigo-500 text-sm shadow-sm capitalize" />
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Notes</label>
+                        <textarea name="notes" x-model="contratEdit.notes" rows="2" class="w-full rounded-xl border border-slate-200 bg-white py-3 px-4 text-slate-800 text-sm outline-none focus:border-indigo-500 shadow-sm resize-y"></textarea>
+                    </div>
+                    <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-slate-100">
+                        <button type="button" @click="modalEditContrat = false" class="w-full sm:w-auto px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Annuler</button>
+                        <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 rounded-xl text-sm font-bold text-white hover:bg-indigo-700 shadow-sm transition-colors">Mettre à jour</button>
                     </div>
                 </form>
             </div>
@@ -226,30 +260,21 @@
 
     <template x-teleport="body">
         <div x-show="modalOperationOuverte" class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" style="display: none;" x-transition>
-            <div @click.outside="modalOperationOuverte = false" class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl transform transition-all relative max-h-[95vh] overflow-y-auto">
-                <button @click="modalOperationOuverte = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-1.5 rounded-full transition-colors z-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
+            <div @click.outside="modalOperationOuverte = false" class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl relative">
+                <button @click="modalOperationOuverte = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 p-1.5 rounded-full transition-colors z-10"><i class="ph-bold ph-x text-lg"></i></button>
                 <div class="text-center mb-6 mt-2">
-                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                        <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg leading-6 font-bold text-gray-900">Démarrer une opération</h3>
-                    <p class="text-sm text-gray-500 mt-2">Le client <strong class="uppercase">{{ client.nom }}</strong> vous a-t-il laissé une avance ?</p>
+                    <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-2xl bg-emerald-100 text-emerald-600 mb-4 shadow-sm border border-emerald-200"><i class="ph-bold ph-currency-circle-dollar text-3xl"></i></div>
+                    <h3 class="text-xl font-black text-slate-800">Démarrer une opération</h3>
+                    <p class="text-sm text-slate-500 mt-1 font-medium">Le client <strong class="uppercase text-slate-700">{{ client.nom }}</strong> vous a-t-il laissé une avance ?</p>
                 </div>
                 <form action="/nouvelle_operation/{{ client.id }}" method="POST" enctype="multipart/form-data">
                     <div class="mb-5 relative">
-                        <input type="number" step="0.01" name="montant_avance" placeholder="0.00" class="block w-full rounded-xl border-gray-300 py-4 pl-4 pr-12 text-3xl font-black text-center text-gray-900 focus:border-green-500 focus:ring-green-500 bg-gray-50 transition border shadow-inner" />
-                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                            <span class="text-gray-400 font-bold text-lg">DH</span>
-                        </div>
+                        <input type="number" step="0.01" name="montant_avance" placeholder="0.00" class="block w-full rounded-xl border-slate-200 py-4 px-4 text-3xl font-black text-center text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 bg-slate-50 transition border shadow-inner" />
+                        <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none"><span class="text-slate-400 font-black text-xl">DH</span></div>
                     </div>
-                    
-                    <div class="flex flex-col gap-3">
-                        <button type="submit" class="w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">Créer l'opération</button>
-                        <button type="button" @click="modalOperationOuverte = false" class="w-full flex justify-center items-center px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Annuler</button>
+                    <div class="flex flex-col gap-2">
+                        <button type="submit" class="w-full py-3.5 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm transition-colors">Créer l'opération</button>
+                        <button type="button" @click="modalOperationOuverte = false" class="w-full py-3.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">Annuler</button>
                     </div>
                 </form>
             </div>
@@ -258,194 +283,112 @@
 
     <template x-teleport="body">
         <div x-show="modalHistoriqueOuvert" class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" style="display: none;" x-transition>
-            <div @click.outside="modalHistoriqueOuvert = false" class="w-full max-w-4xl rounded-2xl bg-white shadow-2xl transform transition-all relative flex flex-col max-h-[90vh]">
-                <div class="px-5 sm:px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-2xl z-10 sticky top-0">
-                    <h3 class="font-bold text-gray-900 text-lg flex items-center gap-2">
-                        <div class="bg-purple-100 p-2 rounded-lg text-purple-600">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
+            <div @click.outside="modalHistoriqueOuvert = false" class="w-full max-w-4xl rounded-3xl bg-white shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <h3 class="font-black text-slate-800 text-lg flex items-center gap-3">
+                        <div class="bg-purple-100 p-2 rounded-xl text-purple-600"><i class="ph-bold ph-clock-counter-clockwise text-xl"></i></div>
                         Historique des opérations
                     </h3>
-                    <div class="flex items-center gap-3 sm:gap-4">
-                        <span class="bg-purple-100 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-md border border-purple-200 hidden sm:block">
-                            {{ historique|length }} opération(s)
-                        </span>
-                        <button @click="modalHistoriqueOuvert = false" class="text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-1.5 rounded-full transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                    </div>
+                    <button @click="modalHistoriqueOuvert = false" class="text-slate-400 hover:text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 p-2 rounded-xl transition-colors"><i class="ph-bold ph-x text-lg"></i></button>
                 </div>
-
-                <div class="overflow-y-auto p-0 flex-1">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-gray-600 whitespace-nowrap">
-                            <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] font-bold tracking-wider border-b border-gray-200 sticky top-0 z-10">
-                                <tr>
-                                    <th class="px-5 py-3">Date</th>
-                                    <th class="px-5 py-3">Finances (Détail)</th>
-                                    <th class="px-5 py-3">Bilan Financier</th>
-                                    <th class="px-5 py-3">Avancement du Dossier</th>
-                                    <th class="px-5 py-3 text-right">Action / Reçu</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                {% for op in historique %}
-                                <tr class="hover:bg-slate-50 transition">
-                                    <td class="px-5 py-4 font-medium text-gray-700">
-                                        {{ op.date_operation.strftime('%d/%m/%Y à %H:%M') }}
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <div class="text-xs">
-                                            <span class="text-gray-400 block mb-0.5">Total : <strong class="text-gray-900">{{ op.montant_total or '--' }} DH</strong></span>
-                                            <span class="text-gray-400 block">Avance : <strong class="text-green-600">{{ op.montant_avance }} DH</strong></span>
+                <div class="overflow-y-auto flex-1">
+                    <table class="w-full text-left text-sm text-slate-600 whitespace-nowrap">
+                        <thead class="bg-white text-slate-400 uppercase text-[10px] font-black tracking-widest border-b border-slate-100 sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th class="px-6 py-4">Date</th>
+                                <th class="px-6 py-4">Finances</th>
+                                <th class="px-6 py-4">Bilan</th>
+                                <th class="px-6 py-4">Avancement</th>
+                                <th class="px-6 py-4 text-right">Reçus</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            {% for op in historique %}
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-6 py-4 font-bold text-slate-800">{{ op.date_operation.strftime('%d/%m/%Y à %H:%M') }}</td>
+                                <td class="px-6 py-4">
+                                    <div class="text-xs font-medium">
+                                        <span class="text-slate-400 block mb-0.5">Total: <strong class="text-slate-800">{{ op.montant_total or '--' }} DH</strong></span>
+                                        <span class="text-slate-400 block">Avance: <strong class="text-emerald-600">{{ op.montant_avance }} DH</strong></span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    {% if op.statut == 'Terminé' %}
+                                    {% set reste = (op.montant_total or 0) - op.montant_avance %}
+                                    {% if reste > 0 %}
+                                    <div class="px-3 py-2 bg-red-50 border border-red-100 rounded-xl inline-block">
+                                        <span class="block text-[10px] text-red-500 font-black uppercase tracking-widest mb-1">Dette Client</span>
+                                        <div class="flex items-center gap-3">
+                                            <span class="font-black text-red-700 text-base">{{ reste }} DH</span>
+                                            <a href="/regler_reste/{{ op.id }}" onclick="return confirm('Encaisser {{ reste }} DH ?');" class="text-[10px] font-black bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition shadow-sm">Encaisser</a>
                                         </div>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        {% if op.statut == 'Terminé' %}
-                                        {% set reste = (op.montant_total or 0) - op.montant_avance %}
-                                        {% if reste > 0 %}
-                                        <div class="px-3 py-2 bg-red-50 border border-red-200 rounded-lg inline-block shadow-sm">
-                                            <span class="block text-[10px] text-red-500 font-bold uppercase tracking-wider mb-1">Client Débiteur (Dette)</span>
-                                            <div class="flex items-center gap-3">
-                                                <span class="font-black text-red-700 text-base">{{ reste }} DH</span>
-                                                <a href="/regler_reste/{{ op.id }}" onclick="return confirm('Confirmer le paiement de la dette de {{ reste }} DH ?');" class="text-[10px] font-bold bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded shadow-sm transition">
-                                                    Encaisser
-                                                </a>
-                                            </div>
+                                    </div>
+                                    {% elif reste < 0 %}
+                                    <div class="px-3 py-2 bg-amber-50 border border-amber-100 rounded-xl inline-block">
+                                        <span class="block text-[10px] text-amber-600 font-black uppercase tracking-widest mb-1">À Rendre</span>
+                                        <div class="flex items-center gap-3">
+                                            <span class="font-black text-amber-700 text-base">{{ reste|abs }} DH</span>
+                                            <a href="/regler_reste/{{ op.id }}" onclick="return confirm('Restituer {{ reste|abs }} DH ?');" class="text-[10px] font-black bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg transition shadow-sm">Restituer</a>
                                         </div>
-                                        {% elif reste < 0 %}
-                                        <div class="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg inline-block shadow-sm">
-                                            <span class="block text-[10px] text-amber-600 font-bold uppercase tracking-wider mb-1">Client Créditeur (À Rendre)</span>
-                                            <div class="flex items-center gap-3">
-                                                <span class="font-black text-amber-700 text-base">{{ reste|abs }} DH</span>
-                                                <a href="/regler_reste/{{ op.id }}" onclick="return confirm('Confirmer la restitution de {{ reste|abs }} DH au client ?');" class="text-[10px] font-bold bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded shadow-sm transition">
-                                                    Restituer
-                                                </a>
-                                            </div>
-                                        </div>
-                                        {% else %}
-                                        <div class="px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg inline-block">
-                                            <span class="block text-[10px] text-green-600 font-bold uppercase tracking-widest">Bilan</span>
-                                            <span class="font-black text-green-700">Soldé (0 DH)</span>
-                                        </div>
-                                        {% endif %}
-                                        {% else %}
-                                        <span class="text-xs text-gray-400 italic">En attente de clôture</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        {% set reste = (op.montant_total or 0) - (op.montant_avance or 0) %}
-
-                                        {% if op.statut == 'En attente' %}
-                                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 text-slate-700 border border-slate-200 text-[11px] font-bold w-full min-w-[170px] shadow-sm">
-                                            <div class="bg-slate-200 p-1 rounded-md text-slate-500 shrink-0">
-                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            </div>
-                                            Dossier déposé
-                                        </span>
-
-                                        {% elif op.statut == 'Terminé' and reste > 0 %}
-                                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200 text-[11px] font-bold w-full min-w-[170px] shadow-sm">
-                                            <div class="bg-red-100 p-1 rounded-md text-red-500 shrink-0">
-                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                            </div>
-                                            Facture (Impayé)
-                                        </span>
-
-                                        {% elif op.statut == 'Terminé' and reste < 0 %}
-                                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold w-full min-w-[170px] shadow-sm">
-                                            <div class="bg-amber-100 p-1 rounded-md text-amber-500 shrink-0">
-                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                            </div>
-                                            En attente (Monnaie)
-                                        </span>
-
-                                        {% else %}
-                                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 text-green-700 border border-green-200 text-[11px] font-bold w-full min-w-[170px] shadow-sm">
-                                            <div class="bg-green-100 p-1 rounded-md text-green-600 shrink-0">
-                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                                            </div>
-                                            Dossier Validé
-                                        </span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-5 py-4 text-right">
+                                    </div>
+                                    {% else %}
+                                    <span class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-black uppercase tracking-widest"><i class="ph-bold ph-check mr-1"></i> Soldé (0 DH)</span>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="text-xs font-bold text-slate-400 italic">En attente</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {% set reste = (op.montant_total or 0) - (op.montant_avance or 0) %}
+                                    {% if op.statut == 'En attente' %}
+                                    <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-[11px] uppercase tracking-widest"><i class="ph-bold ph-folder text-lg text-slate-400"></i> Dossier déposé</span>
+                                    {% elif op.statut == 'Terminé' and reste > 0 %}
+                                    <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 text-red-700 font-bold text-[11px] uppercase tracking-widest border border-red-100"><i class="ph-bold ph-warning text-lg text-red-500"></i> Facture (Impayé)</span>
+                                    {% elif op.statut == 'Terminé' and reste < 0 %}
+                                    <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 text-amber-700 font-bold text-[11px] uppercase tracking-widest border border-amber-100"><i class="ph-bold ph-coins text-lg text-amber-500"></i> Monnaie au Kiosque</span>
+                                    {% else %}
+                                    <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-[11px] uppercase tracking-widest border border-emerald-100"><i class="ph-bold ph-check-circle text-lg text-emerald-500"></i> Dossier Validé</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex flex-wrap items-center justify-end gap-1.5">
                                         {% if op.photos %}
                                         {% for photo in op.photos %}
-                                        <a href="/static/uploads/recus/{{ photo.nom_fichier }}" target="_blank"
-                                           class="p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-indigo-100 hover:text-indigo-600 transition"
-                                           title="Voir reçu {{ loop.index }}">
-                                            <i class="ph-bold ph-file-image text-lg"></i>
-                                        </a>
+                                        <button type="button" @click="$dispatch('open-image', '/static/uploads/recus/{{ photo.nom_fichier }}')" class="p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-indigo-100 hover:text-indigo-600 transition inline-block shadow-sm">
+                                            <i class="ph-bold ph-image text-base"></i>
+                                        </button>
                                         {% endfor %}
                                         {% else %}
-                                        <span class="text-[10px] text-slate-400">Pas de reçu</span>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-2">Pas de doc</span>
                                         {% endif %}
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="5" class="px-5 py-8 text-center text-gray-400 italic text-sm bg-gray-50/50">
-                                        Aucune opération enregistrée pour ce client.
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+
+                                        <form action="/ajouter_recu/{{ op.id }}" method="POST" enctype="multipart/form-data" class="inline-block" x-data>
+                                            <input type="file" name="photos" multiple accept="image/*" capture="environment" class="hidden" x-ref="fileInput" @change="$el.form.submit()">
+                                            <button type="button" @click="$refs.fileInput.click()" class="p-1.5 bg-white border border-slate-200 text-slate-400 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition shadow-sm" title="Ajouter un reçu manquant">
+                                                <i class="ph-bold ph-plus text-base"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="px-6 py-12 text-center text-slate-400 font-bold text-sm bg-slate-50/50">Aucune opération enregistrée.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </template>
-
 </div>
 
 <script>
     function copierEnSecurite(texte) {
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(texte);
-        } else {
-            let textArea = document.createElement("textarea");
-            textArea.value = texte;
-            textArea.style.position = "fixed";
-            textArea.style.left = "-9999px";
-            textArea.style.top = "0";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            try { document.execCommand('copy'); }
-            catch (err) { console.error('Erreur de copie:', err); }
-            document.body.removeChild(textArea);
+        if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(texte); }
+        else {
+            let textArea = document.createElement("textarea"); textArea.value = texte; textArea.style.position = "fixed"; textArea.style.left = "-9999px"; textArea.style.top = "0"; document.body.appendChild(textArea); textArea.focus(); textArea.select();
+            try { document.execCommand('copy'); } catch (err) { } document.body.removeChild(textArea);
         }
-    }
-    function appelerClient(id) {
-        // On change le texte du bouton temporairement pour donner un feedback
-        const btn = event.currentTarget;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = "Appel en cours...";
-        btn.disabled = true;
-
-        fetch(`/appeler_client/${id}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Succès : on remet le bouton avec une petite animation verte
-                    btn.classList.replace('from-orange-500', 'from-green-500');
-                    btn.innerHTML = "Appelé !";
-                    setTimeout(() => {
-                        btn.classList.replace('from-green-500', 'from-orange-500');
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                    }, 2000);
-                }
-            })
-            .catch(err => {
-                console.error("Erreur d'appel:", err);
-                btn.innerHTML = "Erreur !";
-                btn.disabled = false;
-            });
     }
 </script>
 {% endblock %}

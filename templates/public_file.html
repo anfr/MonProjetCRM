@@ -216,7 +216,9 @@
                 </div>
             </div>
             <div>
-                <h1 class="text-2xl font-black tracking-tight text-white uppercase letter-spacing-wide">Kiosque Pro</h1>
+                <h1 class="text-xl font-black tracking-tight text-white truncate w-40" title="{{ config.nom_boutique if config else 'Mon CRM' }}">
+                    {{ config.nom_boutique if config else 'Mon CRM' }}
+                </h1>
                 <p class="text-slate-400 font-medium text-sm capitalize" x-text="dateJour"></p>
             </div>
         </div>

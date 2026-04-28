@@ -110,6 +110,15 @@
                         <td class="py-4 px-6 text-right">
                             <div class="flex items-center justify-end gap-2">
                                 <button @click="modalClotureOuverte = true" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition">Clôturer</button>
+
+                                {% if session.get('role') == 'admin' %}
+                                <a href="/supprimer_operation/{{ op.id }}"
+                                   onclick="return confirm('Attention : Voulez-vous vraiment annuler et supprimer cette opération en attente ?');"
+                                   class="p-2 text-slate-400 hover:text-red-600 bg-white border border-slate-200 hover:bg-red-50 hover:border-red-200 rounded-md shadow-sm transition-all"
+                                   title="Annuler/Supprimer l'opération">
+                                    <i class="ph-bold ph-trash text-lg"></i>
+                                </a>
+                                {% endif %}
                             </div>
 
                             <div x-show="modalClotureOuverte" x-cloak class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
@@ -129,7 +138,7 @@
                                         </div>
                                         <div class="mb-6">
                                             <label class="block text-sm font-semibold text-gray-700 mb-2">Scanner tous les reçus</label>
-                                            <input type="file" name="photo_recu" multiple accept="image/*" capture="environment" class="block w-full text-xs text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 border border-gray-300 rounded-xl bg-gray-50" />
+                                            <input type="file" name="photos" multiple accept="image/*" capture="environment" class="block w-full text-xs text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 border border-gray-300 rounded-xl bg-gray-50" />
                                             <p class="text-[10px] text-slate-400 mt-1 italic">Vous pouvez sélectionner plusieurs photos à la fois.</p>
                                         </div>
                                         <div class="flex gap-3">

@@ -15,3 +15,5 @@ base.db
 # Ignorer les fichiers temporaires Python
 __pycache__/
 *.pyc
+maj_db.py
+reparer_db.py

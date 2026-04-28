@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
+            <div class="bg-red-100 text-red-600 p-2.5 rounded-xl shadow-inner">
+                <i class="ph-fill ph-trash text-2xl"></i>
+            </div>
+            Corbeille Système
+        </h1>
+        <p class="text-slate-500 font-medium mt-1">Gérez les éléments supprimés. La destruction ici est définitive.</p>
+    </div>
+    <a href="javascript:history.back()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 font-bold py-2.5 px-5 rounded-xl shadow-sm transition-colors flex items-center gap-2">
+        <i class="ph-bold ph-arrow-left text-lg"></i> Retour
+    </a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[600px]">
+        <div class="px-6 py-5 border-b border-slate-100 bg-red-50/50 flex justify-between items-center shrink-0">
+            <h3 class="font-black text-red-900 flex items-center gap-2 text-lg">
+                <i class="ph-bold ph-receipt text-red-500 text-xl"></i> Opérations ({{ operations|length }})
+            </h3>
+        </div>
+        <div class="overflow-y-auto flex-1 p-2">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-white text-slate-400 uppercase text-[10px] font-black tracking-widest sticky top-0 z-10 shadow-sm">
+                    <tr>
+                        <th class="px-4 py-3 border-b border-slate-100">Client & Date</th>
+                        <th class="px-4 py-3 border-b border-slate-100">Finances & Fichiers</th>
+                        <th class="px-4 py-3 border-b border-slate-100 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    {% for op in operations %}
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        <td class="px-4 py-4">
+                            <p class="font-bold text-slate-800 uppercase">{{ op.client.nom }} <span class="capitalize">{{ op.client.prenom }}</span></p>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5"><i class="ph-bold ph-clock"></i> {{ op.date_operation.strftime('%d/%m/%y à %H:%M') }}</p>
+                        </td>
+                        <td class="px-4 py-4">
+                            <span class="block font-black text-slate-700">{{ op.montant_avance }} DH</span>
+                            {% if op.photos %}
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 mt-1 shadow-sm" title="Ces fichiers seront effacés du disque">
+                                <i class="ph-bold ph-images"></i> {{ op.photos|length }} Reçu(s)
+                            </span>
+                            {% elif op.photo_recu %}
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 mt-1 shadow-sm">
+                                <i class="ph-bold ph-image"></i> 1 Ancien Reçu
+                            </span>
+                            {% else %}
+                            <span class="block text-[10px] font-bold text-slate-400 italic mt-1">Aucun fichier</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                <a href="/restaurer_operation/{{ op.id }}" class="p-2 bg-white border border-slate-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 rounded-lg transition-colors shadow-sm" title="Restaurer">
+                                    <i class="ph-bold ph-arrow-u-up-left text-lg"></i>
+                                </a>
+                                <a href="/detruire_operation/{{ op.id }}" onclick="return confirm('Attention : Détruire DÉFINITIVEMENT cette opération {% if op.photos %}ET effacer ses reçus du disque dur {% endif %}?');" class="p-2 bg-white border border-slate-200 text-red-600 hover:bg-red-50 hover:border-red-200 rounded-lg transition-colors shadow-sm" title="Détruire définitivement">
+                                    <i class="ph-bold ph-warning-octagon text-lg"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="p-12 text-center">
+                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-400 mb-3">
+                                <i class="ph-bold ph-check text-2xl"></i>
+                            </div>
+                            <p class="text-slate-500 font-bold text-sm">Corbeille des opérations vide.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[600px]">
+        <div class="px-6 py-5 border-b border-slate-100 bg-red-50/50 flex justify-between items-center shrink-0">
+            <h3 class="font-black text-red-900 flex items-center gap-2 text-lg">
+                <i class="ph-bold ph-file-text text-red-500 text-xl"></i> Contrats ({{ contrats|length }})
+            </h3>
+        </div>
+        <div class="overflow-y-auto flex-1 p-2">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-white text-slate-400 uppercase text-[10px] font-black tracking-widest sticky top-0 z-10 shadow-sm">
+                    <tr>
+                        <th class="px-4 py-3 border-b border-slate-100">Service & Contrat</th>
+                        <th class="px-4 py-3 border-b border-slate-100">Titulaire</th>
+                        <th class="px-4 py-3 border-b border-slate-100 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    {% for contrat in contrats %}
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        <td class="px-4 py-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200 mb-1">
+                                {{ contrat.service.nom_service }}
+                            </span>
+                            <p class="font-black text-slate-800 font-mono text-base tracking-tight">{{ contrat.numero_contrat }}</p>
+                        </td>
+                        <td class="px-4 py-4">
+                            <p class="text-xs font-bold text-slate-600 uppercase">{{ contrat.nom_proprietaire }}</p>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Dossier: {{ contrat.client.nom }}</p>
+                        </td>
+                        <td class="px-4 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                <a href="/restaurer_contrat/{{ contrat.id }}" class="p-2 bg-white border border-slate-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 rounded-lg transition-colors shadow-sm" title="Restaurer">
+                                    <i class="ph-bold ph-arrow-u-up-left text-lg"></i>
+                                </a>
+                                <a href="/detruire_contrat/{{ contrat.id }}" onclick="return confirm('Détruire DÉFINITIVEMENT ce contrat ?');" class="p-2 bg-white border border-slate-200 text-red-600 hover:bg-red-50 hover:border-red-200 rounded-lg transition-colors shadow-sm" title="Suppression définitive">
+                                    <i class="ph-bold ph-warning-octagon text-lg"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="p-12 text-center">
+                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-400 mb-3">
+                                <i class="ph-bold ph-check text-2xl"></i>
+                            </div>
+                            <p class="text-slate-500 font-bold text-sm">Corbeille des contrats vide.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

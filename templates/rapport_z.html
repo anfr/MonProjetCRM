@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-4xl mx-auto mb-6 flex justify-between items-center no-print">
+    <a href="javascript:history.back()" class="text-slate-500 hover:text-slate-800 font-medium flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        Retour
+    </a>
+    <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-sm flex items-center gap-2 transition-colors">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        Imprimer / Sauvegarder en PDF
+    </button>
+</div>
+
+<div id="document-z" class="max-w-4xl mx-auto bg-white p-12 shadow-2xl rounded-sm border border-slate-200" style="min-height: 297mm;">
+
+    <div class="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 uppercase tracking-widest">MON KIOSQUE</h1>
+            <p class="text-sm font-bold text-slate-500 mt-1">RAPPORT "Z" DE CAISSE</p>
+        </div>
+        <div class="text-right">
+            <p class="text-sm text-slate-600">Session N° : <strong class="text-slate-900">{{ session_caisse.id }}</strong></p>
+            <p class="text-sm text-slate-600">Clôturée le : <strong>{{ session_caisse.date_cloture.strftime('%d/%m/%Y à %H:%M') if session_caisse.date_cloture else 'En cours' }}</strong></p>
+            <p class="text-sm text-slate-600">Statut : <span class="uppercase font-bold {% if session_caisse.statut == 'Clôturée' %}text-red-600{% else %}text-green-600{% endif %}">{{ session_caisse.statut }}</span></p>
+        </div>
+    </div>
+
+    <h2 class="text-lg font-bold text-slate-800 mb-4 bg-slate-100 p-2 rounded">Synthèse Financière (Les Deux Mondes)</h2>
+
+    <div class="grid grid-cols-2 gap-8 mb-10">
+        <div class="border-2 border-slate-800 rounded-xl p-6 bg-slate-50 relative">
+            <h2 class="absolute -top-3 left-6 bg-slate-50 px-2 text-sm font-black uppercase tracking-widest text-slate-800 flex items-center gap-1"><i class="ph-fill ph-wallet text-lg"></i> Caisse Espèces</h2>
+
+            <div class="space-y-2 mb-6 mt-2 text-sm text-slate-600 font-medium">
+                <div class="flex justify-between"><span>Fond du matin :</span> <span class="font-bold text-slate-900">{{ session_caisse.fond_initial or 0 }} DH</span></div>
+                <div class="flex justify-between text-green-600"><span>Total Entrées :</span> <span>+ {{ session_caisse.total_entrees or 0 }} DH</span></div>
+                <div class="flex justify-between text-red-600 border-b border-slate-200 pb-2"><span>Total Sorties :</span> <span>- {{ session_caisse.total_sorties or 0 }} DH</span></div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between items-center text-sm">
+                    <span class="font-bold text-slate-500 uppercase">Théorique Tiroir :</span>
+                    <span class="text-xl font-black text-slate-800">{{ session_caisse.montant_theorique or 0 }} DH</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="font-bold text-slate-500 uppercase">Compté par Caissier :</span>
+                    <span class="text-xl font-black text-slate-800">{{ session_caisse.montant_reel or 0 }} DH</span>
+                </div>
+
+                <div class="mt-4 pt-3 border-t-2 border-slate-200 flex justify-between items-center">
+                    <span class="font-black uppercase {% if (session_caisse.ecart or 0) < 0 %}text-red-600{% elif (session_caisse.ecart or 0) > 0 %}text-green-600{% else %}text-slate-800{% endif %}">ÉCART ESPÈCES :</span>
+                    <span class="text-2xl font-black {% if (session_caisse.ecart or 0) < 0 %}text-red-600 bg-red-100 px-2 rounded{% elif (session_caisse.ecart or 0) > 0 %}text-green-600 bg-green-100 px-2 rounded{% else %}text-slate-800{% endif %}">
+                        {% if (session_caisse.ecart or 0) > 0 %}+{% endif %}{{ session_caisse.ecart or 0 }} DH
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-2 border-blue-200 rounded-xl p-6 bg-blue-50/30 relative">
+            <h2 class="absolute -top-3 left-6 bg-white px-2 text-sm font-black uppercase tracking-widest text-blue-800 flex items-center gap-1"><i class="ph-fill ph-device-mobile text-lg"></i> Caisse Virtuelle</h2>
+
+            <div class="space-y-2 mb-6 mt-2 text-sm text-slate-600 font-medium">
+                <div class="flex justify-between"><span>Solde du matin :</span> <span class="font-bold text-slate-900">{{ session_caisse.tasshilat_initial or 0 }} DH</span></div>
+                <div class="flex justify-between text-blue-600"><span>Rechargement cash :</span> <span>+ {{ session_caisse.total_tasshilat_recharge or 0 }} DH</span></div>
+                <div class="flex justify-between text-orange-500 border-b border-blue-100 pb-2"><span>Factures payées :</span> <span>- {{ session_caisse.total_tasshilat_consomme or 0 }} DH</span></div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between items-center text-sm">
+                    <span class="font-bold text-slate-500 uppercase">Théorique Machine :</span>
+                    <span class="text-xl font-black text-blue-900">{{ session_caisse.tasshilat_theorique or 0 }} DH</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="font-bold text-slate-500 uppercase">Lu sur l'écran :</span>
+                    <span class="text-xl font-black text-blue-900">
+                        {{ session_caisse.tasshilat_reel if session_caisse.tasshilat_reel > 0 else (session_caisse.plafond_tasshilat or 0) }} DH
+                    </span>
+                </div>
+
+                <div class="mt-4 pt-3 border-t-2 border-blue-200 flex justify-between items-center">
+                    <span class="font-black uppercase {% if (session_caisse.ecart_tasshilat or 0) < 0 %}text-red-600{% elif (session_caisse.ecart_tasshilat or 0) > 0 %}text-green-600{% else %}text-blue-800{% endif %}">ÉCART MACHINE :</span>
+                    <span class="text-2xl font-black {% if (session_caisse.ecart_tasshilat or 0) < 0 %}text-red-600 bg-red-100 px-2 rounded{% elif (session_caisse.ecart_tasshilat or 0) > 0 %}text-green-600 bg-green-100 px-2 rounded{% else %}text-blue-800{% endif %}">
+                        {% if (session_caisse.ecart_tasshilat or 0) > 0 %}+{% endif %}{{ session_caisse.ecart_tasshilat or 0 }} DH
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="text-lg font-bold text-slate-800 mb-4 bg-slate-100 p-2 rounded">Détail des Mouvements</h2>
+    <table class="w-full text-left text-sm text-slate-700 border-collapse mb-10">
+        <thead>
+            <tr class="border-b border-slate-300">
+                <th class="py-2 px-2 font-bold uppercase text-[10px] tracking-wider">Heure</th>
+                <th class="py-2 px-2 font-bold uppercase text-[10px] tracking-wider">Type</th>
+                <th class="py-2 px-2 font-bold uppercase text-[10px] tracking-wider">Catégorie / Motif</th>
+                <th class="py-2 px-2 text-right font-bold uppercase text-[10px] tracking-wider">Montant</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mvt in mouvements %}
+            <tr class="border-b border-slate-100">
+                <td class="py-2 px-2 text-xs text-slate-500">{{ mvt.date_mouvement.strftime('%H:%M') }}</td>
+                <td class="py-2 px-2 font-bold {% if mvt.type_mouvement == 'Entrée' %}text-green-600{% else %}text-red-600{% endif %}">
+                    {{ mvt.type_mouvement }}
+                </td>
+                <td class="py-2 px-2">
+                    <span class="font-bold text-slate-800">{{ mvt.categorie }}</span>
+                    {% if mvt.description %}<span class="text-slate-500 text-xs ml-1">- {{ mvt.description }}</span>{% endif %}
+                </td>
+                <td class="py-2 px-2 text-right font-black {% if mvt.type_mouvement == 'Entrée' %}text-green-700{% else %}text-red-700{% endif %}">
+                    {% if mvt.type_mouvement == 'Entrée' %}+{% else %}-{% endif %}{{ mvt.montant }} DH
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="py-6 text-center italic text-slate-400">Aucun mouvement enregistré dans cette session.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="mt-16 pt-8 border-t border-slate-300 flex justify-between px-10">
+        <div class="text-center">
+            <p class="text-sm font-bold text-slate-600 mb-12">Signature Caissier</p>
+            <p class="text-slate-300">_____________________</p>
+        </div>
+        <div class="text-center">
+            <p class="text-sm font-bold text-slate-600 mb-12">Validation Gérant</p>
+            <p class="text-slate-300">_____________________</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

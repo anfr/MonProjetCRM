@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon CRM - Kiosque Multiservices</title>
+    <title>{{ config.nom_boutique if config else 'Mon CRM' }} - Kiosque Pro</title>
 
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
@@ -13,7 +13,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
@@ -29,10 +28,10 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
-        /* Scrollbar moderne */
+        /* Scrollbar moderne et discrète */
         ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
+            width: 6px;
+            height: 6px;
         }
 
         ::-webkit-scrollbar-track {
@@ -48,7 +47,7 @@
                 background: #94a3b8;
             }
 
-        /* Animation d'entrée de page */
+        /* Animation fluide pour le chargement des pages */
         .page-enter {
             animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -56,7 +55,7 @@
         @keyframes slideUpFade {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(15px);
             }
 
             to {
@@ -65,9 +64,9 @@
             }
         }
 
-        /* Optimisation Impression */
+        /* Mode Impression 100% propre */
         @media print {
-            aside, header, button, a, nav, .no-print, [role="button"] {
+            aside, header, button, a, nav, .no-print, [role="button"], #palette-recherche {
                 display: none !important;
             }
 
@@ -84,226 +83,220 @@
 
             .shadow-sm, .shadow-md, .shadow-xl {
                 box-shadow: none !important;
-                border: 1px solid #eee !important;
+                border: 1px solid #e2e8f0 !important;
             }
         }
     </style>
 </head>
 
-<body x-data="{ sidebarToggle: false }" class="bg-[#f8fafc] text-slate-800 antialiased h-full overflow-hidden">
+<body x-data="{ sidebarToggle: false, imgModal: { open: false, src: '' } }" @open-image.window="imgModal.src = $event.detail; imgModal.open = true" class="bg-slate-50 text-slate-800 antialiased h-full overflow-hidden flex">
 
-    <div class="flex h-full overflow-hidden">
+    <div x-show="sidebarToggle" x-cloak x-transition.opacity @click="sidebarToggle = false"
+         class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden"></div>
 
-        <div x-show="sidebarToggle"
-             x-cloak
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             @click="sidebarToggle = false"
-             class="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"></div>
+    <aside :class="sidebarToggle ? 'translate-x-0' : '-translate-x-full'"
+           class="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-[#0f172a] transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 border-r border-white/5 shadow-2xl">
 
-        <aside :class="sidebarToggle ? 'translate-x-0' : '-translate-x-full'"
-               class="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-[#0b0f19] transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 border-r border-white/10 shadow-2xl">
+        <div class="absolute top-0 left-0 w-full h-64 bg-indigo-500/10 blur-[80px] pointer-events-none"></div>
 
-            <div class="absolute top-0 left-0 w-full h-64 bg-indigo-500/10 blur-[80px] pointer-events-none"></div>
-
-            <div class="relative flex items-center justify-between px-6 py-7 border-b border-white/5 z-10">
-                <a href="{{ url_for('accueil') }}" class="flex items-center gap-3 group">
-                    <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-blue-500 shadow-lg group-hover:scale-105 transition-transform duration-300">
-                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.809c0-.636-.28-1.236-.76-1.644l-6.6-5.614a3.375 3.375 0 00-4.43 0L3.14 8.165A2.625 2.625 0 002.36 9.81V21M15 6.75V4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75v2.25m-3 0h9" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-black tracking-tight text-white">Mon CRM</h1>
-                        <p class="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Kiosque Pro</p>
-                    </div>
-                </a>
-                <button @click="sidebarToggle = false" class="lg:hidden text-slate-400 hover:text-white transition-colors">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-            </div>
-
-            <div class="flex-1 overflow-y-auto px-4 py-6 z-10 relative">
-                <nav class="space-y-1">
-                    <p class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-2">Menu Principal</p>
-
-                    <a href="{{ url_for('accueil') }}"
-                       class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'accueil' %}bg-indigo-600 text-white shadow-lg shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
-                        Tableau de bord
-                    </a>
-
-                    <a href="{{ url_for('clients.liste_clients') }}"
-                       class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if 'clients' in request.endpoint and request.endpoint != 'clients.historique' and request.endpoint != 'clients.liste_dettes' %}bg-indigo-600 text-white shadow-lg shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
-                        Mes Clients
-                    </a>
-
-                    <a href="{{ url_for('clients.historique') }}"
-                       class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'clients.historique' %}bg-indigo-600 text-white shadow-lg shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-                        Historique & Comptes
-                    </a>
-
-                    <a href="{{ url_for('clients.liste_dettes') }}"
-                       class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'clients.liste_dettes' %}bg-red-600 text-white shadow-lg shadow-red-500/20{% else %}text-slate-400 hover:bg-red-500/10 hover:text-red-400{% endif %}">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
-                        Carnet de Crédit
-                    </a>
-
-                    <div class="pt-4 mt-2 border-t border-white/5">
-                        <p class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-emerald-500/60 mb-2">Service Client</p>
-
-                        <a href="{{ url_for('queue.gestion_file') }}"
-                           class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'queue.gestion_file' %}bg-indigo-600 text-white shadow-lg shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            Gestion File d'Attente
-                        </a>
-
-                        <a href="{{ url_for('queue.public_view') }}" target="_blank"
-                           class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-all mt-1">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                            Écran TV Public
-                        </a>
-                    </div>
-
-
-
-                    {% if session.get('role') == 'admin' %}
-                    <div class="pt-4 mt-2 border-t border-white/5">
-                        <p class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-2">Administration</p>
-                        <a href="{{ url_for('parametres') }}"
-                           class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'parametres' %}bg-indigo-600 text-white shadow-lg{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                            Paramètres Système
-                        </a>
-                    </div>
-                    {% endif %}
-                </nav>
-            </div>
-
-            <div class="p-4 z-10 border-t border-white/5">
-                <div class="bg-white/5 rounded-xl p-3 flex items-center justify-between">
-                    <div>
-                        <p class="text-[10px] font-black text-white uppercase">v2.0 Pro</p>
-                        <p class="text-[9px] text-slate-500 font-bold">Base : SQLite</p>
-                    </div>
-                    <div class="h-2 w-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+        <div class="relative flex items-center justify-between px-6 py-7 border-b border-white/5 z-10">
+            <a href="{{ url_for('accueil') }}" class="flex items-center gap-3 group">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-300">
+                    <i class="ph-bold ph-storefront text-white text-xl"></i>
                 </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight text-white truncate w-40" title="{{ config.nom_boutique if config else 'Mon CRM' }}">
+                        {{ config.nom_boutique if config else 'Mon CRM' }}
+                    </h1>
+                    <p class="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Kiosque Pro</p>
+                </div>
+            </a>
+            <button @click="sidebarToggle = false" class="lg:hidden text-slate-400 hover:text-white transition-colors">
+                <i class="ph-bold ph-x text-2xl"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 py-6 z-10 relative">
+            <nav class="space-y-1.5">
+
+                <p class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Menu Principal</p>
+
+                <a href="{{ url_for('accueil') }}"
+                   class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'accueil' %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
+                    <i class="ph-bold ph-squares-four text-xl"></i> Tableau de bord
+                </a>
+
+                <a href="/caisse"
+                   class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if 'caisse' in request.path and 'historique' not in request.path %}bg-emerald-600 text-white shadow-md shadow-emerald-500/20{% else %}text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300{% endif %}">
+                    <i class="ph-bold ph-calculator text-xl"></i> Caisse (POS)
+                </a>
+
+                <a href="{{ url_for('caisse.historique_caisse') }}"
+                   class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if 'historique_caisse' in request.path or 'historique' in request.endpoint and 'caisse' in request.endpoint %}bg-white/10 text-white{% else %}text-slate-500 hover:bg-white/5 hover:text-slate-300{% endif %}">
+                    <i class="ph-bold ph-receipt text-xl"></i> Historique Z-Caisse
+                </a>
+
+                <a href="{{ url_for('clients.liste_clients') }}"
+                   class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if 'clients' in request.endpoint and request.endpoint not in ['clients.historique', 'clients.liste_dettes'] %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
+                    <i class="ph-bold ph-users text-xl"></i> Mes Clients
+                </a>
+
+                <a href="{{ url_for('clients.historique') }}"
+                   class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'clients.historique' %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
+                    <i class="ph-bold ph-clock-counter-clockwise text-xl"></i> Historique & Comptes
+                </a>
+
+                <a href="{{ url_for('clients.liste_dettes') }}"
+                   class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'clients.liste_dettes' %}bg-red-600 text-white shadow-md shadow-red-500/20{% else %}text-slate-400 hover:bg-red-500/10 hover:text-red-400{% endif %}">
+                    <i class="ph-bold ph-book-bookmark text-xl"></i> Carnet de Crédit
+                </a>
+
+                <div class="pt-4 mt-2 border-t border-white/5">
+                    <p class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-emerald-500/60 mb-3">Service Client</p>
+
+                    <a href="{{ url_for('queue.gestion_file') }}"
+                       class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'queue.gestion_file' %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
+                        <i class="ph-bold ph-list-numbers text-xl"></i> Gestion File d'Attente
+                    </a>
+
+                    <a href="{{ url_for('queue.public_view') }}" target="_blank"
+                       class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-all mt-1">
+                        <i class="ph-bold ph-monitor-play text-xl"></i> Écran TV Public
+                    </a>
+                </div>
+
+                {% if session.get('role') == 'admin' %}
+                <div class="pt-4 mt-2 border-t border-white/5">
+                    <p class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Administration</p>
+
+                    <a href="{{ url_for('parametres') }}"
+                       class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'parametres' %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
+                        <i class="ph-bold ph-sliders-horizontal text-xl"></i> Paramètres Système
+                    </a>
+
+                    <a href="/corbeille"
+                       class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if 'corbeille' in request.path %}bg-red-900/40 text-red-400 border border-red-900/50{% else %}text-slate-500 hover:bg-red-500/10 hover:text-red-400{% endif %}">
+                        <i class="ph-bold ph-trash text-xl"></i> Corbeille
+                    </a>
+                </div>
+                {% endif %}
+            </nav>
+        </div>
+
+        <div class="p-4 z-10 border-t border-white/5 bg-slate-900/20">
+            <div class="rounded-xl p-3 flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] font-black text-white uppercase tracking-wider">v2.0 Pro</p>
+                    <p class="text-[9px] text-slate-500 font-bold">Base : SQLite</p>
+                </div>
+                <div class="h-2.5 w-2.5 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.6)] animate-pulse"></div>
             </div>
-        </aside>
+        </div>
+    </aside>
 
-        <div class="relative flex flex-1 flex-col overflow-hidden bg-[#f8fafc]">
+    <div class="relative flex flex-1 flex-col overflow-hidden">
 
-            <header class="sticky top-0 z-30 flex w-full bg-white/80 backdrop-blur-md border-b border-slate-200">
-                <div class="flex flex-grow items-center justify-between py-3 px-6 lg:px-8">
+        <header class="sticky top-0 z-30 flex w-full bg-white/70 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+            <div class="flex flex-grow items-center justify-between py-3 px-6 lg:px-8">
 
-                    <button class="lg:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg" @click.stop="sidebarToggle = !sidebarToggle">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+                <button class="lg:hidden p-2 text-slate-500 hover:bg-slate-100 hover:text-indigo-600 rounded-xl transition-colors" @click.stop="sidebarToggle = !sidebarToggle">
+                    <i class="ph-bold ph-list text-2xl"></i>
+                </button>
+
+                <div class="hidden md:block flex-1 max-w-md">
+                    <button @click="$dispatch('open-palette')"
+                            class="w-full flex items-center text-left bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl px-4 py-2.5 transition-colors group">
+                        <i class="ph-bold ph-magnifying-glass text-lg text-slate-400 group-hover:text-indigo-500 transition-colors mr-3"></i>
+                        <span class="text-sm text-slate-500 font-medium">Rechercher...</span>
+                        <span class="ml-auto text-[10px] font-bold text-slate-400 border border-slate-300 px-2 py-0.5 rounded-md bg-white shadow-sm">Ctrl + K</span>
                     </button>
+                </div>
 
-                    <div class="hidden md:block flex-1 max-w-md">
-                        <button @click="$dispatch('open-palette')"
-                                class="w-full flex items-center text-left bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl px-4 py-2 transition-colors">
-                            <svg class="w-5 h-5 text-slate-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                            <span class="text-sm text-slate-500 font-medium">Rechercher...</span>
-                            <span class="ml-auto text-[10px] font-bold text-slate-400 border border-slate-300 px-1.5 py-0.5 rounded-lg bg-white">Ctrl + K</span>
+                <div class="flex items-center gap-2 sm:gap-4 ml-auto">
+
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-600 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border border-amber-200 shadow-sm">
+                            <i class="ph-fill ph-lightning text-lg"></i> <span class="hidden sm:inline">Ticket Rapide</span>
                         </button>
-                    </div>
 
-                    <div class="flex items-center gap-3 ml-auto">
-
-                        <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" class="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-600 px-5 py-2.5 rounded-xl text-sm font-bold transition-all border border-amber-200 shadow-sm cursor-pointer">
-                                <i class="ph-fill ph-lightning text-lg"></i> Ticket Rapide
-                            </button>
-
-                            <div x-show="open" @click.outside="open = false" x-cloak x-transition
-                                 class="absolute right-0 mt-3 w-60 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden">
-                                <div class="p-2 space-y-1">
-                                    {% for b in liste_boutons %}
-                                    <a href="/queue/generer/{{ b.nom_service }}" class="flex items-center px-4 py-3 text-sm font-bold text-slate-700 hover:bg-amber-50 border-b border-slate-50 last:border-0 transition-colors group rounded-lg">
-                                        <span class="w-6 h-6 bg-amber-100 text-amber-600 rounded flex items-center justify-center mr-3 text-[10px] font-black group-hover:bg-amber-500 group-hover:text-white transition-colors">
-                                            {{ b.lettre }}
-                                        </span>
-                                        {{ b.nom_service }}
-                                    </a>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <a href="{{ url_for('clients.ajouter_client') }}"
-                           class="hidden sm:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-indigo-200 transition-all">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                            Nouveau Client
-                        </a>
-
-
-
-                        <div class="relative" x-data="{ openNotifs: false }">
-                            <button @click="openNotifs = !openNotifs" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all relative">
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
-                                {% if nb_notifs > 0 %}<span class="absolute top-2.5 right-2.5 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white"></span>{% endif %}
-                            </button>
-                            <div x-show="openNotifs"
-                                 x-cloak
-                                 x-transition.origin.top.right
-                                 @click.outside="openNotifs = false"
-                                 class="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 p-2">
-                                <p class="px-3 py-2 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 mb-2">Notifications</p>
-                                {% if nb_notifs > 0 %}
-                                {% for notif in notifs %}
-                                <a href="{{ notif.lien }}" class="block p-3 hover:bg-slate-50 rounded-xl text-sm font-semibold text-slate-700 transition-colors">
-                                    {{ notif.message }}
+                        <div x-show="open" @click.outside="open = false" x-cloak x-transition
+                             class="absolute right-0 mt-3 w-60 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+                            <div class="p-2 space-y-1">
+                                {% for b in liste_boutons %}
+                                <a href="/queue/generer/{{ b.nom_service }}" class="flex items-center px-4 py-3 text-sm font-bold text-slate-700 hover:bg-amber-50 border-b border-slate-50 last:border-0 transition-colors group rounded-lg">
+                                    <span class="w-6 h-6 bg-amber-100 text-amber-600 rounded flex items-center justify-center mr-3 text-[10px] font-black group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                                        {{ b.lettre }}
+                                    </span>
+                                    {{ b.nom_service }}
                                 </a>
                                 {% endfor %}
-                                {% else %}
-                                <div class="p-8 text-center text-slate-400 text-xs italic">Aucune alerte pour le moment</div>
-                                {% endif %}
                             </div>
                         </div>
-
-                        <a href="/profil" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200 group bg-white shadow-sm">
-                            <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                {{ session.get('username', 'U')[0] | upper }}
-                            </div>
-                            <div class="hidden md:block text-left">
-                                <p class="text-sm font-bold text-slate-800 leading-tight capitalize">{{ session.get('username', 'Utilisateur') }}</p>
-                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{{ session.get('role', 'Rôle') }}</p>
-                            </div>
-                        </a>
-
-                        <a href="{{ url_for('logout') }}" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Déconnexion">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
-                        </a>
                     </div>
-                </div>
-            </header>
 
-            <main class="flex-1 overflow-y-auto p-4 lg:p-8 page-enter">
-                {% block content %}{% endblock %}
-            </main>
-        </div>
+                    <a href="{{ url_for('clients.ajouter_client') }}"
+                       class="hidden sm:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-200 transition-all">
+                        <i class="ph-bold ph-user-plus text-lg"></i> Nouveau Client
+                    </a>
+
+                    <div class="relative" x-data="{ openNotifs: false }">
+                        <button @click="openNotifs = !openNotifs" class="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all relative">
+                            <i class="ph-bold ph-bell text-xl"></i>
+                            {% if nb_notifs > 0 %}<span class="absolute top-2 right-2 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse"></span>{% endif %}
+                        </button>
+                        <div x-show="openNotifs" x-cloak x-transition.origin.top.right @click.outside="openNotifs = false" class="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 p-2">
+                            <p class="px-3 py-2 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 mb-2">Notifications</p>
+                            {% if nb_notifs > 0 %}
+                            {% for notif in notifs %}
+                            <a href="{{ notif.lien }}" class="block p-3 hover:bg-slate-50 rounded-xl text-sm font-semibold text-slate-700 transition-colors">{{ notif.message }}</a>
+                            {% endfor %}
+                            {% else %}
+                            <div class="p-8 text-center text-slate-400 text-xs italic">Aucune alerte pour le moment</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+
+                    <a href="/profil" class="flex items-center gap-3 px-2 sm:px-3 py-2 rounded-xl hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200 group bg-white shadow-sm">
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-blue-100 text-indigo-600 flex items-center justify-center font-black shadow-inner group-hover:from-indigo-600 group-hover:to-blue-600 group-hover:text-white transition-colors">
+                            {{ session.get('username', 'U')[0] | upper }}
+                        </div>
+                        <div class="hidden md:block text-left">
+                            <p class="text-sm font-bold text-slate-800 leading-tight capitalize">{{ session.get('username', 'Utilisateur') }}</p>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{{ session.get('role', 'Rôle') }}</p>
+                        </div>
+                    </a>
+
+                    <a href="{{ url_for('logout') }}" class="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Déconnexion">
+                        <i class="ph-bold ph-sign-out text-xl"></i>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 page-enter relative z-0">
+            {% block content %}{% endblock %}
+        </main>
     </div>
 
-    <div x-data="{
+    <div id="palette-recherche" x-data="{
          openPalette: false,
          searchQuery: '' ,
          results: [],
-         chercher() {
+         isSearching: false,
+         async chercher() {
          if (this.searchQuery.length>
         1) {
-        fetch('/api/recherche?q=' + encodeURIComponent(this.searchQuery))
-        .then(r => r.json())
-        .then(d => { this.results = d; })
-        .catch(err => console.error('Erreur API:', err));
+        this.isSearching = true;
+        try {
+        let response = await fetch('/api/recherche?q=' + encodeURIComponent(this.searchQuery));
+        this.results = await response.json();
+        } catch(err) {
+        console.error('Erreur API Recherche:', err);
+        } finally {
+        this.isSearching = false;
+        }
         } else {
         this.results = [];
         }
@@ -314,50 +307,54 @@
         @open-palette.window="openPalette = true; $nextTick(() => $refs.searchInput.focus())"
         class="relative z-[9999]">
 
-        <div x-show="openPalette"
-             x-transition.opacity
-             class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
-             @click="openPalette = false"></div>
+        <div x-show="openPalette" x-transition.opacity class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="openPalette = false"></div>
 
-        <div x-show="openPalette"
-             x-transition.scale.95
-             class="fixed inset-0 top-[15vh] mx-auto max-w-2xl w-full px-4 h-fit">
+        <div x-show="openPalette" x-transition.scale.95 class="fixed inset-0 top-[10vh] mx-auto max-w-2xl w-full px-4 h-fit">
+            <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden" @click.outside="openPalette = false">
 
-            <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden"
-                 @click.outside="openPalette = false">
+                <div class="flex items-center p-4 border-b border-slate-100 bg-slate-50/50">
+                    <i class="ph-bold ph-magnifying-glass text-2xl text-indigo-500 mr-3" x-show="!isSearching"></i>
+                    <i class="ph-bold ph-spinner animate-spin text-2xl text-indigo-500 mr-3" x-show="isSearching" style="display: none;"></i>
 
-                <div class="flex items-center p-4 border-b border-slate-100">
-                    <svg class="w-6 h-6 text-indigo-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-
-                    <input x-ref="searchInput"
-                           x-model="searchQuery"
-                           @input.debounce.300ms="chercher()"
-                           class="w-full text-xl font-medium outline-none placeholder:text-slate-400"
-                           placeholder="Rechercher un client ou un numéro...">
+                    <input x-ref="searchInput" x-model="searchQuery" @input.debounce.400ms="chercher()" class="w-full text-xl font-medium outline-none placeholder:text-slate-400 bg-transparent" placeholder="Rechercher un client, un tél ou un contrat...">
 
                     <button @click="openPalette = false" class="p-2 text-slate-400 hover:text-slate-600">
-                        <kbd class="text-[10px] font-bold border border-slate-200 px-2 py-1 rounded bg-slate-50 uppercase">Esc</kbd>
+                        <kbd class="text-[10px] font-bold border border-slate-200 px-2 py-1 rounded bg-white uppercase shadow-sm">Esc</kbd>
                     </button>
                 </div>
 
-                <div class="max-h-[50vh] overflow-y-auto p-2 bg-slate-50/50">
+                <div class="max-h-[60vh] overflow-y-auto p-2 bg-white">
                     <template x-for="res in results" :key="res.url">
-                        <a :href="res.url" class="flex items-center gap-3 p-4 hover:bg-indigo-600 hover:text-white rounded-2xl text-sm font-bold transition-all group">
-                            <div class="p-2 bg-indigo-100 text-indigo-600 rounded-lg group-hover:bg-indigo-500 group-hover:text-white">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        <a :href="res.url" class="flex items-center justify-between p-4 hover:bg-indigo-50 rounded-2xl transition-all group border border-transparent hover:border-indigo-100 mb-1">
+                            <div class="flex items-center gap-4">
+                                <div class="p-2.5 bg-indigo-50 text-indigo-500 border border-indigo-100 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <i class="ph-bold text-xl" :class="res.icone"></i>
+                                </div>
+                                <div>
+                                    <span x-text="res.titre" class="block font-black text-slate-800 text-sm"></span>
+                                    <span x-text="res.sous_titre" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5"></span>
+                                </div>
                             </div>
-                            <span x-text="res.titre"></span>
+                            <i class="ph-bold ph-caret-right text-slate-300 group-hover:text-indigo-500 text-lg"></i>
                         </a>
                     </template>
 
-                    <div x-show="searchQuery.length > 1 && results.length === 0" class="p-12 text-center text-slate-400 text-sm italic">
-                        Aucun résultat pour "<span x-text="searchQuery"></span>"
+                    <div x-show="searchQuery.length > 1 && results.length === 0 && !isSearching" class="p-12 text-center text-slate-400 text-sm italic" style="display: none;">
+                        Aucun résultat trouvé pour "<span x-text="searchQuery" class="font-bold text-slate-500"></span>"
                     </div>
                     <div x-show="searchQuery.length <= 1" class="p-12 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
                         Tapez au moins 2 caractères
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+    <div x-show="imgModal.open" x-transition.opacity class="fixed inset-0 z-[999999] bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4" @click="imgModal.open = false" x-cloak>
+        <div class="relative max-w-5xl w-full max-h-[90vh] flex items-center justify-center" @click.stop>
+            <button @click="imgModal.open = false" class="absolute -top-12 right-0 text-white hover:text-red-400 transition-colors">
+                <i class="ph-bold ph-x text-3xl"></i>
+            </button>
+            <img :src="imgModal.src" class="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain cursor-zoom-out" @click="imgModal.open = false">
         </div>
     </div>
 </body>

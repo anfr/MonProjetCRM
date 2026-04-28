@@ -1,21 +1,75 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-8 py-5 mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-    <h1 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 text-blue-600"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+<div class="bg-white shadow-sm border-b border-slate-200 px-4 sm:px-8 py-5 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 -mt-4 sm:-mt-6 -mx-4 sm:-mx-6 lg:-mx-10 rounded-t-none sm:rounded-b-none">
+    <h1 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-3">
+        <div class="bg-indigo-100 text-indigo-600 p-2.5 rounded-xl shadow-inner">
+            <i class="ph-bold ph-clock-counter-clockwise text-2xl"></i>
+        </div>
         Historique & Comptes
     </h1>
-    <button onclick="window.print()" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors w-full sm:w-auto">
-        <svg class="w-5 h-5 mr-2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.728 3.478a.75.75 0 00-.598.758v1.066h11.74V4.236a.75.75 0 00-.598-.758A14.928 14.928 0 0012 3c-1.895 0-3.715.215-5.272.478z" /><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 9.75c0-1.242 1.008-2.25 2.25-2.25h10.5c1.242 0 2.25 1.008 2.25 2.25v4.5A2.25 2.25 0 0117.25 16.5h-1.066v2.25a2.25 2.25 0 01-2.25 2.25H10.066a2.25 2.25 0 01-2.25-2.25v-2.25H6.75A2.25 2.25 0 014.5 14.25v-4.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M10.066 18h3.868v-4.5h-3.868v4.5z" /></svg>
-        Exporter en PDF / Imprimer
+    <button onclick="window.print()" class="inline-flex items-center justify-center px-4 py-2 border border-slate-200 shadow-sm text-sm font-bold rounded-xl text-slate-700 bg-white hover:bg-slate-50 transition-colors w-full sm:w-auto">
+        <i class="ph-bold ph-printer text-lg mr-2"></i> Exporter / Imprimer
     </button>
 </div>
 
-<div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-    <div id="zone-historique" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table class="w-full text-left text-sm text-gray-600 border-collapse block md:table">
-            <thead class="hidden md:table-header-group bg-gray-50 text-gray-500 uppercase text-xs font-semibold tracking-wider border-b border-gray-200">
+<div class="max-w-screen-2xl mx-auto pb-12">
+
+    <div x-data="{ openFilters: {{ 'true' if request.args.get('q') or request.args.get('statut') or request.args.get('date_debut') else 'false' }} }" class="mb-6">
+        <button @click="openFilters = !openFilters" class="flex items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors border border-indigo-100 shadow-sm mb-3">
+            <i class="ph-bold ph-funnel text-lg"></i> <span x-text="openFilters ? 'Masquer les filtres' : 'Filtres avancés'"></span>
+        </button>
+
+        <div x-show="openFilters" x-collapse class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <form method="GET" action="{{ url_for('clients.historique') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Rechercher</label>
+                    <div class="relative">
+                        <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                        <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Nom, Tél..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Du</label>
+                    <div class="relative">
+                        <input type="date" name="date_debut" value="{{ request.args.get('date_debut', '') }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Au</label>
+                    <div class="relative">
+                        <input type="date" name="date_fin" value="{{ request.args.get('date_fin', '') }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Statut du dossier</label>
+                    <select name="statut" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer">
+                        <option value="">Tous les dossiers</option>
+                        <option value="en_attente" {% if request.args.get('statut')=='en_attente' %}selected{% endif %}>En attente de traitement</option>
+                        <option value="termine" {% if request.args.get('statut')=='termine' %}selected{% endif %}>Terminés (Tous)</option>
+                        <option value="dette" {% if request.args.get('statut')=='dette' %}selected{% endif %}>Dettes (Impayés)</option>
+                        <option value="monnaie" {% if request.args.get('statut')=='monnaie' %}selected{% endif %}>À rendre (Monnaie)</option>
+                        <option value="solde" {% if request.args.get('statut')=='solde' %}selected{% endif %}>Soldés (0 DH)</option>
+                    </select>
+                </div>
+
+                <div class="lg:col-span-4 flex items-center justify-end gap-3 pt-2">
+                    <a href="{{ url_for('clients.historique') }}" class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors">Réinitialiser</a>
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center gap-2">
+                        <i class="ph-bold ph-funnel text-lg"></i> Appliquer les filtres
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="zone-historique" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <table class="w-full text-left text-sm text-slate-600 border-collapse block md:table">
+            <thead class="hidden md:table-header-group bg-slate-50 text-slate-400 uppercase text-[10px] font-black tracking-widest border-b border-slate-200">
                 <tr>
                     <th class="px-6 py-4">Client</th>
                     <th class="px-6 py-4">Date</th>
@@ -23,59 +77,66 @@
                     <th class="px-6 py-4 text-right">Statut & Actions</th>
                 </tr>
             </thead>
-            <tbody class="block md:table-row-group divide-y divide-gray-100">
+            <tbody class="block md:table-row-group divide-y divide-slate-50">
 
                 {% for op in operations.items %}
                 <tr class="block md:table-row hover:bg-slate-50 transition duration-150 ease-in-out p-5 md:p-0">
-                    <td class="block md:table-cell md:px-6 md:py-4 align-middle border-b border-gray-50 md:border-0 pb-3 md:pb-0">
-                        <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase block mb-1">Client</span>
+                    <td class="block md:table-cell md:px-6 md:py-4 align-middle border-b border-slate-50 md:border-0 pb-3 md:pb-0">
+                        <span class="md:hidden text-[10px] text-slate-400 font-bold uppercase block mb-1">Client</span>
                         <div class="flex items-center gap-3">
-                            <div class="hidden sm:flex h-9 w-9 rounded-full bg-blue-100 text-blue-600 items-center justify-center font-bold text-xs shrink-0">
+                            <div class="hidden sm:flex h-10 w-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 items-center justify-center font-black text-sm shrink-0 shadow-sm">
                                 {{ op.client.prenom[0] | upper }}{{ op.client.nom[0] | upper }}
                             </div>
                             <div>
-                                <div class="font-bold text-gray-900 text-base uppercase">{{ op.client.nom }}</div>
-                                <div class="text-gray-500 font-medium capitalize">{{ op.client.prenom }}</div>
+                                <div class="font-black text-slate-800 text-base uppercase">{{ op.client.nom }}</div>
+                                <div class="text-slate-500 font-bold capitalize">{{ op.client.prenom }}</div>
                             </div>
                         </div>
                     </td>
 
-                    <td class="block md:table-cell md:px-6 md:py-4 align-middle border-b border-gray-50 md:border-0 py-3 md:py-0 mt-3 md:mt-0">
-                        <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase block mb-1">Date d'opération</span>
-                        <div class="flex items-center text-gray-600 font-medium text-sm">
-                            <svg class="w-4 h-4 mr-2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
-                            {{ op.date_operation.strftime('%d/%m/%Y') }}
+                    <td class="block md:table-cell md:px-6 md:py-4 align-middle border-b border-slate-50 md:border-0 py-3 md:py-0 mt-3 md:mt-0">
+                        <span class="md:hidden text-[10px] text-slate-400 font-bold uppercase block mb-1">Date d'opération</span>
+                        <div class="flex flex-col text-slate-600 font-bold text-sm">
+                            <span class="flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-slate-400 text-lg"></i> {{ op.date_operation.strftime('%d/%m/%Y') }}</span>
+                            <span class="text-xs text-slate-400 ml-6">{{ op.date_operation.strftime('à %H:%M') }}</span>
                         </div>
                     </td>
 
-                    <td class="block md:table-cell md:px-6 md:py-4 align-middle border-b border-gray-50 md:border-0 py-3 md:py-0">
-                        <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase block mb-1">Finances & Reçu</span>
-                        <div class="flex flex-col gap-1.5">
+                    <td class="block md:table-cell md:px-6 md:py-4 align-middle border-b border-slate-50 md:border-0 py-3 md:py-0">
+                        <span class="md:hidden text-[10px] text-slate-400 font-bold uppercase block mb-1">Finances & Reçu</span>
+                        <div class="flex flex-col gap-2">
                             <div class="flex flex-row md:flex-col gap-4 md:gap-1 justify-between md:justify-start">
                                 <div>
-                                    <span class="text-[10px] text-gray-400 font-bold uppercase block mb-0.5">Total Factures</span>
-                                    <span class="text-blue-600 font-black text-sm">{{ op.montant_total }} DH</span>
+                                    <span class="text-[9px] text-slate-400 font-black uppercase tracking-widest block mb-0.5">Total Factures</span>
+                                    <span class="text-indigo-600 font-black text-sm">{{ op.montant_total or '--' }} DH</span>
                                 </div>
                                 <div>
-                                    <span class="text-[10px] text-gray-400 font-bold uppercase block mb-0.5">Avance Reçue</span>
-                                    <span class="text-gray-700 font-semibold text-sm">{{ op.montant_avance }} DH</span>
+                                    <span class="text-[9px] text-slate-400 font-black uppercase tracking-widest block mb-0.5">Avance Reçue</span>
+                                    <span class="text-slate-700 font-black text-sm">{{ op.montant_avance }} DH</span>
                                 </div>
                             </div>
-                            <div class="mt-1">
+
+                            <div class="mt-1 flex flex-wrap items-center gap-1.5">
                                 {% if op.photos %}
                                 {% for p in op.photos %}
-                                <a href="/static/uploads/recus/{{ p.nom_fichier }}" target="_blank"
-                                   class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100 hover:bg-blue-100" title="Facture {{ loop.index }}">
-                                    R{{ loop.index }}
-                                </a>
+                                <button @click="$dispatch('open-image', '/static/uploads/recus/{{ p.nom_fichier }}')"
+                                        class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-colors shadow-sm flex items-center gap-1" title="Facture {{ loop.index }}">
+                                    <i class="ph-bold ph-image"></i> R{{ loop.index }}
+                                </button>
                                 {% endfor %}
-
                                 {% elif op.photo_recu %}
-                                <a href="/static/uploads/recus/{{ op.photo_recu }}" target="_blank"
-                                   class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold border border-indigo-100 hover:bg-indigo-100">
-                                    Reçu
-                                </a>
+                                <button @click="$dispatch('open-image', '/static/uploads/recus/{{ op.photo_recu }}')"
+                                        class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-colors shadow-sm flex items-center gap-1">
+                                    <i class="ph-bold ph-image"></i> Ancien
+                                </button>
                                 {% endif %}
+
+                                <form action="/ajouter_recu/{{ op.id }}" method="POST" enctype="multipart/form-data" class="inline-block" x-data>
+                                    <input type="file" name="photos" multiple accept="image/*" capture="environment" class="hidden" x-ref="fileInput" @change="$el.form.submit()">
+                                    <button type="button" @click="$refs.fileInput.click()" class="px-2 py-0.5 rounded bg-slate-50 text-slate-500 text-[10px] font-bold border border-slate-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors shadow-sm flex items-center gap-1" title="Ajouter un reçu manquant">
+                                        <i class="ph-bold ph-plus"></i> Reçu
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </td>
@@ -83,87 +144,62 @@
                     <td class="block md:table-cell md:px-6 md:py-4 align-middle mt-4 md:mt-0 text-left md:text-right">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-3 w-full">
 
-                            {% if op.reste_a_payer > 0 %}
+                            {% if op.statut == 'Terminé' and op.reste_a_payer > 0 %}
                             <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full sm:w-auto">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>
-                                    Manque {{ op.reste_a_payer }} DH
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-2 animate-pulse"></span> Dette: {{ op.reste_a_payer }} DH
                                 </span>
                                 <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                                     {% if op.client.telephone %}
-                                    <a href="https://wa.me/212{{ op.client.telephone | replace(' ', '') }}?text=Bonjour {{ op.client.prenom }}, sauf erreur de ma part, il reste un solde de {{ op.reste_a_payer }} DH sur votre dernière opération du {{ op.date_operation.strftime('%d/%m/%Y') }}. Merci de passer au kiosque dès que possible ! 🙏" target="_blank" class="flex-1 sm:flex-none inline-flex justify-center items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-md shadow-sm text-white bg-[#25D366] hover:bg-[#20b858] transition-colors gap-1.5" title="Relancer">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
-                                        Relancer
+                                    <a href="https://wa.me/212{{ op.client.telephone | replace(' ', '') }}?text=Bonjour {{ op.client.prenom }}, sauf erreur de ma part, il reste un solde de {{ op.reste_a_payer }} DH sur votre dernière opération. Merci de passer au kiosque dès que possible ! 🙏" target="_blank" class="flex-1 sm:flex-none inline-flex justify-center items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg shadow-sm text-white bg-[#25D366] hover:bg-[#20b858] transition-colors gap-1.5" title="Relancer">
+                                        <i class="ph-bold ph-whatsapp-logo text-base"></i> Relancer
                                     </a>
                                     {% endif %}
-                                    <a href="/regler_reste/{{ op.id }}" class="flex-1 sm:flex-none inline-flex justify-center items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 transition-colors">Encaisser</a>
-                                    {% if session.get('role') == 'admin' %}
-                                    <a href="/supprimer_operation/{{ op.id }}" onclick="return confirm('Attention : Effacer cette opération ?')" class="inline-flex items-center justify-center p-1.5 border border-gray-200 text-gray-400 rounded-md hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors" title="Supprimer">
-                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                                    </a>
-                                    {% else %}
-                                    <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full sm:w-auto">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">
-                                            <i class="ph-bold ph-check-circle mr-1"></i> Soldé (0 DH)
-                                        </span>
-                                        <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                                            {% if op.client.telephone %}
-                                            <a href="/generer_whatsapp/recu/{{ op.id }}" target="_blank"
-                                               class="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-md shadow-sm text-white bg-green-500 hover:bg-green-600 transition-colors gap-1.5">
-                                                <i class="ph-bold ph-whatsapp-logo"></i> Reçu
-                                            </a>
-                                            {% endif %}
-
-                                        </div>
-                                    </div>
-                                    {% endif %}
+                                    <a href="/regler_reste/{{ op.id }}" class="flex-1 sm:flex-none inline-flex justify-center items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg shadow-sm text-white bg-red-600 hover:bg-red-700 transition-colors">Encaisser</a>
                                 </div>
                             </div>
 
-                            {% elif op.reste_a_payer < 0 %}
+                            {% elif op.statut == 'Terminé' and op.reste_a_payer < 0 %}
                             <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full sm:w-auto">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest bg-amber-50 text-amber-700 border border-amber-200">
                                     À rendre : {{ op.reste_a_payer|abs }} DH
                                 </span>
                                 <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                                     {% if op.client.telephone %}
-                                    <a href="/generer_whatsapp/recu/{{ op.id }}" target="_blank"
-                                       class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center border border-green-200 hover:bg-green-500 hover:text-white transition-colors" title="Envoyer le reçu">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+                                    <a href="/generer_whatsapp/monnaie/{{ op.id }}" target="_blank" class="flex-1 sm:flex-none inline-flex justify-center items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg shadow-sm text-white bg-[#25D366] hover:bg-[#20b858] transition-colors gap-1.5" title="Prévenir">
+                                        <i class="ph-bold ph-whatsapp-logo text-base"></i> Prévenir
                                     </a>
                                     {% endif %}
-                                    <a href="/regler_reste/{{ op.id }}" class="flex-1 sm:flex-none inline-flex justify-center items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-md shadow-sm text-amber-900 bg-amber-300 hover:bg-amber-400 transition-colors">Monnaie rendue</a>
-                                    {% if session.get('role') == 'admin' %}
-                                    <a href="/supprimer_operation/{{ op.id }}" onclick="return confirm('Attention : Effacer cette opération ?')" class="inline-flex items-center justify-center p-1.5 border border-gray-200 text-gray-400 rounded-md hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors" title="Supprimer">
-                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                                    </a>
-                                    {% endif %}
+                                    <a href="/regler_reste/{{ op.id }}" class="flex-1 sm:flex-none inline-flex justify-center items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg shadow-sm text-amber-900 bg-amber-300 hover:bg-amber-400 transition-colors">Monnaie rendue</a>
                                 </div>
                             </div>
 
+                            {% elif op.statut == 'En attente' %}
+                            <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200">
+                                <i class="ph-bold ph-folder text-lg mr-1.5"></i> Dossier déposé
+                            </span>
+
                             {% else %}
                             <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full sm:w-auto">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">
-                                    <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                                    Soldé (0 DH)
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <i class="ph-bold ph-check-circle text-lg mr-1.5"></i> Soldé (0 DH)
                                 </span>
                                 <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                                     {% if op.client.telephone %}
                                     <a href="/generer_whatsapp/recu/{{ op.id }}" target="_blank"
-                                       class="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-md shadow-sm text-white bg-green-500 hover:bg-green-600 transition-colors gap-1.5">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
-                                        Reçu
-                                    </a>
-                                    {% endif %}
-
-                                    {% if session.get('role') == 'admin' %}
-                                    <a href="/supprimer_operation/{{ op.id }}" onclick="return confirm('Attention : Effacer cette opération ?')" class="inline-flex items-center justify-center p-1.5 border border-gray-200 text-gray-400 rounded-md hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors" title="Supprimer">
-                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                                       class="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg shadow-sm text-white bg-[#25D366] hover:bg-[#20b858] transition-colors gap-1.5">
+                                        <i class="ph-bold ph-whatsapp-logo text-base"></i> Reçu
                                     </a>
                                     {% endif %}
                                 </div>
                             </div>
+                            {% endif %}
+
+                            {% if session.get('role') == 'admin' %}
+                            <div class="hidden sm:block h-6 w-px bg-slate-200 mx-1"></div>
+                            <a href="/supprimer_operation/{{ op.id }}" onclick="return confirm('Mettre cette opération à la corbeille ?')" class="inline-flex items-center justify-center p-2 border border-slate-200 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors" title="Corbeille">
+                                <i class="ph-bold ph-trash text-lg"></i>
+                            </a>
                             {% endif %}
 
                         </div>
@@ -171,13 +207,14 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4" class="px-6 py-16 text-center text-gray-500 block md:table-cell bg-gray-50/50">
+                    <td colspan="4" class="px-6 py-20 text-center text-slate-500 bg-slate-50/50">
                         <div class="flex flex-col items-center justify-center">
-                            <div class="bg-gray-100 p-4 rounded-full mb-3 text-gray-400">
-                                <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                            <div class="bg-white p-4 rounded-full mb-3 text-slate-300 border border-slate-200 shadow-sm">
+                                <i class="ph-fill ph-magnifying-glass text-4xl"></i>
                             </div>
-                            <p class="font-medium text-gray-900">Le registre est vide.</p>
-                            <p class="text-sm">Aucune opération terminée n'a été enregistrée pour le moment.</p>
+                            <p class="font-black text-slate-800 text-lg">Aucun résultat trouvé.</p>
+                            <p class="text-sm font-medium mt-1">Modifiez vos filtres ou effectuez une nouvelle recherche.</p>
+                            <a href="{{ url_for('clients.historique') }}" class="mt-4 text-sm font-bold text-indigo-600 hover:underline">Réinitialiser tous les filtres</a>
                         </div>
                     </td>
                 </tr>
@@ -186,55 +223,41 @@
         </table>
 
         {% if operations.pages > 1 %}
-        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+        <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                    <p class="text-sm text-gray-700">
-                        Affichage de <span class="font-black text-blue-600">{{ operations.first_item }}</span> à <span class="font-black text-blue-600">{{ operations.last_item }}</span> sur <span class="font-black text-blue-600">{{ operations.total }}</span> opérations
+                    <p class="text-sm font-bold text-slate-500">
+                        Affichage de <span class="font-black text-indigo-600">{{ operations.first_item }}</span> à <span class="font-black text-indigo-600">{{ operations.last_item }}</span> sur <span class="font-black text-indigo-600">{{ operations.total }}</span>
                     </p>
                 </div>
                 <div>
-                    <nav class="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px" aria-label="Pagination">
-
+                    <nav class="relative z-0 inline-flex rounded-xl shadow-sm -space-x-px overflow-hidden">
                         {% if operations.has_prev %}
-                        <a href="{{ url_for('clients.historique', page=operations.prev_num) }}" class="relative inline-flex items-center px-4 py-2 rounded-l-lg border border-gray-300 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
-                            <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                            Précédent
+                        <a href="{{ url_for('clients.historique', page=operations.prev_num, q=request.args.get('q', ''), date_debut=request.args.get('date_debut', ''), date_fin=request.args.get('date_fin', ''), statut=request.args.get('statut', '')) }}" class="relative inline-flex items-center px-4 py-2 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors border border-slate-200">
+                            <i class="ph-bold ph-caret-left mr-2 text-lg"></i> Précédent
                         </a>
-                        {% else %}
-                        <span class="relative inline-flex items-center px-4 py-2 rounded-l-lg border border-gray-200 bg-gray-100 text-sm font-bold text-gray-400 cursor-not-allowed">
-                            <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                            Précédent
-                        </span>
                         {% endif %}
 
-                        <span class="relative inline-flex items-center px-4 py-2 border-y border-gray-300 bg-white text-sm font-bold text-gray-700">
-                            Page {{ operations.page }} / {{ operations.pages }}
+                        <span class="relative inline-flex items-center px-4 py-2 bg-slate-100 text-sm font-black text-slate-400 border-y border-slate-200">
+                            {{ operations.page }} / {{ operations.pages }}
                         </span>
 
                         {% if operations.has_next %}
-                        <a href="{{ url_for('clients.historique', page=operations.next_num) }}" class="relative inline-flex items-center px-4 py-2 rounded-r-lg border border-gray-300 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
-                            Suivant
-                            <svg class="h-4 w-4 ml-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                        <a href="{{ url_for('clients.historique', page=operations.next_num, q=request.args.get('q', ''), date_debut=request.args.get('date_debut', ''), date_fin=request.args.get('date_fin', ''), statut=request.args.get('statut', '')) }}" class="relative inline-flex items-center px-4 py-2 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors border border-slate-200">
+                            Suivant <i class="ph-bold ph-caret-right ml-2 text-lg"></i>
                         </a>
-                        {% else %}
-                        <span class="relative inline-flex items-center px-4 py-2 rounded-r-lg border border-gray-200 bg-gray-100 text-sm font-bold text-gray-400 cursor-not-allowed">
-                            Suivant
-                            <svg class="h-4 w-4 ml-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                        </span>
                         {% endif %}
-
                     </nav>
                 </div>
             </div>
 
             <div class="flex items-center justify-between w-full sm:hidden">
                 {% if operations.has_prev %}
-                <a href="{{ url_for('clients.historique', page=operations.prev_num) }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Précédent</a>
+                <a href="{{ url_for('clients.historique', page=operations.prev_num, q=request.args.get('q', ''), date_debut=request.args.get('date_debut', ''), date_fin=request.args.get('date_fin', ''), statut=request.args.get('statut', '')) }}" class="relative inline-flex items-center px-4 py-2 border border-slate-200 text-sm font-black rounded-xl text-slate-700 bg-white hover:bg-slate-50 shadow-sm">Préc.</a>
                 {% endif %}
-                <span class="text-sm text-gray-500 font-bold">Pg {{ operations.page }}/{{ operations.pages }}</span>
+                <span class="text-sm text-slate-400 font-bold">{{ operations.page }}/{{ operations.pages }}</span>
                 {% if operations.has_next %}
-                <a href="{{ url_for('clients.historique', page=operations.next_num) }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Suivant</a>
+                <a href="{{ url_for('clients.historique', page=operations.next_num, q=request.args.get('q', ''), date_debut=request.args.get('date_debut', ''), date_fin=request.args.get('date_fin', ''), statut=request.args.get('statut', '')) }}" class="relative inline-flex items-center px-4 py-2 border border-slate-200 text-sm font-black rounded-xl text-slate-700 bg-white hover:bg-slate-50 shadow-sm">Suiv.</a>
                 {% endif %}
             </div>
         </div>

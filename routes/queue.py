@@ -1,7 +1,7 @@
 import socket
 from flask import Blueprint, render_template, redirect, request, jsonify, url_for, session, current_app
 import win32print
-from models import db, Ticket, Client, ParametreTV, Service, BoutonRapide
+from models import db, Ticket, Client, ConfigSysteme, Service, BoutonRapide
 from datetime import datetime
 
 queue_bp = Blueprint('queue', __name__)
@@ -95,7 +95,7 @@ def generer_ticket(service_nom):
 @queue_bp.route('/queue/public')
 def public_view():
     ticket_actuel = Ticket.query.filter_by(statut='appele').order_by(Ticket.id.desc()).first()
-    tv_config = ParametreTV.query.first()
+    tv_config = ConfigSysteme.query.first()
     historique = Ticket.query.filter_by(statut='appele').order_by(Ticket.id.desc()).offset(1).limit(10).all()
     
     debut_jour = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -117,7 +117,7 @@ def api_temps_attente():
 @queue_bp.route('/queue/imprimer/<int:id_ticket>')
 def imprimer_ticket(id_ticket):
     ticket = Ticket.query.get_or_404(id_ticket)
-    tv_config = ParametreTV.query.first()
+    tv_config = ConfigSysteme.query.first()
     return render_template('ticket_impression.html', ticket=ticket, tv_config=tv_config)
 
 @queue_bp.route('/queue/annoncer_urgence/<int:id_ticket>')

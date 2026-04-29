@@ -1,238 +1,248 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="max-w-screen-2xl mx-auto pb-12 space-y-6">
 
-{% if total_dettes > 0 %}
-<div class="bg-red-50 border-b border-red-200 px-4 sm:px-8 py-3 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-inner rounded-t-xl">
-    <div class="flex items-center gap-2 text-red-800 font-medium text-sm sm:text-base">
-        <span class="relative flex h-3 w-3 shrink-0">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-        </span>
-        <span><strong>Alerte :</strong> Vous avez <span class="font-black text-red-600 bg-white px-2 py-0.5 rounded border border-red-200 shadow-sm">{{ total_dettes }} DH</span> dehors.</span>
-    </div>
-    <a href="/dettes" class="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg shadow-sm transition-colors whitespace-nowrap w-full sm:w-auto text-center">
-        Consulter les dettes →
-    </a>
-</div>
-{% endif %}
-
-<div class="bg-white shadow-sm border border-slate-200 rounded-2xl px-6 py-5 mb-8 flex justify-between items-center gap-4">
-    <h1 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
-        <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl shadow-inner">
-            <i class="ph-fill ph-chart-pie-slice text-2xl"></i>
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
+                Bonjour <span class="text-indigo-600 capitalize">{{ session.get('prenom', 'Admin') }}</span> 👋
+            </h1>
+            <p class="text-slate-500 font-medium mt-1">Voici le résumé de votre activité aujourd'hui.</p>
         </div>
-        Tableau de bord
-    </h1>
-    <div class="hidden sm:flex items-center gap-2 text-sm text-slate-500 font-bold bg-slate-50 px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
-        <i class="ph-bold ph-calendar-blank text-slate-400"></i>
-        <span id="dateJour"></span>
-    </div>
-</div>
-
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <div class="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm group">
-        <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Aujourd'hui</span>
-        <h4 class="text-3xl font-black text-gray-900 mt-1">{{ ca_jour }} <span class="text-lg text-gray-500 font-bold">DH</span></h4>
-        <div class="mt-3 flex items-center gap-2 text-xs text-gray-500 font-semibold">
-            <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 font-bold">{{ ops_jour_count }} opérations</span>
+        <div class="px-4 py-2 bg-white rounded-xl shadow-sm border border-slate-200 text-sm font-bold text-slate-600 flex items-center gap-2">
+            <i class="ph-bold ph-calendar-blank text-indigo-500"></i>
+            <span id="dateJour" class="capitalize"></span>
         </div>
     </div>
 
-    <div class="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-5 shadow-sm">
-        <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Ce Mois-ci</span>
-        <h4 class="text-3xl font-black text-gray-900 mt-1">{{ ca_mois }} <span class="text-lg text-gray-500 font-bold">DH</span></h4>
-        <div class="mt-3 text-xs text-gray-500 font-medium italic">Cumul : {{ chiffre_affaires }} DH</div>
-    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
 
-    <div class="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-5 shadow-sm">
-        <span class="text-xs font-bold text-orange-600 uppercase tracking-wider">File d'attente</span>
-        <h4 class="text-3xl font-black text-gray-900 mt-1">{{ total_attente }}</h4>
-        <div class="mt-3 text-xs text-orange-700 font-medium flex items-center gap-1">
-            <i class="ph-bold ph-clock"></i> Opérations à traiter
-        </div>
-    </div>
-
-    <div class="rounded-2xl border border-green-100 bg-gradient-to-br from-green-50 to-white p-5 shadow-sm">
-        <span class="text-xs font-bold text-green-600 uppercase tracking-wider">Base Clients</span>
-        <h4 class="text-3xl font-black text-gray-900 mt-1">{{ total_clients }}</h4>
-        <div class="mt-3 text-xs text-green-700 font-medium italic">Clients enregistrés</div>
-    </div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
-        <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center bg-gray-50/80">
-            <h3 class="font-bold text-lg text-gray-900 flex items-center gap-2">
-                <i class="ph-fill ph-list-checks text-orange-500 text-xl"></i>
-                Opérations en attente (À Traiter)
-            </h3>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-gray-600">
-                <thead class="bg-gray-50 text-gray-500 uppercase text-xs font-semibold tracking-wider border-b border-gray-200">
-                    <tr>
-                        <th class="py-4 px-6">Client</th>
-                        <th class="py-4 px-6">Date de demande</th>
-                        <th class="py-4 px-6 text-center">Avance & Reçus</th>
-                        <th class="py-4 px-6 text-right">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    {% for op in operations %}
-                    <tr x-data="{ modalClotureOuverte: false }" class="hover:bg-slate-50 transition duration-150">
-                        <td class="py-4 px-6">
-                            <div class="font-bold text-gray-900 uppercase">{{ op.client.nom }}</div>
-                            <div class="text-gray-500 font-medium capitalize">{{ op.client.prenom }}</div>
-                        </td>
-                        <td class="py-4 px-6">
-                            <div class="text-gray-600 font-medium">{{ op.date_operation.strftime('%d/%m/%Y %H:%M') }}</div>
-                        </td>
-                        <td class="py-4 px-6 text-center">
-                            <div class="flex flex-col items-center gap-1.5">
-                                <span class="px-2.5 py-1 rounded-md text-sm font-bold bg-green-50 text-green-700 border border-green-100">
-                                    {{ op.montant_avance }} DH
-                                </span>
-                                {% if op.photos %}
-                                <div class="flex flex-wrap gap-1 justify-center max-w-[120px]">
-                                    {% for p in op.photos %}
-                                    <a href="/static/uploads/recus/{{ p.nom_fichier }}" target="_blank"
-                                       class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100 hover:bg-blue-100" title="Voir facture {{ loop.index }}">
-                                        R{{ loop.index }}
-                                    </a>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td class="py-4 px-6 text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                <button @click="modalClotureOuverte = true" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition">Clôturer</button>
-
-                                {% if session.get('role') == 'admin' %}
-                                <a href="/supprimer_operation/{{ op.id }}"
-                                   onclick="return confirm('Attention : Voulez-vous vraiment annuler et supprimer cette opération en attente ?');"
-                                   class="p-2 text-slate-400 hover:text-red-600 bg-white border border-slate-200 hover:bg-red-50 hover:border-red-200 rounded-md shadow-sm transition-all"
-                                   title="Annuler/Supprimer l'opération">
-                                    <i class="ph-bold ph-trash text-lg"></i>
-                                </a>
-                                {% endif %}
-                            </div>
-
-                            <div x-show="modalClotureOuverte" x-cloak class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-                                <div @click.outside="modalClotureOuverte = false" class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl text-left">
-                                    <h3 class="text-xl font-bold text-gray-900 mb-4">Clôturer l'opération</h3>
-                                    <div class="mb-5 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-                                        <p class="text-sm text-gray-600 flex justify-between">Client : <strong class="text-gray-900 uppercase">{{ op.client.nom }}</strong></p>
-                                        <p class="text-sm text-gray-600 flex justify-between">Avance : <strong class="text-green-600">{{ op.montant_avance }} DH</strong></p>
-                                    </div>
-                                    <form action="/cloturer_operation/{{ op.id }}" method="POST" enctype="multipart/form-data">
-                                        <div class="mb-4">
-                                            <label class="block text-sm font-semibold text-gray-700 mb-1">Montant TOTAL Factures</label>
-                                            <div class="relative">
-                                                <input type="number" step="0.01" name="montant_total" required placeholder="0.00" class="block w-full rounded-xl border-gray-300 py-3 pl-4 pr-12 text-xl font-black text-gray-900 focus:ring-blue-500 bg-gray-50 border" />
-                                                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none"><span class="text-gray-400 font-bold">DH</span></div>
-                                            </div>
-                                        </div>
-                                        <div class="mb-6">
-                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Scanner tous les reçus</label>
-                                            <input type="file" name="photos" multiple accept="image/*" capture="environment" class="block w-full text-xs text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 border border-gray-300 rounded-xl bg-gray-50" />
-                                            <p class="text-[10px] text-slate-400 mt-1 italic">Vous pouvez sélectionner plusieurs photos à la fois.</p>
-                                        </div>
-                                        <div class="flex gap-3">
-                                            <button type="button" @click="modalClotureOuverte = false" class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700">Annuler</button>
-                                            <button type="submit" class="w-full px-4 py-2.5 bg-blue-600 rounded-lg text-sm font-medium text-white">Valider</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="lg:col-span-1 flex flex-col gap-6">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1">
-            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
-                    <i class="ph-bold ph-clock-counter-clockwise text-purple-500"></i>
-                    Activité récente
-                </h3>
-                <a href="/historique" class="text-xs font-bold text-blue-600 hover:underline">Tout voir</a>
+        <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] relative overflow-hidden group">
+            <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-50 rounded-full blur-2xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
+            <div class="relative z-10 flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="ph-bold ph-wallet text-2xl"></i>
+                </div>
+                {% if evolution_ca is defined %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black {% if evolution_ca >= 0 %}bg-emerald-50 text-emerald-600{% else %}bg-red-50 text-red-600{% endif %}">
+                    <i class="ph-bold {% if evolution_ca >= 0 %}ph-trend-up{% else %}ph-trend-down{% endif %}"></i>
+                    {{ "%.1f"|format(evolution_ca|abs) }}%
+                </span>
+                {% endif %}
             </div>
-            <div class="overflow-y-auto max-h-[350px]">
-                <ul class="divide-y divide-gray-100">
-                    {% for op in dernieres_operations %}
-                    <li class="p-4 hover:bg-gray-50 transition flex justify-between items-center group">
+            <div class="relative z-10">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Chiffre d'Affaires</h3>
+                <div class="flex items-end gap-1">
+                    <span class="text-3xl font-black text-slate-800 tracking-tight">{{ ca_jour }}</span>
+                    <span class="text-lg font-bold text-slate-400 mb-1">DH</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] relative overflow-hidden group">
+            <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-full blur-2xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
+            <div class="relative z-10 flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <i class="ph-bold ph-folders text-2xl"></i>
+                </div>
+            </div>
+            <div class="relative z-10">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Dossiers traités</h3>
+                <div class="flex items-end gap-1">
+                    <span class="text-3xl font-black text-slate-800 tracking-tight">{{ total_operations_jour|default(0) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] relative overflow-hidden group {% if total_dettes > 0 %}border-red-100 bg-red-50/10{% endif %}">
+            <div class="relative z-10 flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-2xl {% if total_dettes > 0 %}bg-gradient-to-br from-red-500 to-orange-500 shadow-red-500/30{% else %}bg-slate-100 text-slate-400{% endif %} text-white flex items-center justify-center shadow-lg">
+                    <i class="ph-bold ph-warning-circle text-2xl"></i>
+                </div>
+                {% if total_dettes > 0 %}
+                <span class="relative flex h-3 w-3 mt-2 mr-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                {% endif %}
+            </div>
+            <div class="relative z-10">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Crédits Dehors</h3>
+                <div class="flex items-end gap-1">
+                    <span class="text-3xl font-black {% if total_dettes > 0 %}text-red-600{% else %}text-slate-800{% endif %} tracking-tight">{{ total_dettes }}</span>
+                    <span class="text-lg font-bold text-slate-400 mb-1">DH</span>
+                </div>
+            </div>
+            {% if total_dettes > 0 %}
+            <a href="/dettes" class="absolute inset-0 z-20"></a>
+            {% endif %}
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] relative overflow-hidden group">
+            <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-50 rounded-full blur-2xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
+            <div class="relative z-10 flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <i class="ph-bold ph-chart-line-up text-2xl"></i>
+                </div>
+            </div>
+            <div class="relative z-10">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Bénéfice estimé</h3>
+                <div class="flex items-end gap-1">
+                    <span class="text-3xl font-black text-slate-800 tracking-tight">{{ benefice_estime|default('--') }}</span>
+                    <span class="text-lg font-bold text-slate-400 mb-1">DH</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                    <i class="ph-fill ph-clock-countdown text-indigo-500 text-xl"></i> Opérations en attente
+                </h2>
+                <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-black rounded-full">{{ operations_en_attente|length }} dossiers</span>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                {% for op in operations_en_attente %}
+                <div x-data="{ modeCloture: false, montant: '' }" class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center font-black text-slate-500 shrink-0">
+                            {{ op.client.prenom[0]|upper }}{{ op.client.nom[0]|upper }}
+                        </div>
                         <div>
-                            <p class="text-sm font-bold text-gray-900 truncate uppercase">{{ op.client.nom }}</p>
-                            <p class="text-[10px] text-gray-500">{{ op.date_operation.strftime('%d/%m à %H:%M') }}</p>
+                            <p class="font-black text-slate-800 text-base uppercase leading-tight">{{ op.client.nom }} <span class="capitalize font-bold text-slate-500">{{ op.client.prenom }}</span></p>
+                            <p class="text-xs font-bold text-slate-400 flex items-center gap-1 mt-0.5">
+                                <i class="ph-bold ph-calendar"></i> Déposé le {{ op.date_operation.strftime('%d/%m à %H:%M') }}
+                            </p>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <div class="text-right">
-                                <p class="text-sm font-black text-gray-900">{{ op.montant_total }} DH</p>
-                                {% if op.photos %}
-                                <p class="text-[9px] text-blue-600 font-bold">{{ op.photos|length }} reçus joints</p>
-                                {% endif %}
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+
+                        <button x-show="!modeCloture" @click="modeCloture = true" class="px-5 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
+                            Traiter
+                        </button>
+
+                        <form x-show="modeCloture" action="/cloturer_operation/{{ op.id }}" method="POST" class="flex items-center gap-2" x-cloak>
+                            <div class="relative w-32">
+                                <input type="number" name="montant_total" x-model="montant" placeholder="Total" required class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 text-sm font-bold outline-none focus:border-emerald-500">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">DH</span>
                             </div>
-                            {% if op.client.telephone %}
-                            <a href="/generer_whatsapp/recu/{{ op.id }}" target="_blank"
-                               class="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center border border-green-100 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-green-500 hover:text-white" title="Envoyer le reçu">
-                                <i class="ph-bold ph-whatsapp-logo text-lg"></i>
-                            </a>
-                            {% endif %}
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
+                            <button type="submit" class="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 shadow-sm" title="Valider">
+                                <i class="ph-bold ph-check text-lg"></i>
+                            </button>
+                            <button type="button" @click="modeCloture = false" class="p-1.5 bg-slate-100 text-slate-400 rounded-lg hover:text-slate-600">
+                                <i class="ph-bold ph-x text-lg"></i>
+                            </button>
+                        </form>
+
+                        {% if session.get('role') == 'admin' %}
+                        <a href="/supprimer_operation/{{ op.id }}" x-show="!modeCloture" onclick="return confirm('Mettre à la corbeille ?');" class="p-2 text-slate-300 hover:text-red-500 bg-white border border-slate-100 rounded-xl hover:bg-red-50 transition-colors">
+                            <i class="ph-bold ph-trash"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="h-full flex flex-col items-center justify-center text-center p-8">
+                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                        <i class="ph-fill ph-check-circle text-3xl text-emerald-400"></i>
+                    </div>
+                    <p class="font-black text-slate-800">Aucun dossier en attente</p>
+                    <p class="text-sm font-medium text-slate-400 mt-1">Vous êtes à jour dans vos traitements.</p>
+                </div>
+                {% endfor %}
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-            <h3 class="font-bold text-gray-800 text-sm mb-3">Évolution 7 Jours</h3>
-            <div class="h-40 w-full">
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 flex flex-col h-[500px]">
+            <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
+                <i class="ph-fill ph-trend-up text-indigo-500 text-xl"></i> Évolution sur 7 jours
+            </h2>
+            <div class="flex-1 relative w-full h-full">
                 <canvas id="graphiqueCA"></canvas>
             </div>
         </div>
+
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Date du jour
+    // 1. Date du jour
     const optionsDate = { weekday: 'long', day: 'numeric', month: 'long' };
     const dateJourElement = document.getElementById('dateJour');
     if (dateJourElement) {
         dateJourElement.textContent = new Date().toLocaleDateString('fr-FR', optionsDate).replace(/^\w/, (c) => c.toUpperCase());
     }
 
-    // Graphique
-    const labelsGraphique = {{ labels_jours|tojson|safe }};
-    const donneesGraphique = {{ donnees_ca|tojson|safe }};
+    // 2. Initialisation du Graphique Moderne (Spline Area)
+    document.addEventListener("DOMContentLoaded", function() {
+        const labelsGraphique = {{ labels_jours|tojson|safe }};
+        const donneesGraphique = {{ donnees_ca|tojson|safe }};
 
-    const ctx = document.getElementById('graphiqueCA').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labelsGraphique,
-            datasets: [{
-                data: donneesGraphique,
-                backgroundColor: 'rgba(99, 102, 241, 0.85)',
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: {size: 9} } } },
-            plugins: { legend: { display: false } }
-        }
+        const ctx = document.getElementById('graphiqueCA').getContext('2d');
+
+        // Création d'un dégradé pour la courbe
+        let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');   // Indigo semi-transparent
+        gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');   // Transparent en bas
+
+        new Chart(ctx, {
+            type: 'line', // On passe de 'bar' à 'line'
+            data: {
+                labels: labelsGraphique,
+                datasets: [{
+                    label: "Chiffre d'Affaires",
+                    data: donneesGraphique,
+                    borderColor: '#4f46e5', // Indigo-600
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#4f46e5',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true, // Remplissage en dessous de la courbe
+                    tension: 0.4 // Courbe adoucie (Spline) au lieu de traits droits
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }, // Cache la légende inutile
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        titleFont: { family: 'Inter', size: 13 },
+                        bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + ' DH';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { borderDash: [4, 4], color: '#f1f5f9', drawBorder: false },
+                        ticks: { font: { family: 'Inter' }, color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { font: { family: 'Inter' }, color: '#94a3b8' }
+                    }
+                }
+            }
+        });
     });
 </script>
-
 {% endblock %}

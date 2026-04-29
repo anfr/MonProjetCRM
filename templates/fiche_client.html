@@ -33,7 +33,7 @@
             <div>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Dossier Client</p>
                 <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
-                    <span class="capitalize">{{ client.prenom }}</span> <span class="uppercase text-slate-600">{{ client.nom }}</span>
+                    <span id="ext-nom-client" class="capitalize">{{ client.prenom }}</span> <span class="uppercase text-slate-600">{{ client.nom }}</span>
                 </h2>
             </div>
         </div>
@@ -42,6 +42,10 @@
             <a href="{{ url_for('clients.carte_client', id_client=client.id) }}" target="_blank" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 shadow-sm text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all w-full sm:w-auto">
                 <i class="ph-bold ph-printer text-lg"></i> Imprimer Carte
             </a>
+
+            <button id="btn-capture-ext" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl font-bold hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-200">
+                <i class="ph-bold ph-plugs-connected text-lg"></i> <span>Capturer Contrats</span>
+            </button>
 
             <button @click="modalHistoriqueOuvert = true" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-purple-200 shadow-sm text-sm font-bold rounded-xl text-purple-700 bg-purple-50 hover:bg-purple-100 transition-all w-full sm:w-auto">
                 <i class="ph-bold ph-clock-counter-clockwise text-lg"></i> Historique ({{ historique|length }})
@@ -99,7 +103,8 @@
                  :class="actif ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-80'"
                  class="group relative rounded-2xl p-5 hover:border-blue-300 transition-all cursor-pointer border">
 
-                <div class="relative z-10 flex justify-between items-center mb-4">
+                <div class="relative z-10 flex justify-between items-center mb-4 ext-contrat-item" data-service="{{ contrat.service.nom_service }}" data-numero="{{ contrat.numero_contrat }}">
+
                     <span :class="actif ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-slate-200 text-slate-500 border-slate-300'" class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border transition-colors">
                         {{ contrat.service.nom_service }}
                     </span>

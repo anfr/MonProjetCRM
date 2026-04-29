@@ -138,23 +138,64 @@ def supprimer_bouton_rapide(id_bouton):
 @app.route('/')
 @app.route('/dashboard')
 def accueil():
+    # Sécurité basique
+    if not session.get('connecte'):
+        return redirect(url_for('login'))
+
     aujourdhui = datetime.now().date()
+    hier = aujourdhui - timedelta(days=1)
+    
+    # 1. Préparation du Graphique (7 derniers jours)
     labels_jours, donnees_ca = [], []
     for i in range(6, -1, -1):
         date_cible = aujourdhui - timedelta(days=i)
+        # On formate la date en français abrégé (ex: Lun 28)
         labels_jours.append(date_cible.strftime('%a %d'))
-        ca_du_jour = db.session.query(func.sum(Operation.montant_avance)).filter(func.date(Operation.date_operation) == date_cible, Operation.archive == False).scalar() or 0
+        
+        ca_du_jour = db.session.query(func.sum(Operation.montant_avance)).filter(
+            func.date(Operation.date_operation) == date_cible, 
+            Operation.statut == 'Terminé', # On ne compte que l'argent vraiment encaissé
+            Operation.archive == False
+        ).scalar() or 0
         donnees_ca.append(float(ca_du_jour))
 
+    # 2. Récupération des dossiers
     ops_en_attente = Operation.query.filter_by(statut='En attente', archive=False).order_by(Operation.date_operation.asc()).all()
     ops_du_jour = Operation.query.filter(func.date(Operation.date_operation) == aujourdhui, Operation.archive == False).all()
-    ca_jour = sum((op.montant_avance or 0) for op in ops_du_jour)
     
-    total_dettes = db.session.query(func.sum(Operation.montant_total - Operation.montant_avance)).filter(Operation.montant_total > Operation.montant_avance, Operation.archive == False).scalar() or 0
-    ca_total = db.session.query(func.sum(Operation.montant_avance)).filter(Operation.archive == False).scalar() or 0
+    # 3. Calculs Financiers (Aujourd'hui vs Hier)
+    ca_jour = sum((op.montant_avance or 0) for op in ops_du_jour if op.statut == 'Terminé')
+    
+    ca_hier = db.session.query(func.sum(Operation.montant_avance)).filter(
+        func.date(Operation.date_operation) == hier, 
+        Operation.statut == 'Terminé',
+        Operation.archive == False
+    ).scalar() or 0
 
-    return render_template('dashboard.html', operations=ops_en_attente, total_clients=Client.query.count(), total_attente=len(ops_en_attente), ca_jour=ca_jour, ops_jour_count=len(ops_du_jour), ca_mois=ca_jour, chiffre_affaires=ca_total, total_dettes=round(total_dettes, 2), dernieres_operations=Operation.query.filter_by(statut='Terminé', archive=False).order_by(Operation.date_operation.desc()).limit(5).all(), labels_jours=labels_jours, donnees_ca=donnees_ca)
+    # 4. Tendance (Pour la petite flèche verte/rouge)
+    if ca_hier > 0:
+        evolution_ca = ((ca_jour - ca_hier) / ca_hier) * 100
+    else:
+        evolution_ca = 100.0 if ca_jour > 0 else 0.0
 
+    # 5. Calcul des dettes globales
+    total_dettes = db.session.query(func.sum(Operation.montant_total - Operation.montant_avance)).filter(
+        Operation.statut == 'Terminé',
+        Operation.montant_total > Operation.montant_avance, 
+        Operation.archive == False
+    ).scalar() or 0
+
+    # Envoi de TOUTES les variables exactes attendues par dashboard.html
+    return render_template('dashboard.html', 
+        operations_en_attente=ops_en_attente, 
+        total_operations_jour=len(ops_du_jour), 
+        ca_jour=round(ca_jour, 2), 
+        evolution_ca=evolution_ca,
+        total_dettes=round(total_dettes, 2), 
+        benefice_estime="--", # Tu pourras mettre une formule ici plus tard si tu as les marges
+        labels_jours=labels_jours, 
+        donnees_ca=donnees_ca
+    )
 # --- AUTH ---
 # --- AUTHENTIFICATION SÉCURISÉE ---
 @app.route('/login', methods=['GET', 'POST'])
@@ -489,6 +530,11 @@ def api_recherche():
             client_ids_trouves.append(ct.client_id)
             
     return jsonify(results)
+
+@app.route('/confidentialite')
+def confidentialite():
+    # Pas besoin d'être connecté pour voir cette page (pratique pour l'afficher à un client à l'accueil)
+    return render_template('confidentialite.html')
 
 if __name__ == '__main__':
     with app.app_context(): db.create_all()

@@ -15,13 +15,19 @@
         this.modalEditContrat = true;
     },
 
-    /* Fonction AJAX pour le Switch Apple */
+    /* Fonction AJAX pour le Switch Apple sécurisée avec CSRF */
     async basculerStatut(id) {
         try {
-            await fetch(`/api/contrat/${id}/toggle_statut`, { method: 'POST' });
+            await fetch(`/api/contrat/${id}/toggle_statut`, { 
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token() }}' // 👈 Le jeton de sécurité est injecté ici !
+                }
+            });
         } catch (e) {
             console.error('Erreur lors du changement de statut:', e);
         }
+    
     }
 }">
 
@@ -123,9 +129,12 @@
                         </button>
 
                         {% if session.get('role') == 'admin' %}
-                        <a href="/supprimer_contrat/{{ contrat.id }}" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" onclick="event.stopPropagation(); return confirm('Supprimer définitivement ce contrat ?');" title="Supprimer">
-                            <i class="ph-bold ph-trash text-base"></i>
-                        </a>
+                        <form action="/supprimer_contrat/{{ contrat.id }}" method="POST" class="m-0 inline-block" onclick="event.stopPropagation();">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <button type="submit" onclick="return confirm('Supprimer définitivement ce contrat ?');" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors bg-transparent border-none cursor-pointer" title="Supprimer">
+                                <i class="ph-bold ph-trash text-base"></i>
+                            </button>
+                        </form>
                         {% endif %}
                     </div>
                 </div>
@@ -174,6 +183,8 @@
             <i class="ph-fill ph-warning-circle text-amber-500 text-xl"></i> Notes Internes Privées
         </h3>
         <form action="{{ url_for('clients.maj_notes', id_client=client.id) }}" method="POST">
+            <!-- 👇 LE JETON DE SÉCURITÉ 👇 -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <textarea name="notes" rows="3" placeholder="Informations confidentielles sur le client..." class="w-full rounded-xl border border-amber-200 bg-white py-3 px-4 text-slate-700 font-medium outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition shadow-sm text-sm resize-y">{{ client.notes or '' }}</textarea>
             <div class="mt-4 flex justify-end">
                 <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 shadow-sm text-sm font-bold rounded-xl text-amber-900 bg-amber-300 hover:bg-amber-400 transition-colors w-full sm:w-auto">
@@ -181,7 +192,7 @@
                 </button>
             </div>
         </form>
-    </div>
+</div>
 
     <template x-teleport="body">
         <div x-show="modalContratOuverte" class="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" style="display: none;" x-transition>
@@ -194,6 +205,8 @@
                     Lier un contrat
                 </h3>
                 <form action="/ajouter_contrat/{{ client.id }}" method="POST">
+                    <!-- 👇 LE JETON DE SÉCURITÉ 👇 -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <div class="mb-4">
                         <label class="block text-sm font-bold text-slate-700 mb-1.5">Type de service</label>
                         <select name="service_id" required class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 px-4 text-slate-800 font-bold outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm cursor-pointer">
@@ -234,6 +247,8 @@
                     Modifier le contrat
                 </h3>
                 <form :action="'/modifier_contrat/' + contratEdit.id" method="POST">
+                    <!-- 👇 LE JETON DE SÉCURITÉ 👇 -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <div class="mb-4">
                         <label class="block text-sm font-bold text-slate-700 mb-1.5">Type de service</label>
                         <select name="service_id" x-model="contratEdit.service_id" required class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 px-4 text-slate-800 font-bold outline-none focus:border-indigo-500 text-sm cursor-pointer">
@@ -273,6 +288,8 @@
                     <p class="text-sm text-slate-500 mt-1 font-medium">Le client <strong class="uppercase text-slate-700">{{ client.nom }}</strong> vous a-t-il laissé une avance ?</p>
                 </div>
                 <form action="/nouvelle_operation/{{ client.id }}" method="POST" enctype="multipart/form-data">
+                    <!-- 👇 LE JETON DE SÉCURITÉ 👇 -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <div class="mb-5 relative">
                         <input type="number" step="0.01" name="montant_avance" placeholder="0.00" class="block w-full rounded-xl border-slate-200 py-4 px-4 text-3xl font-black text-center text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 bg-slate-50 transition border shadow-inner" />
                         <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none"><span class="text-slate-400 font-black text-xl">DH</span></div>
@@ -368,6 +385,8 @@
                                         {% endif %}
 
                                         <form action="/ajouter_recu/{{ op.id }}" method="POST" enctype="multipart/form-data" class="inline-block" x-data>
+                                            <!-- 👇 LE JETON DE SÉCURITÉ 👇 -->
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                             <input type="file" name="photos" multiple accept="image/*" capture="environment" class="hidden" x-ref="fileInput" @change="$el.form.submit()">
                                             <button type="button" @click="$refs.fileInput.click()" class="p-1.5 bg-white border border-slate-200 text-slate-400 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition shadow-sm" title="Ajouter un reçu manquant">
                                                 <i class="ph-bold ph-plus text-base"></i>

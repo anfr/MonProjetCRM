@@ -17,7 +17,7 @@
         <div class="relative z-10">
             <span class="text-xs font-black text-red-400 uppercase tracking-widest block mb-2">Total en attente de paiement</span>
             <div class="flex items-baseline gap-2">
-                <h4 class="text-5xl font-black text-red-600 tracking-tight">{{ total_dettes }}</h4>
+                <h4 class="text-5xl font-black text-red-600 tracking-tight">{{ "%.2f"|format(total_dettes) }}</h4>
                 <span class="text-2xl font-bold text-red-400">DH</span>
             </div>
         </div>
@@ -40,6 +40,7 @@
                 </thead>
 
                 {% for client_id, ops in operations | groupby('client_id') %}
+                {% if ops and ops[0].client %}
                 {% set le_client = ops[0].client %}
 
                 {% set client_dette = namespace(total=0) %}
@@ -66,16 +67,19 @@
                         <td class="px-6 py-4">
                             <div class="flex flex-wrap items-center gap-3">
                                 <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-black bg-red-50 text-red-700 border border-red-200 shadow-sm">
-                                    {{ client_dette.total }} DH
+                                    {{ "%.2f"|format(client_dette.total) }} DH
                                 </span>
 
-                                <a href="/regler_toutes_dettes/{{ le_client.id }}"
-                                   onclick="return confirm('Confirmez-vous le règlement total de toutes les dettes de ce client ?');"
-                                   class="inline-flex items-center justify-center gap-2 px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 group"
-                                   title="Solder toutes les dettes de ce client">
-                                    <i class="ph-bold ph-check-double text-lg group-hover:animate-pulse"></i>
-                                    <span class="hidden sm:inline">Tout Encaisser</span>
-                                </a>
+                                <form action="/regler_toutes_dettes/{{ le_client.id }}" method="POST" class="m-0 inline-block">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                    <button type="submit"
+                                            onclick="return confirm('Confirmez-vous le règlement total de toutes les dettes de ce client ?');"
+                                            class="inline-flex items-center justify-center gap-2 px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 group border-none cursor-pointer"
+                                            title="Solder toutes les dettes de ce client">
+                                        <i class="ph-bold ph-check-double text-lg group-hover:animate-pulse"></i>
+                                        <span class="hidden sm:inline">Tout Encaisser</span>
+                                    </button>
+                                </form>
                             </div>
 
                         </td>
@@ -83,8 +87,8 @@
                         <td class="px-6 py-4 text-right">
                             <div class="flex flex-wrap items-center justify-end gap-2.5">
                                 {% if le_client.telephone %}
-                                <a href="https://wa.me/212{{ le_client.telephone | replace(' ', '') }}?text=Bonjour {{ le_client.prenom }}, sauf erreur de notre part, il reste un solde total de {{ client_dette.total }} DH sur votre compte au kiosque. Merci de passer dès que possible ! 🙏"
-                                   target="_blank" @click.stop class="inline-flex justify-center items-center px-4 py-2 text-xs font-bold rounded-lg shadow-sm text-white bg-[#25D366] hover:bg-[#20b858] transition-colors gap-2">
+                                <a href="{{ url_for('generer_whatsapp', type_msg='dette', id_op=ops[0].id) }}"
+                                   target="_blank" rel="noopener noreferrer" @click.stop class="inline-flex justify-center items-center px-4 py-2 text-xs font-bold rounded-lg shadow-sm text-white bg-[#25D366] hover:bg-[#20b858] transition-colors gap-2">
                                     <i class="ph-bold ph-whatsapp-logo text-base"></i> Relancer
                                 </a>
                                 {% endif %}
@@ -106,14 +110,19 @@
                                         <div>
                                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Opération #{{ op.id }}</p>
                                             <p class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
-                                                <i class="ph-bold ph-calendar-blank text-slate-400"></i> {{ op.date_operation.strftime('%d/%m/%Y à %H:%M') }}
+                                                <i class="ph-bold ph-calendar-blank text-slate-400"></i> {{ op.date_operation.strftime('%d/%m/%Y à %H:%M') if op.date_operation else 'Date non renseignée' }}
                                             </p>
                                         </div>
                                         <div class="flex flex-col items-end gap-2">
-                                            <span class="font-black text-red-600 text-sm">{{ op.reste_a_payer }} DH</span>
-                                            <a href="/regler_reste/{{ op.id }}" class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-500 hover:text-white rounded-lg text-[11px] font-black uppercase tracking-widest transition-colors shadow-sm">
-                                                Encaisser
-                                            </a>
+                                            <span class="font-black text-red-600 text-sm">{{ "%.2f"|format(op.reste_a_payer) }} DH</span>
+                                            <form action="/regler_reste/{{ op.id }}" method="POST" class="m-0 inline-block">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                                <button type="submit"
+                                                        onclick="return confirm('Encaisser le reste de {{ "%.2f"|format(op.reste_a_payer) }} DH pour l\'opération #{{ op.id }} ?');"
+                                                        class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-500 hover:text-white rounded-lg text-[11px] font-black uppercase tracking-widest transition-colors shadow-sm cursor-pointer">
+                                                    Encaisser
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                     {% endfor %}
@@ -123,6 +132,7 @@
                         </td>
                     </tr>
                 </tbody>
+                {% endif %}
                 {% endfor %}
             </table>
         </div>

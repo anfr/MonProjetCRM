@@ -30,6 +30,7 @@ class Utilisateur(db.Model):
     peut_cloturer_caisse = db.Column(db.Boolean, default=False)
     peut_voir_stats = db.Column(db.Boolean, default=False)
 
+
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.String(100), index=True, nullable=False)
@@ -41,6 +42,7 @@ class Client(db.Model):
     contrats = db.relationship('Contrat', backref='client', lazy=True, cascade='all, delete')
     operations = db.relationship('Operation', backref='client', lazy=True, cascade='all, delete')
 
+# service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=True)  # Lien direct vers le service préféré du client
 class Service(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nom_service = db.Column(db.String(50), nullable=False)

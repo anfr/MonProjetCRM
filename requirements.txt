@@ -8,3 +8,4 @@ pywin32
 gunicorn
 sqlmodel
 python-multipart
+Flask-WTF==1.2.1

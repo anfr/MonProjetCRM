@@ -134,7 +134,7 @@ def admin_ticket():
     if session.get('role') != 'admin':
         return redirect(url_for('accueil'))
 
-    config = ParametreTV.query.first()
+    config = ConfigSysteme.query.first()
     
     if request.method == 'POST':
         config.ticket_nom_kiosque = request.form.get('ticket_nom_kiosque', 'KIOSQUE PRO')
@@ -260,7 +260,7 @@ def mobile_deck():
 @queue_bp.route('/queue/imprimer_direct/<int:id_ticket>', methods=['POST'])
 def imprimer_direct(id_ticket):
     ticket = Ticket.query.get_or_404(id_ticket)
-    config = ParametreTV.query.first()
+    config = ConfigSysteme.query.first()
     nom_boutique = config.ticket_nom_kiosque if config and config.ticket_nom_kiosque else "KIOSQUE PRO"
     sous_titre = config.ticket_sous_titre if config and config.ticket_sous_titre else "Espace Multiservices"
     message_fin = config.ticket_message if config and config.ticket_message else "Merci de patienter\nVotre tour arrive bientôt !"

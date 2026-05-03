@@ -34,18 +34,32 @@
      modalMouvement: false, modalCloture: false, typeMouvement: 'Entrée' ,
      modalAnnulation: false, actionAnnulation: '' , categorieSelectionnee: '' ,
      modalNouvelleCat: false, modeEdition: false,
-     /* 1. On charge les catégories dans le navigateur */
+     /* 1. On charge les catégories dans le navigateur * /
      categories: [
      {% for cat in categories %}
      { id: {{ cat.id }} , nom: '{{ cat.nom | escape }}' , type_mouvement: '{{ cat.type_mouvement }}' , icone: '{{ cat.icone }}' },
      {% endfor %}
      ],
-     /* 2. Suppression Instantanée (Zéro confirmation) */
+     /* 2. Suppression avec confirmation et gestion erreur * /
      supprimerCategorie(id) {
-     /* Attention: Pas d'espace avant /caisse ! */
-     fetch('/caisse/categorie/supprimer_ajax/' + id, { method: 'POST' });
-     this.categories=this.categories.filter(c =>
-    c.id !== id);
+     if (!confirm('Supprimer cette catégorie ? Les mouvements existants ne seront pas affectés.')) return;
+     fetch(' /caisse/categorie/supprimer_ajax/' + id, { method: 'POST' })
+     .then(res=>
+    {
+    if (!res.ok) throw new Error('Erreur serveur');
+    return res.json();
+    })
+    .then(data => {
+    if (data.success) {
+    this.categories = this.categories.filter(c => c.id !== id);
+    } else {
+    alert('Impossible de supprimer : cette catégorie est utilisée.');
+    }
+    })
+    .catch(err => {
+    console.error('Erreur suppression:', err);
+    alert('Erreur lors de la suppression. Veuillez réessayer.');
+    });
     },
 
     /* 3. Ajout Instantané (Garde la modale ouverte) */
@@ -70,6 +84,9 @@
             </div>
             Terminal de Caisse (POS)
         </h1>
+        <a href="{{ url_for('caisse.historique_caisse') }}" class="hidden sm:flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">
+            <i class="ph-bold ph-clock-counter-clockwise"></i> Historique
+        </a>
     </div>
 
     <div class="max-w-screen-xl mx-auto px-4 sm:px-6">
@@ -83,14 +100,16 @@
             <p class="text-gray-500 mb-8">Veuillez ouvrir une session pour commencer à encaisser.</p>
 
             <form action="{{ url_for('caisse.ouvrir_caisse') }}" method="POST" class="text-left">
+                <!-- 👇 LE JETON DE SÉCURITÉ 👇 -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2"><i class="ph-fill ph-wallet"></i> Espèces (Tiroir)</label>
-                        <input type="number" step="0.01" name="fond_initial" required placeholder="Ex: 200.00" class="block w-full rounded-xl border-gray-300 py-3 pl-4 text-xl font-bold bg-slate-50 border focus:border-indigo-500" />
+                        <input type="number" step="0.01" min="0" name="fond_initial" required placeholder="Ex: 200.00" class="block w-full rounded-xl border-gray-300 py-3 pl-4 text-xl font-bold bg-slate-50 border focus:border-indigo-500" />
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2"><i class="ph-fill ph-device-mobile"></i> Solde Tasshilat</label>
-                        <input type="number" step="0.01" name="tasshilat_initial" required placeholder="Ex: 5000.00" class="block w-full rounded-xl border-gray-300 py-3 pl-4 text-xl font-bold bg-slate-50 border focus:border-indigo-500" />
+                        <input type="number" step="0.01" min="0" name="tasshilat_initial" required placeholder="Ex: 5000.00" class="block w-full rounded-xl border-gray-300 py-3 pl-4 text-xl font-bold bg-slate-50 border focus:border-indigo-500" />
                     </div>
                 </div>
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition text-lg flex justify-center items-center gap-2">
@@ -100,23 +119,29 @@
         </div>
 
         {% else %}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-blue-500">
                 <p class="text-xs font-bold text-slate-500 uppercase flex items-center gap-1"><i class="ph-fill ph-wallet"></i> Fond Initial (Espèces)</p>
-                <p class="text-2xl font-black text-gray-900 mt-1">{{ session_ouverte.fond_initial }} <span class="text-sm">DH</span></p>
+                <p class="text-2xl font-black text-gray-900 mt-1">{{ "%.2f"|format(session_ouverte.fond_initial) }} <span class="text-sm">DH</span></p>
             </div>
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-green-500">
                 <p class="text-xs font-bold text-green-600 uppercase flex items-center gap-1"><i class="ph-bold ph-trend-up"></i> Total Entrées</p>
-                <p class="text-2xl font-black text-green-700 mt-1">+ {{ session_ouverte.total_entrees }} <span class="text-sm">DH</span></p>
+                <p class="text-2xl font-black text-green-700 mt-1">+ {{ "%.2f"|format(session_ouverte.total_entrees) }} <span class="text-sm">DH</span></p>
             </div>
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-red-500">
                 <p class="text-xs font-bold text-red-500 uppercase flex items-center gap-1"><i class="ph-bold ph-trend-down"></i> Total Sorties</p>
-                <p class="text-2xl font-black text-red-600 mt-1">- {{ session_ouverte.total_sorties }} <span class="text-sm">DH</span></p>
+                <p class="text-2xl font-black text-red-600 mt-1">- {{ "%.2f"|format(session_ouverte.total_sorties) }} <span class="text-sm">DH</span></p>
             </div>
             <div class="bg-slate-900 p-5 rounded-xl shadow-xl border-l-4 border-l-amber-400 relative overflow-hidden">
                 <div class="absolute -right-4 -top-4 opacity-10"><i class="ph-fill ph-coins text-8xl text-white"></i></div>
                 <p class="text-xs font-bold text-amber-400 uppercase relative z-10 flex items-center gap-1"><i class="ph-bold ph-equals"></i> Tiroir Théorique (Espèces)</p>
-                <p class="text-3xl font-black text-white mt-1 relative z-10">{{ theorique }} <span class="text-lg">DH</span></p>
+                <p class="text-3xl font-black text-white mt-1 relative z-10">{{ "%.2f"|format(theorique) }} <span class="text-lg">DH</span></p>
+            </div>
+            <div class="bg-blue-900 p-5 rounded-xl shadow-xl border-l-4 border-l-blue-400 relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 opacity-10"><i class="ph-fill ph-device-mobile text-8xl text-white"></i></div>
+                <p class="text-xs font-bold text-blue-300 uppercase relative z-10 flex items-center gap-1"><i class="ph-bold ph-device-mobile"></i> Solde Tasshilat</p>
+                <p class="text-2xl font-black text-white mt-1 relative z-10">{{ "%.2f"|format(session_ouverte.tasshilat_initial - session_ouverte.total_tasshilat_consomme + session_ouverte.total_tasshilat_recharge) }} <span class="text-lg">DH</span></p>
+                <p class="text-[10px] text-blue-400 mt-1 relative z-10">Initial: {{ "%.2f"|format(session_ouverte.tasshilat_initial) }} | Consommé: {{ "%.2f"|format(session_ouverte.total_tasshilat_consomme) }} | Rechargé: {{ "%.2f"|format(session_ouverte.total_tasshilat_recharge) }}</p>
             </div>
         </div>
 
@@ -154,7 +179,7 @@
                         <tr class="border-b border-gray-50 transition {% if mvt.est_annule %}bg-slate-50 opacity-60{% else %}hover:bg-slate-50{% endif %}">
                             <td class="py-3 pr-4">
                                 <span class="text-xs font-bold text-slate-400 flex items-center gap-1">
-                                    <i class="ph-bold ph-clock"></i> {{ mvt.date_mouvement.strftime('%H:%M') }}
+                                    <i class="ph-bold ph-clock"></i> {{ mvt.date_mouvement.strftime('%H:%M') if mvt.date_mouvement else '--:--' }}
                                 </span>
                             </td>
                             <td class="py-3">
@@ -181,7 +206,7 @@
                                 {% endif %}
                             </td>
                             <td class="py-3 text-right font-black {% if mvt.est_annule %}text-slate-400 line-through{% elif mvt.type_mouvement == 'Entrée' %}text-green-600{% else %}text-red-600{% endif %}">
-                                {% if mvt.type_mouvement == 'Entrée' %}+{% else %}-{% endif %} {{ mvt.montant }} DH
+                                {% if mvt.type_mouvement == 'Entrée' %}+{% else %}-{% endif %} {{ "%.2f"|format(mvt.montant) }} DH
                             </td>
                             <td class="py-3 text-right">
                                 {% if not mvt.est_annule and session_ouverte and session_ouverte.statut == 'Ouverte' %}
@@ -214,7 +239,7 @@
             <div class="fixed inset-0 z-10 overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
                     <div x-show="modalMouvement"
-                         @click.outside="modalMouvement = false"
+                         @click.outside="modalMouvement = false; modeEdition = false"
                          x-transition:enter="ease-out duration-300"
                          x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                          x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
@@ -224,6 +249,8 @@
                          class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-slate-200">
 
                         <form action="{{ url_for('caisse.ajouter_mouvement') }}" method="POST">
+                            <!-- 👇 LE JETON DE SÉCURITÉ 👇 -->
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                             <div class="bg-white px-6 pt-5 pb-4">
                                 <h3 class="text-xl leading-6 font-bold text-gray-900 mb-4 flex items-center gap-2">
                                     <i class="ph-bold ph-coins text-indigo-500"></i> <span x-text="'Enregistrer une ' + typeMouvement"></span>
@@ -232,7 +259,7 @@
 
                                 <div class="mt-4">
                                     <label class="block text-sm font-bold text-slate-700 mb-1">Montant (DH)</label>
-                                    <input type="number" step="0.01" name="montant" required placeholder="Ex: 50.00" class="block w-full rounded-xl border-slate-300 bg-slate-50 py-3 px-4 border focus:border-indigo-500 focus:ring-indigo-500 font-bold text-lg">
+                                    <input type="number" step="0.01" min="0" name="montant" required placeholder="Ex: 50.00" class="block w-full rounded-xl border-slate-300 bg-slate-50 py-3 px-4 border focus:border-indigo-500 focus:ring-indigo-500 font-bold text-lg">
                                 </div>
 
                                 <div class="mt-5">
@@ -337,14 +364,26 @@
                              }">
 
                             <form action="{{ url_for('caisse.cloturer_caisse') }}" method="POST">
+                                <!-- 👇 LE JETON DE SÉCURITÉ 👇 -->
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                 <div class="bg-white px-6 pt-6 pb-4">
+                                    <div x-show="Math.abs(totalEspeces - {{ theorique }}) > 10"
+                                         x-transition
+                                         class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3"
+                                         style="display: none;">
+                                        <i class="ph-fill ph-warning text-red-500 text-2xl"></i>
+                                        <div>
+                                            <p class="text-sm font-bold text-red-700">Attention : Écart significatif détecté</p>
+                                            <p class="text-xs text-red-600">Le comptage ne correspond pas au théorique. Vérifiez votre décompte.</p>
+                                        </div>
+                                    </div>
                                     <div class="flex items-center justify-between mb-6">
                                         <h3 class="text-2xl leading-6 font-black text-gray-900 flex items-center gap-3">
                                             <i class="ph-bold ph-calculator text-indigo-600"></i> Comptage de la Caisse
                                         </h3>
                                         <div class="text-right">
                                             <p class="text-xs font-bold text-slate-500 uppercase">Théorique Tiroir Attendu</p>
-                                            <p class="text-xl font-black text-slate-800">{{ theorique }} DH</p>
+                                            <p class="text-xl font-black text-slate-800">{{ "%.2f"|format(theorique) }} DH</p>
                                         </div>
                                     </div>
 
@@ -352,20 +391,20 @@
                                         <div>
                                             <h4 class="text-sm font-bold text-slate-700 mb-3 border-b border-slate-200 pb-2 flex items-center gap-2"><i class="ph-fill ph-money text-green-600 text-lg"></i> Billets</h4>
                                             <div class="space-y-2">
-                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">200 DH</span> <input type="number" min="0" x-model.number="b200" class="w-20 text-center rounded-lg border-slate-300 py-1 font-bold focus:ring-indigo-500"></div>
-                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">100 DH</span> <input type="number" min="0" x-model.number="b100" class="w-20 text-center rounded-lg border-slate-300 py-1 font-bold focus:ring-indigo-500"></div>
-                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">50 DH</span> <input type="number" min="0" x-model.number="b50" class="w-20 text-center rounded-lg border-slate-300 py-1 font-bold focus:ring-indigo-500"></div>
-                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">20 DH</span> <input type="number" min="0" x-model.number="b20" class="w-20 text-center rounded-lg border-slate-300 py-1 font-bold focus:ring-indigo-500"></div>
+                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">200 DH</span> <input type="number" min="0" x-model.number="b200" class="w-20 text-center rounded-lg border-slate-300 bg-white py-1 font-bold focus:ring-indigo-500 focus:border-indigo-500"></div>
+                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">100 DH</span> <input type="number" min="0" x-model.number="b100" class="w-20 text-center rounded-lg border-slate-300 bg-white py-1 font-bold focus:ring-indigo-500 focus:border-indigo-500"></div>
+                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">50 DH</span> <input type="number" min="0" x-model.number="b50" class="w-20 text-center rounded-lg border-slate-300 bg-white py-1 font-bold focus:ring-indigo-500 focus:border-indigo-500"></div>
+                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">20 DH</span> <input type="number" min="0" x-model.number="b20" class="w-20 text-center rounded-lg border-slate-300 bg-white py-1 font-bold focus:ring-indigo-500 focus:border-indigo-500"></div>
                                             </div>
                                         </div>
                                         <div>
                                             <h4 class="text-sm font-bold text-slate-700 mb-3 border-b border-slate-200 pb-2 flex items-center gap-2"><i class="ph-fill ph-coin text-amber-500 text-lg"></i> Pièces</h4>
                                             <div class="space-y-2">
-                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">10 DH</span> <input type="number" min="0" x-model.number="p10" class="w-20 text-center rounded-lg border-slate-300 py-1 font-bold focus:ring-indigo-500"></div>
-                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">5 DH</span> <input type="number" min="0" x-model.number="p5" class="w-20 text-center rounded-lg border-slate-300 py-1 font-bold focus:ring-indigo-500"></div>
-                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">2 DH</span> <input type="number" min="0" x-model.number="p2" class="w-20 text-center rounded-lg border-slate-300 py-1 font-bold focus:ring-indigo-500"></div>
-                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">1 DH</span> <input type="number" min="0" x-model.number="p1" class="w-20 text-center rounded-lg border-slate-300 py-1 font-bold focus:ring-indigo-500"></div>
-                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">0.50 DH</span> <input type="number" min="0" x-model.number="p05" class="w-20 text-center rounded-lg border-slate-300 py-1 font-bold focus:ring-indigo-500"></div>
+                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">10 DH</span> <input type="number" min="0" x-model.number="p10" class="w-20 text-center rounded-lg border-slate-300 bg-white py-1 font-bold focus:ring-indigo-500 focus:border-indigo-500"></div>
+                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">5 DH</span> <input type="number" min="0" x-model.number="p5" class="w-20 text-center rounded-lg border-slate-300 bg-white py-1 font-bold focus:ring-indigo-500 focus:border-indigo-500"></div>
+                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">2 DH</span> <input type="number" min="0" x-model.number="p2" class="w-20 text-center rounded-lg border-slate-300 bg-white py-1 font-bold focus:ring-indigo-500 focus:border-indigo-500"></div>
+                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">1 DH</span> <input type="number" min="0" x-model.number="p1" class="w-20 text-center rounded-lg border-slate-300 bg-white py-1 font-bold focus:ring-indigo-500 focus:border-indigo-500"></div>
+                                                <div class="flex items-center justify-between gap-3"><span class="font-mono font-bold text-slate-600">0.50 DH</span> <input type="number" min="0" x-model.number="p05" class="w-20 text-center rounded-lg border-slate-300 bg-white py-1 font-bold focus:ring-indigo-500 focus:border-indigo-500"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -390,8 +429,18 @@
                                             <span class="font-bold uppercase tracking-wider text-sm text-amber-400 flex items-center gap-2">
                                                 <i class="ph-bold ph-wallet"></i> Total Espèces (Tiroir) :
                                             </span>
-                                            <span class="text-3xl font-black text-amber-400" x-text="totalEspeces + ' DH'"></span>
+                                            <span class="text-3xl font-black text-amber-400" x-text="totalEspeces.toFixed(2) + ' DH'"></span>
                                             <input type="hidden" name="montant_reel" :value="totalEspeces">
+                                        </div>
+                                        <div class="bg-slate-800 p-3 flex justify-between items-center text-white border-b border-slate-700"
+                                             :class="Math.abs(totalEspeces - {{ theorique }}) <= 0.01 ? 'bg-emerald-900/50' : (Math.abs(totalEspeces - {{ theorique }}) <= 10 ? 'bg-amber-900/50' : 'bg-red-900/50')">
+                                            <span class="font-bold uppercase tracking-wider text-xs flex items-center gap-2"
+                                                  :class="Math.abs(totalEspeces - {{ theorique }}) <= 0.01 ? 'text-emerald-400' : (Math.abs(totalEspeces - {{ theorique }}) <= 10 ? 'text-amber-400' : 'text-red-400')">
+                                                <i class="ph-bold" :class="Math.abs(totalEspeces - {{ theorique }}) <= 0.01 ? 'ph-check-circle' : (Math.abs(totalEspeces - {{ theorique }}) <= 10 ? 'ph-warning' : 'ph-warning-circle')"></i> Écart :
+                                            </span>
+                                            <span class="text-xl font-black"
+                                                  :class="Math.abs(totalEspeces - {{ theorique }}) <= 0.01 ? 'text-emerald-400' : (Math.abs(totalEspeces - {{ theorique }}) <= 10 ? 'text-amber-400' : 'text-red-400')"
+                                                  x-text="(totalEspeces - {{ theorique }}).toFixed(2) + ' DH'"></span>
                                         </div>
 
                                         <div class="bg-blue-900 p-4 flex justify-between items-center text-white">
@@ -424,12 +473,18 @@
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
                     <div x-show="modalAnnulation" @click.outside="modalAnnulation = false" class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-slate-200">
                         <form :action="actionAnnulation" method="POST">
+                            <!-- 👇 LE JETON DE SÉCURITÉ 👇 -->
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                             <div class="bg-white px-6 pt-5 pb-4">
                                 <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                                     <i class="ph-bold ph-trash text-2xl text-red-600"></i>
                                 </div>
                                 <h3 class="text-xl leading-6 font-bold text-gray-900 text-center mb-2">Annuler ce mouvement ?</h3>
-                                <p class="text-sm text-slate-500 text-center mb-6">Cette action va annuler l'opération et recalculer le total de la caisse. Le mouvement restera visible dans l'historique.</p>
+                                <p class="text-sm text-slate-500 text-center mb-2">Cette action va annuler l'opération et recalculer le total de la caisse.</p>
+                                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-center">
+                                    <p class="text-xs text-amber-700 font-bold uppercase tracking-wider">Montant concerné</p>
+                                    <p class="text-lg font-black text-amber-800" x-text="actionAnnulation.includes('annuler') ? 'Voir le journal pour le détail' : 'Mouvement sélectionné'"></p>
+                                </div>
 
                                 <div class="mt-4">
                                     <label class="block text-sm font-bold text-slate-700 mb-1">Motif de l'annulation (Optionnel)</label>
@@ -462,15 +517,16 @@
                                     'ph-coffee', 'ph-hamburger', 'ph-lightning', 'ph-device-mobile',
                                     'ph-wifi-high', 'ph-car', 'ph-wrench', 'ph-shopping-cart',
                                     'ph-money', 'ph-credit-card', 'ph-star', 'ph-heart'
-                                ]
-                              }">
+                                ],
+                                notifAjout: false
+                              }"
+                              @cat-ajoutee.window="notifAjout = true; setTimeout(() => notifAjout = false, 2500)">
                             <div class="bg-white px-6 pt-5 pb-4">
                                 <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                                     <i class="ph-bold ph-tag text-indigo-500"></i> Nouvelle Catégorie
                                 </h3>
 
-                                <div x-data="{ show: false }" @cat-ajoutee.window="show = true; setTimeout(() => show = false, 2500)"
-                                     x-show="show" x-transition
+                                <div x-show="notifAjout" x-transition
                                      class="mb-4 p-3 bg-green-50 text-green-700 text-sm font-bold rounded-xl border border-green-200 flex items-center gap-2" style="display: none;">
                                     <i class="ph-fill ph-check-circle text-lg"></i> Ajouté ! Vous pouvez en créer un autre.
                                 </div>

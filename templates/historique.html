@@ -155,7 +155,12 @@
                                         <i class="ph-bold ph-whatsapp-logo text-base"></i> Relancer
                                     </a>
                                     {% endif %}
-                                    <a href="/regler_reste/{{ op.id }}" class="flex-1 sm:flex-none inline-flex justify-center items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg shadow-sm text-white bg-red-600 hover:bg-red-700 transition-colors">Encaisser</a>
+                                    <form action="/regler_reste/{{ op.id }}" method="POST" class="m-0 inline-block flex-1 sm:flex-none">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                        <button type="submit" class="w-full inline-flex justify-center items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg shadow-sm text-white bg-red-600 hover:bg-red-700 transition-colors cursor-pointer">
+                                            Encaisser
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
 
@@ -170,7 +175,12 @@
                                         <i class="ph-bold ph-whatsapp-logo text-base"></i> Prévenir
                                     </a>
                                     {% endif %}
-                                    <a href="/regler_reste/{{ op.id }}" class="flex-1 sm:flex-none inline-flex justify-center items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg shadow-sm text-amber-900 bg-amber-300 hover:bg-amber-400 transition-colors">Monnaie rendue</a>
+                                    <form action="/regler_reste/{{ op.id }}" method="POST" class="m-0 inline-block flex-1 sm:flex-none">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                        <button type="submit" class="w-full inline-flex justify-center items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg shadow-sm text-amber-900 bg-amber-300 hover:bg-amber-400 transition-colors cursor-pointer">
+                                            Monnaie rendue
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
 
@@ -197,9 +207,12 @@
 
                             {% if session.get('role') == 'admin' %}
                             <div class="hidden sm:block h-6 w-px bg-slate-200 mx-1"></div>
-                            <a href="/supprimer_operation/{{ op.id }}" onclick="return confirm('Mettre cette opération à la corbeille ?')" class="inline-flex items-center justify-center p-2 border border-slate-200 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors" title="Corbeille">
-                                <i class="ph-bold ph-trash text-lg"></i>
-                            </a>
+                            <form action="/supprimer_operation/{{ op.id }}" method="POST" class="m-0 inline-block">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                <button type="submit" onclick="return confirm('Mettre cette opération à la corbeille ?')" class="inline-flex items-center justify-center p-2 border border-slate-200 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors cursor-pointer" title="Corbeille">
+                                    <i class="ph-bold ph-trash text-lg"></i>
+                                </button>
+                            </form>
                             {% endif %}
 
                         </div>

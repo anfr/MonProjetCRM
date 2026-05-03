@@ -266,9 +266,12 @@
                     {% for user in utilisateurs %}
                     <div class="bg-white border {% if user.role == 'admin' %}border-amber-200{% else %}border-slate-200{% endif %} rounded-2xl p-5 shadow-sm relative group">
                         {% if user.role != 'admin' %}
-                        <a href="{{ url_for('supprimer_caissier', id=user.id) }}" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <i class="ph-bold ph-trash text-lg"></i>
-                        </a>
+                        <form action="{{ url_for('supprimer_caissier', id=user.id) }}" method="POST" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <button type="submit" onclick="return confirm('Supprimer ce caissier ? Cette action est irréversible.');" class="text-slate-400 hover:text-red-500 bg-transparent border-none p-0 cursor-pointer">
+                                <i class="ph-bold ph-trash text-lg"></i>
+                            </button>
+                        </form>
                         {% endif %}
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg {% if user.role == 'admin' %}bg-amber-100 text-amber-700{% else %}bg-indigo-100 text-indigo-700{% endif %}">
@@ -310,9 +313,12 @@
                             <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-black flex items-center justify-center">{{ service.lettre }}</span>
                             <span class="font-bold text-slate-700">{{ service.nom_service }}</span>
                         </div>
-                        <a href="{{ url_for('supprimer_service', id_service=service.id) }}" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100">
-                            <i class="ph-bold ph-trash"></i>
-                        </a>
+                        <form action="{{ url_for('supprimer_service', id_service=service.id) }}" method="POST" class="m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <button type="submit" onclick="return confirm('Supprimer ce service ?');" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 bg-transparent border-none p-0 cursor-pointer">
+                                <i class="ph-bold ph-trash"></i>
+                            </button>
+                        </form>
                     </div>
                     {% endfor %}
                 </div>
@@ -341,9 +347,12 @@
                             <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 font-black flex items-center justify-center">{{ bouton.lettre }}</span>
                             <span class="font-bold text-slate-700">{{ bouton.nom_service }}</span>
                         </div>
-                        <a href="{{ url_for('supprimer_bouton_rapide', id_bouton=bouton.id) }}" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100">
-                            <i class="ph-bold ph-trash"></i>
-                        </a>
+                        <form action="{{ url_for('supprimer_bouton_rapide', id_bouton=bouton.id) }}" method="POST" class="m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <button type="submit" onclick="return confirm('Supprimer ce raccourci ?');" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 bg-transparent border-none p-0 cursor-pointer">
+                                <i class="ph-bold ph-trash"></i>
+                            </button>
+                        </form>
                     </div>
                     {% endfor %}
                 </div>
@@ -387,6 +396,12 @@
                     <div class="px-6 py-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between"><div class="flex items-center gap-3 font-black text-slate-800"><i class="ph-fill ph-database text-2xl text-indigo-500"></i> Sauvegardes de la Base (Backups)</div></div>
                     <div class="p-6">
                         <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <template x-if="backups.length === 0">
+                                <div class="p-8 text-center text-slate-500">
+                                    <i class="ph-fill ph-folder-open text-3xl mb-2 block"></i>
+                                    <p class="text-sm font-medium">Aucune sauvegarde disponible</p>
+                                </div>
+                            </template>
                             <template x-for="backup in backups" :key="backup.nom">
                                 <div class="flex items-center justify-between p-4 bg-white hover:bg-slate-50 border-b border-slate-100">
                                     <div class="flex items-center gap-3"><i class="ph-fill ph-file-sql text-2xl text-slate-400"></i><div><p class="text-sm font-bold text-slate-800" x-text="backup.nom"></p><p class="text-xs text-slate-500">Taille: <span x-text="backup.taille"></span> Ko</p></div></div>
@@ -417,10 +432,26 @@
             // S'il n'y a rien, on met 'identite' par défaut.
             tab: localStorage.getItem('ongletActifAdmin') || 'identite',
 
+            backups: [],
+
             notif: { show: false, message: '', isError: false },
+
+            chargerBackups() {
+                fetch('/api/securite/backups')
+                    .then(r => {
+                        if (!r.ok) throw new Error('Erreur réseau');
+                        return r.json();
+                    })
+                    .then(data => { this.backups = Array.isArray(data) ? data : []; })
+                    .catch(() => { this.backups = []; });
+            },
 
             // 2. Alpine exécute init() automatiquement au chargement de la page
             init() {
+                // Initialiser le format d'impression depuis la valeur cochée dans le DOM
+                const radioChecked = document.querySelector('input[name="imprimante_format"]:checked');
+                this.formatImpression = radioChecked ? radioChecked.value : '80mm';
+
                 // On "surveille" (watch) la variable tab.
                 // À chaque fois que tu cliques sur un nouvel onglet, on le sauvegarde en mémoire.
                 this.$watch('tab', (valeur) => {
@@ -441,6 +472,9 @@
                 const iconeLoading = btn.querySelector('.icone-loading');
                 const spanTexte = btn.querySelector('span');
                 const texteOriginal = spanTexte.innerText;
+                const csrfToken = document.querySelector('input[name="csrf_token"]') ? document.querySelector('input[name="csrf_token"]').value : '{{ csrf_token() }}';
+
+
 
                 // Mode "Chargement"
                 btn.disabled = true;
@@ -449,16 +483,25 @@
                 if (iconeLoading) iconeLoading.classList.remove('hidden');
                 spanTexte.innerText = 'ENREGISTREMENT...';
 
-                // Requête au serveur Python
-                fetch(url, { method: 'POST', body: formData })
-                    .then(r => r.json())
+                
+                // Requête au serveur Python avec le jeton
+                fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken // 👈 L'intégration est ici
+                    }
+                })
                     .then(d => {
-                        this.afficherNotification(d.message, !d.success);
+                        this.afficherNotification(d.message || 'Opération effectuée', !d.success);
                         if (d.success) {
                             setTimeout(() => window.location.reload(), 1000);
                         }
                     })
-                    .catch(e => { this.afficherNotification('Erreur serveur', true); })
+                    .catch(e => {
+                        console.error('Erreur AJAX:', e);
+                        this.afficherNotification('Erreur serveur : ' + e.message, true);
+                    })
                     .finally(() => {
                         // Retour à la normale
                         setTimeout(() => {

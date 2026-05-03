@@ -136,6 +136,9 @@ def fiche_client(id_client):
 
 @clients_bp.route('/ajouter_client', methods=['GET', 'POST'])
 def ajouter_client():
+    if not session.get('connecte'): 
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         new = Client(
             nom=request.form.get('nom'), 
@@ -148,7 +151,7 @@ def ajouter_client():
         return redirect(url_for('clients.liste_clients'))
     return render_template('ajouter_client.html')
 
-@clients_bp.route('/supprimer_client/<int:id_client>')
+@clients_bp.route('/supprimer_client/<int:id_client>', methods=['POST'])
 def supprimer_client(id_client):
     if session.get('role') != 'admin': return redirect(url_for('accueil'))
     
@@ -210,7 +213,7 @@ def supprimer_contrat(id_contrat):
         
     return redirect(url_for('clients.fiche_client', id_client=id_client))
 
-@clients_bp.route('/nouvelle_operation/<int:id_client>', methods=['POST'])
+
 @clients_bp.route('/nouvelle_operation/<int:id_client>', methods=['POST'])
 def nouvelle_operation(id_client):
     montant_t = float(request.form.get('montant_total') or 0)
@@ -365,7 +368,7 @@ def ajouter_recu_existant(id_op):
     # Retourne sur la page où l'utilisateur se trouvait (Historique, Fiche client, etc.)
     return redirect(request.referrer)
 
-@clients_bp.route('/regler_reste/<int:id_operation>')
+@clients_bp.route('/regler_reste/<int:id_operation>', methods=['POST'])
 def regler_reste(id_operation):
     # On récupère l'opération concernée
     op = Operation.query.get_or_404(id_operation)
@@ -385,7 +388,7 @@ def regler_reste(id_operation):
 
 
 
-@clients_bp.route('/supprimer_operation/<int:id_operation>')
+@clients_bp.route('/supprimer_operation/<int:id_operation>', methods=['POST'])
 def supprimer_operation(id_operation):
     if session.get('role') != 'admin': 
         return redirect(url_for('accueil'))
@@ -470,7 +473,7 @@ def modifier_contrat(id):
     return redirect(url_for('clients.fiche_client', id_client=contrat.client_id))
 
 
-@clients_bp.route('/regler_toutes_dettes/<int:client_id>') # Adapte le décorateur si c'est @app.route
+@clients_bp.route('/regler_toutes_dettes/<int:client_id>', methods=['POST']) # Adapte le décorateur si c'est @app.route
 def regler_toutes_dettes(client_id):
     if not session.get('connecte'): 
         return redirect(url_for('login'))

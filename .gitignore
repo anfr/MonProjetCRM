@@ -7,6 +7,8 @@ static/uploads/recus/*
 !static/uploads/recus/.gitkeep
 # Ignorer le dossier de sauvegarde
 backups/
+docs/
+site/
 
 # Ignorer la base de données (optionnel, mais recommandé si elle contient de vraies données)
 instance/base.db
@@ -17,3 +19,6 @@ __pycache__/
 *.pyc
 maj_db.py
 reparer_db.py
+mkdocs.yml
+.env
+

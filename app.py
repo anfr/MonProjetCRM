@@ -1,4 +1,9 @@
 import os
+from dotenv import load_dotenv
+# 1. ON CHARGE LE COFFRE-FORT EN TOUT PREMIER ! 
+# (Avant même d'importer le reste ou de créer l'app)
+load_dotenv()
+from flask_wtf.csrf import CSRFProtect
 import urllib.parse
 from werkzeug.utils import secure_filename
 from PIL import Image
@@ -9,25 +14,37 @@ from sqlalchemy import func, or_
 from datetime import datetime, timedelta
 import csv
 import io
-from flask import Flask, render_template, request, redirect, session, url_for, jsonify, send_file, make_response
+from flask import Flask, render_template, request, redirect, session, url_for, jsonify, send_file, make_response 
 from flask_migrate import Migrate
 from flask_socketio import SocketIO
 from models import db, Utilisateur, Client, Operation, Service, Ticket, ConfigSysteme, BoutonRapide, PhotoRecu, Contrat
 
+# Initialisation de l'application Flask
 app = Flask(__name__)
+
+# On récupère la clé depuis le fichier .env, et on met une clé de secours bidon par défaut si le fichier manque
+app.secret_key = os.environ.get("SECRET_KEY", "cle_secours_si_env_introuvable")
+
+# On active la protection globale !
+csrf = CSRFProtect(app)
+
 sessions_versions = {}
 
-app.secret_key = "cle_secrete_super_robuste"
+
+# Configuration de l'application
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///base.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads/recus'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# On initialise la base de données et les extensions
 db.init_app(app)
 migrate = Migrate(app, db)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', ping_timeout=60, ping_interval=25)
 app.socketio = socketio 
 
+# On importe les Blueprints à la fin pour éviter les problèmes de dépendances circulaires
 from routes.clients import clients_bp
 from routes.queue import queue_bp
 from routes.caisse import caisse_bp
@@ -36,7 +53,6 @@ app.register_blueprint(queue_bp)
 app.register_blueprint(caisse_bp)
 
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
 import time
 
 # ==========================================
@@ -115,7 +131,9 @@ def injecter_variables_globales():
     # Récupération depuis la RAM (instantané)
     notifs, nb_notifs = get_cached_notifs()
     return dict(notifs=notifs, nb_notifs=nb_notifs, liste_boutons=liste_boutons, config=config)
+
 # --- BOUTONS RAPIDES ---
+# Route pour ajouter un bouton rapide (accessible uniquement aux admins) 
 @app.route('/ajouter_bouton_rapide', methods=['POST'])
 def ajouter_bouton_rapide():
     if not session.get('connecte'):
@@ -142,7 +160,8 @@ def ajouter_bouton_rapide():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Erreur lors de l\'ajout du raccourci.'}), 500
 
-@app.route('/supprimer_bouton_rapide/<int:id_bouton>')
+# Route pour supprimer un bouton rapide (accessible uniquement aux admins)
+@app.route('/supprimer_bouton_rapide/<int:id_bouton>', methods=['POST'])
 def supprimer_bouton_rapide(id_bouton):
     if session.get('role') == 'admin':
         bouton = BoutonRapide.query.get_or_404(id_bouton)
@@ -236,6 +255,7 @@ def login():
         erreur = "Identifiant ou mot de passe incorrect."
     return render_template('login.html', erreur=erreur)
 
+# --- DÉCONNEXION SÉCURISÉE ---
 @app.route('/logout')
 def logout():
     # Sécurité : On incrémente la version de session pour déconnecter 
@@ -246,6 +266,7 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+# --- PROFIL --- explication : Cette route affiche la page de profil de l'utilisateur connecté.
 @app.route('/profil', methods=['GET', 'POST'])
 def profil():
     user = Utilisateur.query.filter_by(username=session.get('username')).first()
@@ -255,6 +276,7 @@ def profil():
 # ==========================================
 # ADMINISTRATION V2 (ROUTES AJAX ISOLÉES)
 # ==========================================
+# Route pour afficher la page des paramètres (accessible uniquement aux admins)
 @app.route('/parametres', methods=['GET'])
 def parametres():
     if session.get('role') != 'admin': return redirect(url_for('accueil'))
@@ -265,6 +287,7 @@ def parametres():
         db.session.commit()
     return render_template('parametres.html', services=Service.query.all(), utilisateurs=Utilisateur.query.all(), config=config)
 
+# Route pour sauvegarder les paramètres d'identité de la boutique (accessible uniquement aux admins)
 @app.route('/api/parametres/identite', methods=['POST'])
 def save_identite():
     if not session.get('connecte') or session.get('role') != 'admin':
@@ -291,6 +314,7 @@ def save_identite():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Erreur serveur lors de la sauvegarde.'}), 500
 
+# Route pour sauvegarder les paramètres de l'écran TV (accessible uniquement aux admins)
 @app.route('/api/parametres/tv', methods=['POST'])
 def save_tv():
     if not session.get('connecte') or session.get('role') != 'admin':
@@ -316,6 +340,7 @@ def save_tv():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Erreur lors de la sauvegarde.'}), 500
 
+# Route pour sauvegarder les paramètres de la borne (accessible uniquement aux admins) 
 @app.route('/api/parametres/borne', methods=['POST'])
 def save_borne():
     if not session.get('connecte') or session.get('role') != 'admin':
@@ -345,7 +370,7 @@ def save_borne():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Erreur lors de la sauvegarde.'}), 500
-
+# Route pour sauvegarder les modèles de messages WhatsApp (accessible uniquement aux admins) 
 @app.route('/api/parametres/whatsapp', methods=['POST'])
 def save_whatsapp():
     if not session.get('connecte') or session.get('role') != 'admin':
@@ -367,7 +392,7 @@ def save_whatsapp():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Erreur lors de la sauvegarde.'}), 500
 from werkzeug.security import generate_password_hash
-
+# Route pour ajouter un caissier (accessible uniquement aux admins)
 @app.route('/ajouter_caissier', methods=['POST'])
 def ajouter_caissier():
     if not session.get('connecte') or session.get('role') != 'admin':
@@ -402,7 +427,9 @@ def ajouter_caissier():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Erreur lors de l\'ajout du caissier.'}), 500
-@app.route('/supprimer_caissier/<int:id>')
+
+# Route pour supprimer un caissier (accessible uniquement aux admins) 
+@app.route('/supprimer_caissier/<int:id>', methods=['POST'])
 def supprimer_caissier(id):
     if session.get('role') == 'admin':
         utilisateur = Utilisateur.query.get_or_404(id)
@@ -411,6 +438,7 @@ def supprimer_caissier(id):
             db.session.commit()
     return redirect(url_for('parametres'))
 
+# Route pour ajouter un service (accessible uniquement aux admins)
 @app.route('/ajouter_service', methods=['POST'])
 def ajouter_service():
     # Sécurité : vérifier si l'utilisateur est connecté
@@ -435,15 +463,15 @@ def ajouter_service():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Erreur lors de l\'ajout du service.'}), 500
-
-@app.route('/supprimer_service/<int:id_service>')
+# Route pour supprimer un service (accessible uniquement aux admins)
+@app.route('/supprimer_service/<int:id_service>', methods=['POST'])
 def supprimer_service(id_service):
     if session.get('role') == 'admin':
         db.session.delete(Service.query.get_or_404(id_service))
         db.session.commit()
     return redirect(url_for('parametres'))
 
-# --- WHATSAPP INTELLIGENT ---
+# --- WHATSAPP INTELLIGENT --- explication : Cette route génère un message WhatsApp personnalisé en fonction du type de message demandé (dette, monnaie ou reçu) et des informations de l'opération. Elle utilise les modèles de messages définis dans la configuration du système, remplace les placeholders par les données réelles, et redirige vers l'URL de WhatsApp pour envoyer le message au client.
 @app.route('/generer_whatsapp/<type_msg>/<int:id_op>')
 def generer_whatsapp(type_msg, id_op):
     op = Operation.query.get_or_404(id_op)
@@ -472,13 +500,13 @@ def lister_backups():
                 fichiers.append({'nom': f, 'taille': round(os.path.getsize(chemin) / 1024, 1), 'date': datetime.fromtimestamp(os.path.getmtime(chemin)).strftime('%d/%m/%Y à %H:%M')})
     fichiers.sort(key=lambda x: x['nom'], reverse=True)
     return jsonify(fichiers)
-
+# Route pour télécharger un backup spécifique explication : On vérifie d'abord que l'utilisateur est admin, puis on construit le chemin complet du fichier demandé en utilisant secure_filename pour éviter les problèmes de sécurité liés aux chemins. Si le fichier existe, on le renvoie en tant que téléchargement ; sinon, on retourne une erreur 404.
 @app.route('/api/securite/telecharger_backup/<nom_fichier>')
 def telecharger_backup(nom_fichier):
     if session.get('role') != 'admin': return "Accès refusé", 403
     chemin_complet = os.path.join('backups', secure_filename(nom_fichier))
     return send_file(chemin_complet, as_attachment=True) if os.path.exists(chemin_complet) else ("Fichier introuvable", 404)
-
+# Route pour supprimer un backup spécifique explication : On vérifie d'abord que l'utilisateur est admin, puis on construit le chemin complet du fichier à supprimer en utilisant secure_filename pour éviter les problèmes de sécurité liés aux chemins. Si le fichier existe, on le supprime et on retourne un message de succès ; sinon, on retourne une erreur 404.
 @app.route('/export_operations_csv')
 def export_operations_csv():
     if session.get('role') != 'admin': return redirect(url_for('accueil'))
@@ -491,7 +519,7 @@ def export_operations_csv():
     output.headers["Content-Disposition"] = f"attachment; filename=export_caisse_{datetime.now().strftime('%Y%m%d')}.csv"
     output.headers["Content-type"] = "text/csv"
     return output
-
+# Route pour exporter les clients en CSV explication : On vérifie d'abord que l'utilisateur est admin, puis on crée un flux de données en mémoire avec io.StringIO() et un objet csv.writer pour écrire les données des clients. On écrit d'abord la ligne d'en-tête, puis on parcourt tous les clients de la base de données pour écrire leurs informations. Enfin, on prépare la réponse HTTP avec le contenu CSV encodé en UTF-8 et les en-têtes appropriés pour déclencher le téléchargement du fichier.
 @app.route('/export_clients_csv')
 def export_clients_csv():
     if session.get('role') != 'admin': return redirect(url_for('accueil'))
@@ -503,10 +531,10 @@ def export_clients_csv():
     output.headers["Content-Disposition"] = f"attachment; filename=base_clients_{datetime.now().strftime('%Y%m%d')}.csv"
     output.headers["Content-type"] = "text/csv"
     return output
-
+# Route pour supprimer un backup spécifique 
 @app.errorhandler(404)
 def page_non_trouvee(e): return render_template('404.html'), 404
-
+# Fonction de sauvegarde de la base de données avec rotation des backups (7 max)
 def sauvegarder_bdd():
     os.makedirs('backups', exist_ok=True)
     chemin_db = 'instance/base.db' if os.path.exists('instance/base.db') else 'base.db'
@@ -520,6 +548,7 @@ scheduler.add_job(func=sauvegarder_bdd, trigger="cron", hour=23, minute=59)
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 
+# --- CORBEILLE (Opérations et Contrats archivés) --- 
 @app.route('/corbeille')
 def corbeille():
     if session.get('role') != 'admin':
@@ -532,7 +561,7 @@ def corbeille():
     return render_template('corbeille.html', operations=operations_supprimees, contrats=contrats_supprimes)
 
 # --- Routes pour détruire/restaurer depuis la corbeille ---
-@app.route('/restaurer_operation/<int:id_op>')
+@app.route('/restaurer_operation/<int:id_op>', methods=['POST'])
 def restaurer_operation(id_op):
     if session.get('role') == 'admin':
         op = Operation.query.get_or_404(id_op)
@@ -540,7 +569,8 @@ def restaurer_operation(id_op):
         db.session.commit()
     return redirect(url_for('corbeille'))
 
-@app.route('/detruire_operation/<int:id_op>')
+# Lors de la destruction définitive d'une opération, on supprime d'abord tous les fichiers associés (photos de reçus récents et ancien reçu), puis on supprime l'opération elle-même de la base de données. En cas d'erreur lors de la suppression des fichiers ou de la base de données, on effectue un rollback pour éviter les incohérences.
+@app.route('/detruire_operation/<int:id_op>', methods=['POST'])
 def detruire_operation(id_op):
     if session.get('role') == 'admin':
         op = Operation.query.get_or_404(id_op)
@@ -567,23 +597,23 @@ def detruire_operation(id_op):
             print(f"Erreur lors de la destruction définitive : {e}")
             
     return redirect(url_for('corbeille'))
-
-@app.route('/restaurer_contrat/<int:id_contrat>')
+# Les routes pour les contrats sont similaires à celles des opérations, mais sans la partie suppression de fichiers, car les contrats n'ont pas de photos associées. On se contente de changer le champ "archive" pour les restaurer ou de les supprimer définitivement de la base de données.
+@app.route('/restaurer_contrat/<int:id_contrat>', methods=['POST'])
 def restaurer_contrat(id_contrat):
     if session.get('role') == 'admin':
         contrat = Contrat.query.get_or_404(id_contrat)
         contrat.archive = False
         db.session.commit()
     return redirect(url_for('corbeille'))
-
-@app.route('/detruire_contrat/<int:id_contrat>')
+# Lors de la destruction définitive d'un contrat, on le supprime simplement de la base de données. En cas d'erreur lors de la suppression, on effectue un rollback pour éviter les incohérences.
+@app.route('/detruire_contrat/<int:id_contrat>', methods=['POST'])
 def detruire_contrat(id_contrat):
     if session.get('role') == 'admin':
         contrat = Contrat.query.get_or_404(id_contrat)
         db.session.delete(contrat)
         db.session.commit()
     return redirect(url_for('corbeille'))
-
+# --- MOTEUR DE RECHERCHE UNIFIÉ (Clients + Contrats + telephone) ---
 @app.route('/api/recherche')
 def api_recherche():
     if not session.get('connecte'): 
@@ -605,7 +635,7 @@ def api_recherche():
         ),
         Client.archive == False
     ).limit(6).all()
-    
+    # On affiche d'abord les clients trouvés, car c'est ce que l'utilisateur recherche le plus souvent. Chaque résultat contient un titre (Nom Prénom), un sous-titre (Client + Téléphone), une URL vers la fiche client, et une icône.
     for c in clients:
         results.append({
             'titre': f"{c.nom.upper()} {c.prenom.capitalize()}",
@@ -633,12 +663,13 @@ def api_recherche():
             client_ids_trouves.append(ct.client_id)
             
     return jsonify(results)
-
+# Route pour la page de confidentialité
 @app.route('/confidentialite')
 def confidentialite():
     # Pas besoin d'être connecté pour voir cette page (pratique pour l'afficher à un client à l'accueil)
     return render_template('confidentialite.html')
 
+#  
 if __name__ == '__main__':
     with app.app_context(): db.create_all()
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False, allow_unsafe_werkzeug=True)

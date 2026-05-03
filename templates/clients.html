@@ -100,9 +100,12 @@
                     </a>
 
                     {% if session.get('role') == 'admin' %}
-                    <a href="/supprimer_client/{{ client.id }}" onclick="return confirm('Mettre ce client à la corbeille ?');" class="inline-flex items-center justify-center w-8 h-8 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-colors shadow-sm border border-slate-200 hover:border-red-200" title="Supprimer">
-                        <i class="ph-bold ph-trash text-base"></i>
-                    </a>
+                    <form action="/supprimer_client/{{ client.id }}" method="POST" class="m-0 inline-block">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <button type="submit" onclick="return confirm('Mettre ce client à la corbeille ?');" class="inline-flex items-center justify-center w-8 h-8 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-colors shadow-sm border border-slate-200 hover:border-red-200 cursor-pointer" title="Supprimer">
+                            <i class="ph-bold ph-trash text-base"></i>
+                        </button>
+                    </form>
                     {% endif %}
                 </div>
             </div>

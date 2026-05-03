@@ -38,6 +38,8 @@
         </div>
 
         <form action="/modifier_client/{{ client.id }}" method="POST">
+            <!-- 👇 LE JETON DE SÉCURITÉ CSRF 👇 -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <div class="p-6 sm:p-8 space-y-6">
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">

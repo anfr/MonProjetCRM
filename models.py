@@ -23,6 +23,7 @@ class Utilisateur(db.Model):
     password = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(20), default='caissier')
     guichet = db.Column(db.String(10), default='1')
+    auth_version = db.Column(db.Integer, default=1)
     operations_faites = db.relationship('Operation', backref='caissier', lazy=True)
     
     # --- PERMISSIONS SPÉCIFIQUES ---

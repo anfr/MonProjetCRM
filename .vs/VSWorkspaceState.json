@@ -1,9 +1,7 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\routes",
-    "\\templates"
+    ""
   ],
-  "SelectedNode": "\\templates\\caisse.html",
+  "SelectedNode": "\\.gitignore",
   "PreviewInSolutionExplorer": false
 }

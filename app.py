@@ -28,7 +28,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "cle_secours_si_env_introuvable")
 # On active la protection globale !
 csrf = CSRFProtect(app)
 
-sessions_versions = {}
+
 
 
 # Configuration de l'application
@@ -56,37 +56,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import time
 
 # ==========================================
-# CACHE MÉMOIRE GLOBAL (Fini les Freezes !)
-# ==========================================
-# On stocke les alertes dans la RAM du serveur, pas dans les cookies.
-CACHE_NOTIFS = {'data': [], 'count': 0, 'last_update': 0}
-
-def get_cached_notifs():
-    now = time.time()
-    # Cache de 5 secondes pour soulager la base de données
-    if now - CACHE_NOTIFS['last_update'] > 5:
-        try:
-            notifs = []
-            # Alerte 1 : Attente
-            nb_attente = Operation.query.filter_by(statut='En attente', archive=False).count()
-            if nb_attente > 0:
-                notifs.append({'titre': 'Opérations', 'message': f'{nb_attente} en attente', 'lien': '/', 'couleur': 'orange'})
-            
-            # Alerte 2 : Dettes (Recouvrement)
-            ops_dettes = Operation.query.filter(Operation.statut == 'Terminé', Operation.montant_total > Operation.montant_avance, Operation.archive == False).all()
-            total_dettes = sum((op.montant_total - op.montant_avance) for op in ops_dettes if op.montant_total is not None)
-            if total_dettes > 0:
-                notifs.append({'titre': 'Recouvrement', 'message': f'Attention, {total_dettes} DH de dettes.', 'lien': '/clients/dettes', 'couleur': 'red'})
-
-            CACHE_NOTIFS['data'] = notifs
-            CACHE_NOTIFS['count'] = len(notifs)
-            CACHE_NOTIFS['last_update'] = now
-        except Exception:
-            pass
-    return CACHE_NOTIFS['data'], CACHE_NOTIFS['count']
-
-
-# ==========================================
 # 1. SÉCURITÉ & VÉRIFICATION DE SESSION
 # ==========================================
 def is_public_route(endpoint):
@@ -106,9 +75,10 @@ def verifier_connexion():
         if not session.get('connecte'): 
             return redirect(url_for('login'))
         
-        # Sécurité 2 : Traçage et Expiration (Changement d'appareil)
-        user_id = session.get('user_id')
-        if session.get('auth_version') != sessions_versions.get(user_id, 1):
+        # Sécurité 2 : Traçage en Base de données (Anti multi-process bug)
+        user = Utilisateur.query.get(session.get('user_id'))
+        # Si l'utilisateur a été supprimé ou si sa version ne correspond plus : on le déconnecte !
+        if not user or session.get('auth_version') != user.auth_version:
             session.clear()
             return redirect(url_for('login', expire='1'))
 
@@ -128,9 +98,28 @@ def injecter_variables_globales():
     if not session.get('connecte'):
         return dict(notifs=[], nb_notifs=0, liste_boutons=liste_boutons, config=config)
 
-    # Récupération depuis la RAM (instantané)
-    notifs, nb_notifs = get_cached_notifs()
-    return dict(notifs=notifs, nb_notifs=nb_notifs, liste_boutons=liste_boutons, config=config)
+    # --- CALCUL DES NOTIFICATIONS EN TEMPS RÉEL ---
+    notifs = []
+    
+    # Alerte 1 : Opérations en attente (Le count() est ultra-rapide en SQLite)
+    nb_attente = Operation.query.filter_by(statut='En attente', archive=False).count()
+    if nb_attente > 0:
+        notifs.append({'titre': 'Opérations', 'message': f'{nb_attente} en attente', 'lien': '/', 'couleur': 'orange'})
+    
+    # Alerte 2 : Recouvrement des dettes
+    # Optimisation : On laisse le moteur SQL faire l'addition (func.sum) au lieu de faire une boucle en Python !
+    total_dettes = db.session.query(
+        func.sum(Operation.montant_total - Operation.montant_avance)
+    ).filter(
+        Operation.statut == 'Terminé', 
+        Operation.montant_total > Operation.montant_avance, 
+        Operation.archive == False
+    ).scalar() or 0
+
+    if total_dettes > 0:
+        notifs.append({'titre': 'Recouvrement', 'message': f'Attention, {total_dettes} DH de dettes.', 'lien': '/clients/dettes', 'couleur': 'red'})
+
+    return dict(notifs=notifs, nb_notifs=len(notifs), liste_boutons=liste_boutons, config=config)
 
 # --- BOUTONS RAPIDES ---
 # Route pour ajouter un bouton rapide (accessible uniquement aux admins) 
@@ -248,7 +237,7 @@ def login():
                 'username': user.username, 
                 'role': user.role, 
                 'guichet': getattr(user, 'guichet', '1'), 
-                'auth_version': sessions_versions.get(user.id, 1)
+                'auth_version': user.auth_version
             })
             return redirect(url_for('accueil'))
             
@@ -258,10 +247,12 @@ def login():
 # --- DÉCONNEXION SÉCURISÉE ---
 @app.route('/logout')
 def logout():
-    # Sécurité : On incrémente la version de session pour déconnecter 
-    # automatiquement les autres appareils fantômes de cet utilisateur
+    # On incrémente la version de session en BDD pour expulser les autres appareils
     if session.get('user_id'): 
-        sessions_versions[session['user_id']] = sessions_versions.get(session['user_id'], 1) + 1
+        user = Utilisateur.query.get(session['user_id'])
+        if user:
+            user.auth_version += 1
+            db.session.commit()
     
     session.clear()
     return redirect(url_for('login'))

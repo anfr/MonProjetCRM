@@ -219,58 +219,54 @@
 <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 <script>
     // 1. GESTION DU TEMPS RÉEL
-    const socket = io();
-    socket.on('ticket_maj', function () {
-        window.location.reload();
+    let isNavigating = false;
+
+    // On détecte si l'utilisateur a cliqué sur un bouton (pour éviter de recharger en boucle)
+    window.addEventListener('beforeunload', () => {
+        isNavigating = true;
+        sessionStorage.setItem('scrollPos_gestion', window.scrollY);
     });
 
-    window.addEventListener('beforeunload', () => sessionStorage.setItem('scrollPos_gestion', window.scrollY));
+    const socket = io();
+    socket.on('ticket_maj', function () {
+        // On ne recharge la page QUE si le navigateur n'est pas déjà en train de changer de page
+        if (!isNavigating) {
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        }
+    });
+
     window.addEventListener('load', () => {
         if (sessionStorage.getItem('scrollPos_gestion')) {
             window.scrollTo(0, parseInt(sessionStorage.getItem('scrollPos_gestion')));
         }
     });
 
-    // 2. GESTION DE L'IMPRESSION DIRECTE (PC -> USB)
+    // 2. GESTION DE L'IMPRESSION DIRECTE (PC -> USB) SÉCURISÉE 🔒
     function lancerImpression(idTicket) {
+        // On récupère le jeton de sécurité généré par Flask
+        const csrfToken = '{{ csrf_token() }}';
+
         fetch('/queue/imprimer_direct/' + idTicket, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken // 👈 L'ajout qui débloque l'impression !
+            }
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    console.log("Impression lancée avec succès !");
-                } else {
-                    alert("Erreur d'impression : " + data.message);
-                }
-            })
-            .catch(error => {
-                console.error("Erreur de communication avec l'imprimante :", error);
-            });
-
-        // 1. GESTION DU TEMPS RÉEL
-        let isNavigating = false;
-
-        // On détecte si l'utilisateur a cliqué sur un bouton (comme "Appeler" ou "Pause")
-        window.addEventListener('beforeunload', () => {
-            isNavigating = true;
-            sessionStorage.setItem('scrollPos_gestion', window.scrollY);
-        });
-
-        const socket = io();
-        socket.on('ticket_maj', function () {
-            // On ne recharge la page QUE si le navigateur n'est pas déjà en train de changer de page
-            if (!isNavigating) {
-                setTimeout(() => {
-                    window.location.reload();
-                }, 300); // Un tout petit délai pour la fluidité
+        .then(response => {
+            if (!response.ok) throw new Error("Requête bloquée ou erreur serveur");
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                console.log("Impression lancée avec succès !");
+            } else {
+                alert("Erreur d'impression : " + data.message);
             }
-        });
-
-        window.addEventListener('load', () => {
-            if (sessionStorage.getItem('scrollPos_gestion')) {
-                window.scrollTo(0, parseInt(sessionStorage.getItem('scrollPos_gestion')));
-            }
+        })
+        .catch(error => {
+            console.error("Erreur de communication avec l'imprimante :", error);
         });
     }
 </script>

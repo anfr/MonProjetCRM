@@ -498,6 +498,10 @@
                         'X-CSRFToken': csrfToken // 👈 L'intégration est ici
                     }
                 })
+                    .then(res => {
+                        if (!res.ok) throw new Error("Erreur réseau");
+                        return res.json(); 
+                    })
                     .then(d => {
                         this.afficherNotification(d.message || 'Opération effectuée', !d.success);
                         if (d.success) {

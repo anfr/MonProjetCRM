@@ -192,23 +192,28 @@
             }
         });
 
-        function imprimerTicket(id, nom) {
-            const toast = document.getElementById('toast-impression');
-            toast.classList.remove('translate-y-40');
+function imprimerTicket(id, nom) {
+    const toast = document.getElementById('toast-impression');
+    toast.classList.remove('translate-y-40');
 
-            fetch('/borne/creer_et_imprimer/' + id, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'error') {
-                    window.dispatchEvent(new CustomEvent('printer-error'));
-                }
-                setTimeout(() => toast.classList.add('translate-y-40'), 3000);
-            })
-            .catch(() => {
-                window.dispatchEvent(new CustomEvent('printer-error'));
-                toast.classList.add('translate-y-40');
-            });
+    fetch('/borne/creer_et_imprimer/' + id, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token() }}' // 👈 Le jeton de sécurité est ajouté ici !
         }
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'error') {
+                window.dispatchEvent(new CustomEvent('printer-error'));
+            }
+            setTimeout(() => toast.classList.add('translate-y-40'), 3000);
+        })
+        .catch(() => {
+            window.dispatchEvent(new CustomEvent('printer-error'));
+            toast.classList.add('translate-y-40');
+        });
+}
     </script>
 </body>
 </html>

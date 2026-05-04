@@ -220,6 +220,17 @@ def nouvelle_operation(id_client):
     montant_a = float(request.form.get('montant_avance') or 0)
     user_id = session.get('user_id') or 1 
 
+    # --- NOUVEAU : Récupération et fusion des motifs ---
+    motifs_coches = request.form.getlist('motifs') # Récupère toutes les cases cochées
+    autre_motif = request.form.get('autre_motif', '').strip()
+    
+    tous_les_motifs = motifs_coches.copy()
+    if autre_motif:
+        tous_les_motifs.append(autre_motif)
+        
+    # On crée une belle phrase, ex: "Eau (12345) + Internet (6789) + Photocopie"
+    motif_final = " + ".join(tous_les_motifs) if tous_les_motifs else "Non spécifié"
+
     # 1. Création de l'opération
     nouvelle_op = Operation(
         montant_total=montant_t,
@@ -227,7 +238,8 @@ def nouvelle_operation(id_client):
         date_operation=datetime.now(),
         statut='En attente',
         client_id=id_client,
-        utilisateur_id=user_id       
+        utilisateur_id=user_id,
+        motif=motif_final   # 👈 AJOUT ICI
     )
     
     try:

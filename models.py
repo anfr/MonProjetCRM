@@ -67,6 +67,7 @@ class Operation(db.Model):
     # 💡 Sécurité : Toujours 0 par défaut, impossible d'être vide
     montant_avance = db.Column(db.Float, nullable=False, default=0.0) 
     montant_total = db.Column(db.Float, nullable=True)
+    motif = db.Column(db.String(255), nullable=True)
     
     statut = db.Column(db.String(20), default='En attente')
     statut_dossier = db.Column(db.String(50), default='Dossier déposé')

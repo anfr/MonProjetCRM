@@ -132,6 +132,7 @@
                                 {% endif %}
 
                                 <form action="/ajouter_recu/{{ op.id }}" method="POST" enctype="multipart/form-data" class="inline-block" x-data>
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                     <input type="file" name="photos" multiple accept="image/*" capture="environment" class="hidden" x-ref="fileInput" @change="$el.form.submit()">
                                     <button type="button" @click="$refs.fileInput.click()" class="px-2 py-0.5 rounded bg-slate-50 text-slate-500 text-[10px] font-bold border border-slate-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors shadow-sm flex items-center gap-1" title="Ajouter un reçu manquant">
                                         <i class="ph-bold ph-plus"></i> Reçu

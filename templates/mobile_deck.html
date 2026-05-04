@@ -208,8 +208,14 @@
             // Optionnel : tu peux faire vibrer le téléphone pour confirmer l'appui
             if (navigator.vibrate) navigator.vibrate(50);
 
+            // On récupère le jeton de sécurité
+            const csrfToken = '{{ csrf_token() }}';
+
             fetch('/queue/imprimer_direct/' + idTicket, {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken // 👈 On ajoute le jeton aux en-têtes !
+                }
             })
                 .then(response => response.json())
                 .then(data => {

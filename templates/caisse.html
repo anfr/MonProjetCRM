@@ -34,16 +34,22 @@
      modalMouvement: false, modalCloture: false, typeMouvement: 'Entrée' ,
      modalAnnulation: false, actionAnnulation: '' , categorieSelectionnee: '' ,
      modalNouvelleCat: false, modeEdition: false,
-     /* 1. On charge les catégories dans le navigateur * /
      categories: [
      {% for cat in categories %}
      { id: {{ cat.id }} , nom: '{{ cat.nom | escape }}' , type_mouvement: '{{ cat.type_mouvement }}' , icone: '{{ cat.icone }}' },
      {% endfor %}
      ],
-     /* 2. Suppression avec confirmation et gestion erreur * /
+     /* 2. Suppression avec confirmation et gestion erreur (CORRIGÉ AVEC CSRF) * /
      supprimerCategorie(id) {
      if (!confirm('Supprimer cette catégorie ? Les mouvements existants ne seront pas affectés.')) return;
-     fetch(' /caisse/categorie/supprimer_ajax/' + id, { method: 'POST' })
+     // On récupère le token généré par Jinja
+     const csrfToken='{{ csrf_token() }}' ;
+     fetch('/caisse/categorie/supprimer_ajax/' + id, {
+     method: 'POST' ,
+     headers: {
+     'X-CSRFToken' : csrfToken // 👈 Ajout crucial !
+     }
+     })
      .then(res=>
     {
     if (!res.ok) throw new Error('Erreur serveur');
@@ -62,10 +68,20 @@
     });
     },
 
-    /* 3. Ajout Instantané (Garde la modale ouverte) */
+    /* 3. Ajout Instantané (CORRIGÉ AVEC CSRF) */
     ajouterCategorie(event) {
     let formData = new FormData(event.target);
-    fetch('/caisse/categorie/ajouter_ajax', { method: 'POST', body: formData })
+
+    // On récupère le token généré par Jinja
+    const csrfToken = '{{ csrf_token() }}';
+
+    fetch('/caisse/categorie/ajouter_ajax', {
+    method: 'POST',
+    body: formData,
+    headers: {
+    'X-CSRFToken': csrfToken // 👈 Ajout crucial !
+    }
+    })
     .then(res => res.json())
     .then(data => {
     if(data.success) {

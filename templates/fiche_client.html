@@ -342,7 +342,12 @@
                                         <span class="block text-[10px] text-red-500 font-black uppercase tracking-widest mb-1">Dette Client</span>
                                         <div class="flex items-center gap-3">
                                             <span class="font-black text-red-700 text-base">{{ reste }} DH</span>
-                                            <a href="/regler_reste/{{ op.id }}" onclick="return confirm('Encaisser {{ reste }} DH ?');" class="text-[10px] font-black bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition shadow-sm">Encaisser</a>
+                                            <form action="/regler_reste/{{ op.id }}" method="POST" class="m-0 inline-block">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                                <button type="submit" onclick="return confirm('Encaisser {{ reste }} DH ?');" class="text-[10px] font-black bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition shadow-sm border-none cursor-pointer">
+                                                    Encaisser
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                     {% elif reste < 0 %}
@@ -350,7 +355,12 @@
                                         <span class="block text-[10px] text-amber-600 font-black uppercase tracking-widest mb-1">À Rendre</span>
                                         <div class="flex items-center gap-3">
                                             <span class="font-black text-amber-700 text-base">{{ reste|abs }} DH</span>
-                                            <a href="/regler_reste/{{ op.id }}" onclick="return confirm('Restituer {{ reste|abs }} DH ?');" class="text-[10px] font-black bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg transition shadow-sm">Restituer</a>
+                                            <form action="/regler_reste/{{ op.id }}" method="POST" class="m-0 inline-block">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                                <button type="submit" onclick="return confirm('Restituer {{ reste|abs }} DH ?');" class="text-[10px] font-black bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg transition shadow-sm border-none cursor-pointer">
+                                                    Restituer
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                     {% else %}

@@ -66,7 +66,13 @@
         <button @click="tab = 'equipe'" :class="tab === 'equipe' ? 'bg-white text-indigo-600 shadow-sm border-slate-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 border-transparent'" class="border px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2"><i class="ph-fill ph-users-three text-lg"></i> Équipe</button>
         <button @click="tab = 'catalogue'" :class="tab === 'catalogue' ? 'bg-white text-indigo-600 shadow-sm border-slate-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 border-transparent'" class="border px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2"><i class="ph-fill ph-tag text-lg"></i> Catalogue</button>
         <button @click="tab = 'whatsapp'" :class="tab === 'whatsapp' ? 'bg-white text-emerald-600 shadow-sm border-emerald-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 border-transparent'" class="border px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2"><i class="ph-fill ph-whatsapp-logo text-lg"></i> WhatsApp</button>
-        <button @click="tab = 'maintenance'" :class="tab === 'maintenance' ? 'bg-white text-red-600 shadow-sm border-red-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 border-transparent'" class="border px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 md:ml-auto"><i class="ph-fill ph-shield-check text-lg"></i> Sécurité</button>
+        <!-- On a retiré le md:ml-auto d'ici 👇 -->
+        <button @click="tab = 'maintenance'" :class="tab === 'maintenance' ? 'bg-white text-red-600 shadow-sm border-red-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 border-transparent'" class="border px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2"><i class="ph-fill ph-shield-check text-lg"></i> Sécurité</button>
+
+        <!-- 👇 TON NOUVEAU LIEN VERS ADMIN TICKET (Poussé sur la droite avec md:ml-auto) 👇 -->
+        <a href="/admin_ticket" target="_blank" class="border border-slate-800 px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 bg-slate-900 text-white hover:bg-slate-800 shadow-md md:ml-auto">
+            <i class="ph-bold ph-ticket text-lg"></i> Écran Tickets
+        </a>
     </nav>
 
     <div x-show="tab === 'identite'" x-transition style="display: none;" class="space-y-6">

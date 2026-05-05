@@ -110,14 +110,19 @@
                 {% for op in operations_en_attente %}
                 <div x-data="{ modeCloture: false, montant: '' }" class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center font-black text-slate-500 shrink-0">
+                    <a href="{{ url_for('clients.fiche_client', id_client=op.client.id) }}" class="flex items-center gap-4 group cursor-pointer hover:translate-x-1 transition-transform">
+                        <!-- Le carré avec les initiales -->
+                        <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center font-black text-slate-500 shrink-0 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-colors shadow-sm">
                             {{ op.client.prenom[0]|upper }}{{ op.client.nom[0]|upper }}
                         </div>
-                        <div>
-                            <p class="font-black text-slate-800 text-base uppercase leading-tight">{{ op.client.nom }} <span class="capitalize font-bold text-slate-500">{{ op.client.prenom }}</span></p>
 
-                            <!-- 👇 NOUVEAU : AFFICHAGE MOTIF ET AVANCE 👇 -->
+                        <div>
+                            <!-- Le nom du client (qui change de couleur au survol) -->
+                            <p class="font-black text-slate-800 text-base uppercase leading-tight group-hover:text-indigo-600 transition-colors">
+                                {{ op.client.nom }} <span class="capitalize font-bold text-slate-500 group-hover:text-indigo-400">{{ op.client.prenom }}</span>
+                            </p>
+
+                            <!-- 👇 AFFICHAGE MOTIF ET AVANCE 👇 -->
                             <div class="mt-1.5 flex flex-col sm:flex-row flex-wrap gap-1.5">
                                 <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 max-w-[200px] truncate" title="{{ op.motif or 'Non spécifié' }}">
                                     <i class="ph-bold ph-tag text-indigo-500"></i> {{ op.motif or 'Non spécifié' }}
@@ -132,7 +137,7 @@
                                 <i class="ph-bold ph-calendar"></i> Déposé le {{ op.date_operation.strftime('%d/%m à %H:%M') }}
                             </p>
                         </div>
-                    </div>
+                    </a>
 
                     <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3">
 

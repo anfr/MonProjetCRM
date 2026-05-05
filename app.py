@@ -37,6 +37,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///base.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads/recus'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+app.config['VERSION_APP'] = '0.9.0-bêta' # 👈 version de dev actuelle
 
 # On initialise la base de données et les extensions
 db.init_app(app)
@@ -117,9 +118,15 @@ def injecter_variables_globales():
     ).scalar() or 0
 
     if total_dettes > 0:
-        notifs.append({'titre': 'Recouvrement', 'message': f'Attention, {total_dettes} DH de dettes.', 'lien': '/clients/dettes', 'couleur': 'red'})
+        notifs.append({'titre': 'Recouvrement', 'message': f'Attention, {total_dettes} DH de dettes.', 'lien': url_for('clients.liste_dettes'), 'couleur': 'red'})
 
-    return dict(notifs=notifs, nb_notifs=len(notifs), liste_boutons=liste_boutons, config=config)
+    return dict(
+        notifs=notifs, 
+        nb_notifs=len(notifs), 
+        liste_boutons=liste_boutons, 
+        config=config,
+        version_app=app.config.get('VERSION_APP', '0.0.0')
+        )
 
 # --- BOUTONS RAPIDES ---
 # Route pour ajouter un bouton rapide (accessible uniquement aux admins) 

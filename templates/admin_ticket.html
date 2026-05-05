@@ -23,6 +23,8 @@
 
         <div class="lg:col-span-7">
             <form action="{{ url_for('queue.admin_ticket') }}" method="POST" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <!-- 👇 LE JETON DE SÉCURITÉ 👇 -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <div class="px-8 py-5 bg-slate-50 border-b border-slate-100">
                     <h3 class="font-bold text-slate-800">Éditeur de contenu</h3>
                 </div>

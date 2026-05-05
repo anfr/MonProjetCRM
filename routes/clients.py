@@ -72,7 +72,8 @@ def historique():
         query = query.filter(or_(
             Client.nom.ilike(search),
             Client.prenom.ilike(search),
-            Client.telephone.ilike(search)
+            Client.telephone.ilike(search),
+            Operation.motif.ilike(search)
         ))
 
     # -- B. Filtre par Dates

@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\routes"
   ],
-  "SelectedNode": "\\.gitignore",
+  "SelectedNode": "\\models.py",
   "PreviewInSolutionExplorer": false
 }

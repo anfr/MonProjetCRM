@@ -87,7 +87,7 @@
                         <td class="px-6 py-4 text-right">
                             <div class="flex flex-wrap items-center justify-end gap-2.5">
                                 {% if le_client.telephone %}
-                                <a href="{{ url_for('generer_whatsapp', type_msg='dette', id_op=ops[0].id) }}"
+                                <a href="{{ url_for('communication.generer_whatsapp', type_msg='dette', id_op=ops[0].id) }}"
                                    target="_blank" rel="noopener noreferrer" @click.stop class="inline-flex justify-center items-center px-4 py-2 text-xs font-bold rounded-lg shadow-sm text-white bg-[#25D366] hover:bg-[#20b858] transition-colors gap-2">
                                     <i class="ph-bold ph-whatsapp-logo text-base"></i> Relancer
                                 </a>

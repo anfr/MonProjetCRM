@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\routes"
+    "\\routes",
+    "\\templates"
   ],
-  "SelectedNode": "\\models.py",
+  "SelectedNode": "\\templates\\dashboard.html",
   "PreviewInSolutionExplorer": false
 }

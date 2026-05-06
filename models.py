@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
-db = SQLAlchemy()
+from extensions import db
 
 class Ticket(db.Model):
     id = db.Column(db.Integer, primary_key=True)

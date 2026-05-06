@@ -1,6 +1,6 @@
 import socket
 # On importe app ET socketio depuis ton fichier principal
-from app import app, socketio 
+from main import main, socketio 
 
 def get_local_ip():
     """Petite fonction magique pour trouver la vraie adresse IP de ton PC sur le Wifi"""
@@ -26,4 +26,4 @@ if __name__ == '__main__':
     print("="*55 + "\n")
     
     # SocketIO remplace Waitress pour gérer parfaitement les WebSockets !
-    socketio.run(app, host='0.0.0.0', port=5000)
+    socketio.run(main, host='0.0.0.0', port=5000)

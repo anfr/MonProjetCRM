@@ -56,14 +56,14 @@
                         </td>
                         <td class="px-4 py-4 text-right">
                             <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                <form action="/restaurer_operation/{{ op.id }}" method="POST" class="m-0 inline-block">
+                                <form action="{{ url_for('corbeille.restaurer_operation', id_op=op.id) }}" method="POST" class="m-0 inline-block">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                     <button type="submit" class="p-2 bg-white border border-slate-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 rounded-lg transition-colors shadow-sm cursor-pointer" title="Restaurer">
                                         <i class="ph-bold ph-arrow-u-up-left text-lg"></i>
                                     </button>
                                 </form>
 
-                                <form action="/detruire_operation/{{ op.id }}" method="POST" class="m-0 inline-block">
+                                <form action="{{ url_for('corbeille.detruire_operation', id_op=op.id) }}" method="POST" class="m-0 inline-block">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                     <button type="submit" onclick="return confirm('Attention : Détruire DÉFINITIVEMENT cette opération {% if op.photos %}ET effacer ses reçus du disque dur {% endif %}?');" class="p-2 bg-white border border-slate-200 text-red-600 hover:bg-red-50 hover:border-red-200 rounded-lg transition-colors shadow-sm cursor-pointer" title="Détruire définitivement">
                                         <i class="ph-bold ph-warning-octagon text-lg"></i>
@@ -117,14 +117,14 @@
                         </td>
                         <td class="px-4 py-4 text-right">
                             <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                <form action="/restaurer_contrat/{{ contrat.id }}" method="POST" class="m-0 inline-block">
+                                <form action="{{ url_for('corbeille.restaurer_contrat', id_contrat=contrat.id) }}" method="POST" class="m-0 inline-block">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                     <button type="submit" class="p-2 bg-white border border-slate-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 rounded-lg transition-colors shadow-sm cursor-pointer" title="Restaurer">
                                         <i class="ph-bold ph-arrow-u-up-left text-lg"></i>
                                     </button>
                                 </form>
 
-                                <form action="/detruire_contrat/{{ contrat.id }}" method="POST" class="m-0 inline-block">
+                                <form action="{{ url_for('corbeille.detruire_contrat', id_contrat=contrat.id) }}" method="POST" class="m-0 inline-block">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                     <button type="submit" onclick="return confirm('Détruire DÉFINITIVEMENT ce contrat ?');" class="p-2 bg-white border border-slate-200 text-red-600 hover:bg-red-50 hover:border-red-200 rounded-lg transition-colors shadow-sm cursor-pointer" title="Suppression définitive">
                                         <i class="ph-bold ph-warning-octagon text-lg"></i>

@@ -39,7 +39,7 @@
             </div>
             {% endif %}
 
-            <form action="/login" method="POST" class="space-y-6">
+            <form action="{{ url_for('auth.login') }}" method="POST" class="space-y-6">
                 <!-- 👇 LE JETON DE SÉCURITÉ CSRF 👇 -->
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 

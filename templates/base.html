@@ -100,7 +100,7 @@
         <div class="absolute top-0 left-0 w-full h-64 bg-indigo-500/10 blur-[80px] pointer-events-none"></div>
 
         <div class="relative flex items-center justify-between px-6 py-7 border-b border-white/5 z-10">
-            <a href="{{ url_for('accueil') }}" class="flex items-center gap-3 group">
+            <a href="{{ url_for('dashboard.accueil') }}" class="flex items-center gap-3 group">
                 <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-300">
                     <i class="ph-bold ph-storefront text-white text-xl"></i>
                 </div>
@@ -121,7 +121,7 @@
 
                 <p class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Menu Principal</p>
 
-                <a href="{{ url_for('accueil') }}"
+                <a href="{{ url_for('dashboard.accueil') }}"
                    class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'accueil' %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
                     <i class="ph-bold ph-squares-four text-xl"></i> Tableau de bord
                 </a>
@@ -169,12 +169,12 @@
                 <div class="pt-4 mt-2 border-t border-white/5">
                     <p class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Administration</p>
 
-                    <a href="{{ url_for('parametres') }}"
+                    <a href="{{ url_for('admin.parametres') }}"
                        class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'parametres' %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
                         <i class="ph-bold ph-sliders-horizontal text-xl"></i> Paramètres Système
                     </a>
 
-                    <a href="/corbeille"
+                    <a href="{{ url_for('corbeille.vue_corbeille') }}"
                        class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if 'corbeille' in request.path %}bg-red-900/40 text-red-400 border border-red-900/50{% else %}text-slate-500 hover:bg-red-500/10 hover:text-red-400{% endif %}">
                         <i class="ph-bold ph-trash text-xl"></i> Corbeille
                     </a>
@@ -279,7 +279,7 @@
 
                     <div class="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
 
-                    <a href="/profil" class="flex items-center gap-3 px-2 sm:px-3 py-2 rounded-xl hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200 group bg-white shadow-sm">
+                    <a href="{{ url_for('auth.profil')}}" class="flex items-center gap-3 px-2 sm:px-3 py-2 rounded-xl hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200 group bg-white shadow-sm">
                         <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-blue-100 text-indigo-600 flex items-center justify-center font-black shadow-inner group-hover:from-indigo-600 group-hover:to-blue-600 group-hover:text-white transition-colors">
                             {{ session.get('username', 'U')[0] | upper }}
                         </div>
@@ -289,7 +289,7 @@
                         </div>
                     </a>
 
-                    <a href="{{ url_for('logout') }}" class="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Déconnexion">
+                    <a href="{{ url_for('auth.logout') }}" class="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Déconnexion">
                         <i class="ph-bold ph-sign-out text-xl"></i>
                     </a>
                 </div>

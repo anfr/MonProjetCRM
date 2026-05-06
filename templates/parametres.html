@@ -251,7 +251,7 @@
             </div>
             <div class="p-8">
 
-                <form @submit.prevent="soumettreFormulaire($event, '{{ url_for('ajouter_caissier') }}', 'btn-add-equipe')" class="mb-8 bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
+                <form @submit.prevent="soumettreFormulaire($event, '{{ url_for('admin.ajouter_caissier') }}', 'btn-add-equipe')" class="mb-8 bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
                     <div class="flex flex-col md:flex-row gap-4">
                         <input type="text" name="username" required placeholder="Nom d'utilisateur" class="flex-1 bg-white border border-indigo-200 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none">
                         <input type="password" name="password" required placeholder="Mot de passe" class="flex-1 bg-white border border-indigo-200 rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none">
@@ -272,7 +272,7 @@
                     {% for user in utilisateurs %}
                     <div class="bg-white border {% if user.role == 'admin' %}border-amber-200{% else %}border-slate-200{% endif %} rounded-2xl p-5 shadow-sm relative group">
                         {% if user.role != 'admin' %}
-                        <form action="{{ url_for('supprimer_caissier', id=user.id) }}" method="POST" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity m-0">
+                        <form action="{{ url_for('admin.supprimer_caissier', id=user.id) }}" method="POST" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity m-0">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                             <button type="submit" onclick="return confirm('Supprimer ce caissier ? Cette action est irréversible.');" class="text-slate-400 hover:text-red-500 bg-transparent border-none p-0 cursor-pointer">
                                 <i class="ph-bold ph-trash text-lg"></i>
@@ -302,7 +302,7 @@
                 <i class="ph-fill ph-tag text-2xl text-indigo-500"></i> Services
             </div>
             <div class="p-6">
-                <form @submit.prevent="soumettreFormulaire($event, '{{ url_for('ajouter_service') }}', 'btn-add-service')" class="flex gap-2 mb-6">
+                <form @submit.prevent="soumettreFormulaire($event, '{{ url_for('admin.ajouter_service') }}', 'btn-add-service')" class="flex gap-2 mb-6">
                     <input type="text" name="lettre" required placeholder="A" maxlength="1" class="w-14 text-center bg-white border border-slate-200 rounded-xl px-2 py-2 font-bold uppercase outline-none">
                     <input type="text" name="nom_service" required placeholder="Nom..." class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none">
                     <button type="submit" id="btn-add-service" class="bg-indigo-600 text-white font-bold w-10 h-10 rounded-xl flex items-center justify-center hover:bg-indigo-700 transition">
@@ -319,7 +319,7 @@
                             <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-black flex items-center justify-center">{{ service.lettre }}</span>
                             <span class="font-bold text-slate-700">{{ service.nom_service }}</span>
                         </div>
-                        <form action="{{ url_for('supprimer_service', id_service=service.id) }}" method="POST" class="m-0">
+                        <form action="{{ url_for('admin.supprimer_service', id_service=service.id) }}" method="POST" class="m-0">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                             <button type="submit" onclick="return confirm('Supprimer ce service ?');" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 bg-transparent border-none p-0 cursor-pointer">
                                 <i class="ph-bold ph-trash"></i>
@@ -336,7 +336,7 @@
                 <i class="ph-fill ph-lightning text-2xl text-amber-500"></i> Raccourcis Caisse
             </div>
             <div class="p-6">
-                <form @submit.prevent="soumettreFormulaire($event, '{{ url_for('ajouter_bouton_rapide') }}', 'btn-add-raccourci')" class="flex gap-2 mb-6">
+                <form @submit.prevent="soumettreFormulaire($event, '{{ url_for('api.ajouter_bouton_rapide') }}', 'btn-add-raccourci')" class="flex gap-2 mb-6">
                     <input type="text" name="lettre" required placeholder="B" maxlength="1" class="w-14 text-center bg-white border border-amber-200 rounded-xl px-2 py-2 font-bold uppercase outline-none">
                     <input type="text" name="nom_bouton" required placeholder="Nom..." class="flex-1 bg-white border border-amber-200 rounded-xl px-4 py-2 text-sm outline-none">
                     <button type="submit" id="btn-add-raccourci" class="bg-amber-500 text-white font-bold w-10 h-10 rounded-xl flex items-center justify-center hover:bg-amber-600 transition">
@@ -353,7 +353,7 @@
                             <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 font-black flex items-center justify-center">{{ bouton.lettre }}</span>
                             <span class="font-bold text-slate-700">{{ bouton.nom_service }}</span>
                         </div>
-                        <form action="{{ url_for('supprimer_bouton_rapide', id_bouton=bouton.id) }}" method="POST" class="m-0">
+                        <form action="{{ url_for('api.supprimer_bouton_rapide', id_bouton=bouton.id) }}" method="POST" class="m-0">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                             <button type="submit" onclick="return confirm('Supprimer ce raccourci ?');" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 bg-transparent border-none p-0 cursor-pointer">
                                 <i class="ph-bold ph-trash"></i>
@@ -422,8 +422,8 @@
                 <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                     <div class="px-6 py-5 border-b border-slate-100 bg-slate-50 font-black text-slate-800 flex items-center gap-3"><i class="ph-fill ph-export text-2xl text-indigo-500"></i> Exports de Données</div>
                     <div class="p-6 space-y-4">
-                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 group"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white border border-slate-200 text-indigo-600 flex items-center justify-center"><i class="ph-bold ph-file-csv text-xl"></i></div><div><h3 class="font-bold text-slate-800 text-sm">Caisse & Opérations</h3></div></div><a href="{{ url_for('export_operations_csv') }}" class="text-slate-400 hover:text-indigo-600"><i class="ph-bold ph-download-simple text-xl"></i></a></div>
-                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 group"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white border border-slate-200 text-blue-600 flex items-center justify-center"><i class="ph-bold ph-users text-xl"></i></div><div><h3 class="font-bold text-slate-800 text-sm">Base Clients</h3></div></div><a href="{{ url_for('export_clients_csv') }}" class="text-slate-400 hover:text-blue-600"><i class="ph-bold ph-download-simple text-xl"></i></a></div>
+                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 group"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white border border-slate-200 text-indigo-600 flex items-center justify-center"><i class="ph-bold ph-file-csv text-xl"></i></div><div><h3 class="font-bold text-slate-800 text-sm">Caisse & Opérations</h3></div></div><a href="{{ url_for('exports.export_operations_csv') }}" class="text-slate-400 hover:text-indigo-600"><i class="ph-bold ph-download-simple text-xl"></i></a></div>
+                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 group"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-white border border-slate-200 text-blue-600 flex items-center justify-center"><i class="ph-bold ph-users text-xl"></i></div><div><h3 class="font-bold text-slate-800 text-sm">Base Clients</h3></div></div><a href="{{ url_for('exports.export_clients_csv') }}" class="text-slate-400 hover:text-blue-600"><i class="ph-bold ph-download-simple text-xl"></i></a></div>
                     </div>
                 </div>
             </div>

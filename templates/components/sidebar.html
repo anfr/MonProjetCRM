@@ -1,0 +1,103 @@
+<aside :class="sidebarToggle ? 'translate-x-0' : '-translate-x-full'"
+       class="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-[#0f172a] transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 border-r border-white/5 shadow-2xl">
+
+    <div class="absolute top-0 left-0 w-full h-64 bg-indigo-500/10 blur-[80px] pointer-events-none"></div>
+
+    <div class="relative flex items-center justify-between px-6 py-7 border-b border-white/5 z-10">
+        <a href="{{ url_for('dashboard.accueil') }}" class="flex items-center gap-3 group">
+            <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-300">
+                <i class="ph-bold ph-storefront text-white text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-tight text-white truncate w-40" title="{{ config.nom_boutique if config else 'Mon CRM' }}">
+                    {{ config.nom_boutique if config else 'Mon CRM' }}
+                </h1>
+                <p class="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Kiosque Pro</p>
+            </div>
+        </a>
+        <button @click="sidebarToggle = false" class="lg:hidden text-slate-400 hover:text-white transition-colors">
+            <i class="ph-bold ph-x text-2xl"></i>
+        </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-4 py-6 z-10 relative">
+        <nav class="space-y-1.5">
+
+            <p class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Menu Principal</p>
+
+            <a href="{{ url_for('dashboard.accueil') }}"
+               class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'accueil' or request.endpoint == 'dashboard.accueil' %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
+                <i class="ph-bold ph-squares-four text-xl"></i> Tableau de bord
+            </a>
+
+            <a href="/caisse"
+               class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if 'caisse' in request.path and 'historique' not in request.path %}bg-emerald-600 text-white shadow-md shadow-emerald-500/20{% else %}text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300{% endif %}">
+                <i class="ph-bold ph-calculator text-xl"></i> Caisse (POS)
+            </a>
+
+            <a href="{{ url_for('caisse.historique_caisse') }}"
+               class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if 'historique_caisse' in request.path or 'historique' in request.endpoint and 'caisse' in request.endpoint %}bg-white/10 text-white{% else %}text-slate-500 hover:bg-white/5 hover:text-slate-300{% endif %}">
+                <i class="ph-bold ph-receipt text-xl"></i> Historique Z-Caisse
+            </a>
+
+            <a href="{{ url_for('clients.liste_clients') }}"
+               class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if 'clients' in request.endpoint and request.endpoint not in ['clients.historique', 'clients.liste_dettes'] %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
+                <i class="ph-bold ph-users text-xl"></i> Mes Clients
+            </a>
+
+            <a href="{{ url_for('clients.historique') }}"
+               class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'clients.historique' %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
+                <i class="ph-bold ph-clock-counter-clockwise text-xl"></i> Historique & Comptes
+            </a>
+
+            <a href="{{ url_for('clients.liste_dettes') }}"
+               class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'clients.liste_dettes' %}bg-red-600 text-white shadow-md shadow-red-500/20{% else %}text-slate-400 hover:bg-red-500/10 hover:text-red-400{% endif %}">
+                <i class="ph-bold ph-book-bookmark text-xl"></i> Carnet de Crédit
+            </a>
+
+            <div class="pt-4 mt-2 border-t border-white/5">
+                <p class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-emerald-500/60 mb-3">Service Client</p>
+
+                <a href="{{ url_for('queue.gestion_file') }}"
+                   class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'queue.gestion_file' %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/20{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
+                    <i class="ph-bold ph-list-numbers text-xl"></i> Gestion File d'Attente
+                </a>
+
+                <a href="{{ url_for('queue.public_view') }}" target="_blank"
+                   class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-all mt-1">
+                    <i class="ph-bold ph-monitor-play text-xl"></i> Écran TV Public
+                </a>
+            </div>
+
+            {% if session.get('role') == 'admin' %}
+            <div class="pt-4 mt-2 border-t border-white/5">
+                <p class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Administration</p>
+
+                <a href="{{ url_for('admin.parametres') }}"
+                   class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if request.endpoint == 'admin.parametres' or request.endpoint == 'parametres' %}bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md{% else %}text-slate-400 hover:bg-white/5 hover:text-white{% endif %}">
+                    <i class="ph-bold ph-sliders-horizontal text-xl"></i> Paramètres Système
+                </a>
+
+                <a href="{{ url_for('corbeille.vue_corbeille') }}"
+                   class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all {% if 'corbeille' in request.path %}bg-red-900/40 text-red-400 border border-red-900/50{% else %}text-slate-500 hover:bg-red-500/10 hover:text-red-400{% endif %}">
+                    <i class="ph-bold ph-trash text-xl"></i> Corbeille
+                </a>
+            </div>
+            {% endif %}
+
+            <a href="/confidentialite" class="flex items-center gap-3 px-4 py-2 mt-8 text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors">
+                <i class="ph-bold ph-shield-check text-lg"></i> Mentions & Confidentialité
+            </a>
+        </nav>
+    </div>
+
+    <div class="p-4 z-10 border-t border-white/5 bg-slate-900/20">
+        <div class="rounded-xl p-3 flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-black text-white uppercase tracking-wider">v{{ version_app }}</p>
+                <p class="text-[9px] text-slate-500 font-bold">Appli en développement</p>
+            </div>
+            <div class="h-2.5 w-2.5 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.6)] animate-pulse"></div>
+        </div>
+    </div>
+</aside>

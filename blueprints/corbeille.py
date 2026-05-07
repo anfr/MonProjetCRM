@@ -14,7 +14,7 @@ def vue_corbeille():
     operations_supprimees = Operation.query.filter_by(archive=True).all()
     contrats_supprimes = Contrat.query.filter_by(archive=True).all()
     
-    return render_template('corbeille.html', operations=operations_supprimees, contrats=contrats_supprimes)
+    return render_template('pages/admin/corbeille.html', operations=operations_supprimees, contrats=contrats_supprimes)
 
 @corbeille_bp.route('/restaurer_operation/<int:id_op>', methods=['POST'])
 def restaurer_operation(id_op):

@@ -1,16 +1,18 @@
-{% extends "base.html" %}
+{% extends "layouts/app.html" %}
+
+{% from "macros/ui.html" import btn, badge %}
 
 {% block content %}
-<div class="bg-white shadow-sm border-b border-slate-200 px-4 sm:px-8 py-5 mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 -mt-4 sm:-mt-6 -mx-4 sm:-mx-6 lg:-mx-10 rounded-t-none sm:rounded-b-none">
-    <h1 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-3">
-        <div class="bg-red-100 text-red-600 p-2.5 rounded-xl shadow-inner">
+<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+    <h1 class="text-3xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
+        <div class="p-2.5 bg-red-100 text-red-600 rounded-2xl shadow-inner border border-red-200/50">
             <i class="ph-bold ph-book-bookmark text-2xl"></i>
         </div>
         Carnet de Crédit (Impayés)
     </h1>
 </div>
 
-<div class="max-w-screen-xl mx-auto pb-12">
+<div class="max-w-screen-xl mx-auto pb-12 relative z-10">
 
     <div class="mb-8 rounded-3xl border border-red-200 bg-gradient-to-br from-red-50 to-white p-8 shadow-sm flex items-center justify-between gap-6 relative overflow-hidden">
         <div class="absolute right-0 top-0 -mt-10 -mr-10 w-40 h-40 bg-red-100 rounded-full opacity-50 blur-2xl pointer-events-none"></div>
@@ -26,11 +28,11 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
         {% if operations %}
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-slate-600 border-collapse">
-                <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-black tracking-widest border-b border-slate-200">
+                <thead class="bg-slate-50/50 text-slate-400 uppercase text-[10px] font-black tracking-widest border-b border-slate-100">
                     <tr>
                         <th class="px-6 py-4">Client</th>
                         <th class="px-6 py-4 text-center">Dossiers Impayés</th>
@@ -49,7 +51,6 @@
                 {% endfor %}
 
                 <tbody x-data="{ expanded: false }" class="bg-white border-b border-slate-100 hover:bg-slate-50 transition-colors">
-
                     <tr @click="expanded = !expanded" class="cursor-pointer group">
                         <td class="px-6 py-4">
                             <div class="font-black text-slate-800 text-base uppercase">{{ le_client.nom }} <span class="capitalize font-bold">{{ le_client.prenom }}</span></div>
@@ -59,9 +60,7 @@
                         </td>
 
                         <td class="px-6 py-4 text-center">
-                            <span class="inline-flex items-center justify-center px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                                {{ ops|length }} Opération(s)
-                            </span>
+                            {{ badge(ops|length ~ ' Opération(s)', type='neutre') }}
                         </td>
 
                         <td class="px-6 py-4">
@@ -74,21 +73,20 @@
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                     <button type="submit"
                                             onclick="return confirm('Confirmez-vous le règlement total de toutes les dettes de ce client ?');"
-                                            class="inline-flex items-center justify-center gap-2 px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 group border-none cursor-pointer"
+                                            class="inline-flex items-center justify-center gap-2 px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black rounded-xl shadow-md transition-all active:scale-95 border-none cursor-pointer"
                                             title="Solder toutes les dettes de ce client">
-                                        <i class="ph-bold ph-check-double text-lg group-hover:animate-pulse"></i>
+                                        <i class="ph-bold ph-check-double text-lg"></i>
                                         <span class="hidden sm:inline">Tout Encaisser</span>
                                     </button>
                                 </form>
                             </div>
-
                         </td>
 
                         <td class="px-6 py-4 text-right">
                             <div class="flex flex-wrap items-center justify-end gap-2.5">
                                 {% if le_client.telephone %}
                                 <a href="{{ url_for('communication.generer_whatsapp', type_msg='dette', id_op=ops[0].id) }}"
-                                   target="_blank" rel="noopener noreferrer" @click.stop class="inline-flex justify-center items-center px-4 py-2 text-xs font-bold rounded-lg shadow-sm text-white bg-[#25D366] hover:bg-[#20b858] transition-colors gap-2">
+                                   target="_blank" rel="noopener noreferrer" @click.stop class="inline-flex justify-center items-center px-4 py-2 text-xs font-bold rounded-xl shadow-sm text-white bg-[#25D366] hover:bg-[#20b858] transition-colors gap-2 active:scale-95">
                                     <i class="ph-bold ph-whatsapp-logo text-base"></i> Relancer
                                 </a>
                                 {% endif %}
@@ -119,7 +117,7 @@
                                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                                 <button type="submit"
                                                         onclick="return confirm('Encaisser le reste de {{ "%.2f"|format(op.reste_a_payer) }} DH pour l\'opération #{{ op.id }} ?');"
-                                                        class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-500 hover:text-white rounded-lg text-[11px] font-black uppercase tracking-widest transition-colors shadow-sm cursor-pointer">
+                                                        class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-500 hover:text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm cursor-pointer active:scale-95">
                                                     Encaisser
                                                 </button>
                                             </form>

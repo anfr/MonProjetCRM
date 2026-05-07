@@ -1,0 +1,89 @@
+{% extends "layouts/app.html" %}
+
+{% from "macros/ui.html" import btn, input_text %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+    <h1 class="text-3xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
+        <div class="p-2.5 bg-blue-100 text-blue-600 rounded-2xl shadow-inner border border-blue-200/50">
+            <i class="ph-bold ph-user-circle text-2xl"></i>
+        </div>
+        Mon Espace Personnel
+    </h1>
+</div>
+
+<div class="max-w-screen-xl mx-auto pb-12 relative z-10">
+
+    {% if erreur %}
+    <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 flex items-center gap-3 shadow-sm">
+        <i class="ph-bold ph-warning-circle text-2xl text-red-500"></i>
+        <span class="font-bold text-red-800">{{ erreur }}</span>
+    </div>
+    {% endif %}
+
+    {% if succes %}
+    <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3 shadow-sm">
+        <i class="ph-bold ph-check-circle text-2xl text-emerald-500"></i>
+        <span class="font-bold text-emerald-800">{{ succes }}</span>
+    </div>
+    {% endif %}
+
+    <form action="/profil" method="POST" class="flex flex-col gap-6 sm:gap-8">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden h-fit">
+                <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                    <i class="ph-bold ph-identification-card text-slate-500 text-xl"></i>
+                    <h2 class="text-lg font-black text-slate-800 tracking-tight">Carte d'identité</h2>
+                </div>
+
+                <div class="p-6 sm:p-8 space-y-2">
+                    {{ input_text('username', 'Identifiant de connexion *', valeur=user.username, required=true, icone='ph-user') }}
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest -mt-4 mb-4 ml-4">C'est ce que vous utilisez pour vous connecter.</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                        {{ input_text('prenom', 'Prénom', valeur=user.prenom or '') }}
+                        {{ input_text('nom', 'Nom', valeur=user.nom or '') }}
+                    </div>
+
+                    {{ input_text('telephone', 'Numéro de téléphone', valeur=user.telephone or '', icone='ph-phone') }}
+                    {{ input_text('email', 'Adresse Email', valeur=user.email or '', type='email', icone='ph-envelope') }}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden h-fit">
+                <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="ph-bold ph-lock-key text-slate-500 text-xl"></i>
+                        <h2 class="text-lg font-black text-slate-800 tracking-tight">Sécurité du compte</h2>
+                    </div>
+                    <span class="inline-flex items-center rounded-lg bg-slate-200 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-slate-600">Optionnel</span>
+                </div>
+
+                <div class="p-6 sm:p-8 space-y-2">
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6 flex items-start gap-3">
+                        <i class="ph-fill ph-info text-blue-500 text-xl"></i>
+                        <p class="text-xs font-bold text-blue-800 leading-relaxed">Laissez ces champs vides si vous souhaitez conserver votre mot de passe actuel.</p>
+                    </div>
+
+                    {{ input_text('ancien_mdp', 'Mot de passe ACTUEL', type='password', placeholder='Obligatoire pour autoriser le changement', icone='ph-lock-key') }}
+
+                    <div class="h-px bg-slate-100 my-6"></div>
+
+                    {{ input_text('nouveau_mdp', 'NOUVEAU mot de passe', type='password', placeholder='Saisissez un nouveau mot de passe sécurisé', icone='ph-key') }}
+                    {{ input_text('confirmer_mdp', 'CONFIRMER le nouveau mot de passe', type='password', placeholder="Retapez-le à l'identique", icone='ph-key') }}
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end mt-2">
+            <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3.5 border border-transparent text-sm font-black rounded-xl shadow-md text-white bg-blue-600 hover:bg-blue-700 transition-all active:scale-95 gap-2">
+                <i class="ph-bold ph-floppy-disk text-lg"></i>
+                Enregistrer les modifications
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

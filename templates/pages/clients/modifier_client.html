@@ -1,0 +1,57 @@
+{% extends "layouts/app.html" %}
+
+{% from "macros/ui.html" import btn, input_text, input_textarea %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto pb-12">
+
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 relative z-10">
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
+            <div class="p-2.5 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-2xl shadow-lg shadow-amber-500/30">
+                <i class="ph-bold ph-pencil-simple text-2xl"></i>
+            </div>
+            Modifier le profil
+        </h1>
+
+        <a href="{{ url_for('clients.liste_clients') }}">
+            {{ btn('Annuler et revenir', icone='ph-arrow-left', type='secondaire') }}
+        </a>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden relative">
+
+        <div class="absolute right-0 top-0 w-32 h-32 bg-amber-50 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+
+        <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3 relative z-10">
+            <div class="h-10 w-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-bold shadow-inner shrink-0">
+                {{ client.prenom[0] | upper }}{{ client.nom[0] | upper }}
+            </div>
+            <div>
+                <h2 class="text-lg font-black text-slate-800 tracking-tight">
+                    <span class="capitalize">{{ client.prenom }}</span> <span class="uppercase">{{ client.nom }}</span>
+                </h2>
+                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">Mise à jour des informations de contact</p>
+            </div>
+        </div>
+
+        <form action="/modifier_client/{{ client.id }}" method="POST" class="relative z-10">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <div class="p-8 space-y-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                    {{ input_text('nom', 'Nom de famille', valeur=client.nom, icone='ph-user', required=true) }}
+                    {{ input_text('prenom', 'Prénom', valeur=client.prenom, icone='ph-user', required=true) }}
+                </div>
+
+                {{ input_text('telephone', 'Numéro de téléphone principal', valeur=client.telephone, icone='ph-phone', required=true) }}
+
+                {{ input_textarea('adresse', 'Adresse postale ou localisation', valeur=client.adresse, icone='ph-map-pin', rows=3) }}
+            </div>
+
+            <div class="px-8 py-5 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+                {{ btn('Enregistrer les modifications', icone='ph-check', type='primaire', is_submit=true) }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

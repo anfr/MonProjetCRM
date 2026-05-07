@@ -1,199 +1,185 @@
-{% extends "base.html" %}
+{% extends "layouts/app.html" %}
+
+{% from "macros/ui.html" import widget_stat, btn %}
 
 {% block content %}
-<div class="max-w-screen-2xl mx-auto pb-12 space-y-6">
+<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+    <div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
+            Bonjour <span class="text-indigo-600 capitalize">{{ session.get('prenom', 'Admin') }}</span> 👋
+        </h1>
+        <p class="text-slate-500 font-medium mt-1">Voici le résumé de votre activité aujourd'hui.</p>
+    </div>
 
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
-                Bonjour <span class="text-indigo-600 capitalize">{{ session.get('prenom', 'Admin') }}</span> 👋
-            </h1>
-            <p class="text-slate-500 font-medium mt-1">Voici le résumé de votre activité aujourd'hui.</p>
-        </div>
+    <div class="flex flex-col sm:flex-row gap-3">
         <div class="px-4 py-2 bg-white rounded-xl shadow-sm border border-slate-200 text-sm font-bold text-slate-600 flex items-center gap-2">
             <i class="ph-bold ph-calendar-blank text-indigo-500"></i>
             <span id="dateJour" class="capitalize"></span>
         </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-
-        <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] relative overflow-hidden group">
-            <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-50 rounded-full blur-2xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
-            <div class="relative z-10 flex justify-between items-start mb-4">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                    <i class="ph-bold ph-wallet text-2xl"></i>
-                </div>
-                {% if evolution_ca is defined %}
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black {% if evolution_ca >= 0 %}bg-emerald-50 text-emerald-600{% else %}bg-red-50 text-red-600{% endif %}">
-                    <i class="ph-bold {% if evolution_ca >= 0 %}ph-trend-up{% else %}ph-trend-down{% endif %}"></i>
-                    {{ "%.1f"|format(evolution_ca|abs) }}%
-                </span>
-                {% endif %}
-            </div>
-            <div class="relative z-10">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Chiffre d'Affaires</h3>
-                <div class="flex items-end gap-1">
-                    <span class="text-3xl font-black text-slate-800 tracking-tight">{{ ca_jour }}</span>
-                    <span class="text-lg font-bold text-slate-400 mb-1">DH</span>
-                </div>
-            </div>
+        <div class="flex gap-2">
+            <a href="{{ url_for('dashboard.accueil') }}">
+                {{ btn('Rafraîchir', icone='ph-arrows-clockwise', type='secondaire', classes_extra='text-sm h-full') }}
+            </a>
+            <a href="/caisse">
+                {{ btn('Caisse', icone='ph-calculator', type='primaire', classes_extra='text-sm h-full') }}
+            </a>
         </div>
-
-        <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] relative overflow-hidden group">
-            <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-full blur-2xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
-            <div class="relative z-10 flex justify-between items-start mb-4">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <i class="ph-bold ph-folders text-2xl"></i>
-                </div>
-            </div>
-            <div class="relative z-10">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Dossiers traités</h3>
-                <div class="flex items-end gap-1">
-                    <span class="text-3xl font-black text-slate-800 tracking-tight">{{ total_operations_jour|default(0) }}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] relative overflow-hidden group {% if total_dettes > 0 %}border-red-100 bg-red-50/10{% endif %}">
-            <div class="relative z-10 flex justify-between items-start mb-4">
-                <div class="w-12 h-12 rounded-2xl {% if total_dettes > 0 %}bg-gradient-to-br from-red-500 to-orange-500 shadow-red-500/30{% else %}bg-slate-100 text-slate-400{% endif %} text-white flex items-center justify-center shadow-lg">
-                    <i class="ph-bold ph-warning-circle text-2xl"></i>
-                </div>
-                {% if total_dettes > 0 %}
-                <span class="relative flex h-3 w-3 mt-2 mr-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                </span>
-                {% endif %}
-            </div>
-            <div class="relative z-10">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Crédits Dehors</h3>
-                <div class="flex items-end gap-1">
-                    <span class="text-3xl font-black {% if total_dettes > 0 %}text-red-600{% else %}text-slate-800{% endif %} tracking-tight">{{ total_dettes }}</span>
-                    <span class="text-lg font-bold text-slate-400 mb-1">DH</span>
-                </div>
-            </div>
-            {% if total_dettes > 0 %}
-            <a href="/dettes" class="absolute inset-0 z-20"></a>
-            {% endif %}
-        </div>
-
-        <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] relative overflow-hidden group">
-            <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-50 rounded-full blur-2xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
-            <div class="relative z-10 flex justify-between items-start mb-4">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                    <i class="ph-bold ph-chart-line-up text-2xl"></i>
-                </div>
-            </div>
-            <div class="relative z-10">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Bénéfice estimé</h3>
-                <div class="flex items-end gap-1">
-                    <span class="text-3xl font-black text-slate-800 tracking-tight">{{ benefice_estime|default('--') }}</span>
-                    <span class="text-lg font-bold text-slate-400 mb-1">DH</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
-            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
-                <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
-                    <i class="ph-fill ph-clock-countdown text-indigo-500 text-xl"></i> Opérations en attente
-                </h2>
-                <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-black rounded-full">{{ operations_en_attente|length }} dossiers</span>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-4 space-y-3">
-                {% for op in operations_en_attente %}
-                <div x-data="{ modeCloture: false, montant: '' }" class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-
-                    <a href="{{ url_for('clients.fiche_client', id_client=op.client.id) }}" class="flex items-center gap-4 group cursor-pointer hover:translate-x-1 transition-transform">
-                        <!-- Le carré avec les initiales -->
-                        <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center font-black text-slate-500 shrink-0 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-colors shadow-sm">
-                            {{ op.client.prenom[0]|upper }}{{ op.client.nom[0]|upper }}
-                        </div>
-
-                        <div>
-                            <!-- Le nom du client (qui change de couleur au survol) -->
-                            <p class="font-black text-slate-800 text-base uppercase leading-tight group-hover:text-indigo-600 transition-colors">
-                                {{ op.client.nom }} <span class="capitalize font-bold text-slate-500 group-hover:text-indigo-400">{{ op.client.prenom }}</span>
-                            </p>
-
-                            <!-- 👇 AFFICHAGE MOTIF ET AVANCE 👇 -->
-                            <div class="mt-1.5 flex flex-col sm:flex-row flex-wrap gap-1.5">
-                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 max-w-[200px] truncate" title="{{ op.motif or 'Non spécifié' }}">
-                                    <i class="ph-bold ph-tag text-indigo-500"></i> {{ op.motif or 'Non spécifié' }}
-                                </span>
-                                <span class="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                    <i class="ph-bold ph-money text-emerald-500"></i> Avance: {{ "%.2f"|format(op.montant_avance or 0) }} DH
-                                </span>
-                            </div>
-                            <!-- 👆 FIN NOUVEAU 👆 -->
-
-                            <p class="text-xs font-bold text-slate-400 flex items-center gap-1 mt-0.5">
-                                <i class="ph-bold ph-calendar"></i> Déposé le {{ op.date_operation.strftime('%d/%m à %H:%M') }}
-                            </p>
-                        </div>
-                    </a>
-
-                    <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3">
-
-                        <button x-show="!modeCloture" @click="modeCloture = true" class="px-5 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
-                            Traiter
-                        </button>
-
-                        <form x-show="modeCloture" action="/cloturer_operation/{{ op.id }}" method="POST" class="flex items-center gap-2" x-cloak>
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                            <div class="relative w-32">
-                                <input type="number" name="montant_total" x-model="montant" placeholder="Total" required class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 text-sm font-bold outline-none focus:border-emerald-500">
-                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">DH</span>
-                            </div>
-                            <button type="submit" class="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 shadow-sm" title="Valider">
-                                <i class="ph-bold ph-check text-lg"></i>
-                            </button>
-                            <button type="button" @click="modeCloture = false" class="p-1.5 bg-slate-100 text-slate-400 rounded-lg hover:text-slate-600">
-                                <i class="ph-bold ph-x text-lg"></i>
-                            </button>
-                        </form>
-
-                        {% if session.get('role') == 'admin' %}
-                        <form x-show="!modeCloture" action="/supprimer_operation/{{ op.id }}" method="POST" class="m-0 inline-block">
-                            <!-- 👇 LE JETON DE SÉCURITÉ CSRF 👇 -->
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                            <button type="submit" onclick="return confirm('Mettre à la corbeille ?');" class="p-2 text-slate-300 hover:text-red-500 bg-white border border-slate-100 rounded-xl hover:bg-red-50 transition-colors cursor-pointer">
-                                <i class="ph-bold ph-trash"></i>
-                            </button>
-                        </form>
-                        {% endif %}
-                    </div>
-                </div>
-                {% else %}
-                <div class="h-full flex flex-col items-center justify-center text-center p-8">
-                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
-                        <i class="ph-fill ph-check-circle text-3xl text-emerald-400"></i>
-                    </div>
-                    <p class="font-black text-slate-800">Aucun dossier en attente</p>
-                    <p class="text-sm font-medium text-slate-400 mt-1">Vous êtes à jour dans vos traitements.</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 flex flex-col h-[500px]">
-            <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
-                <i class="ph-fill ph-trend-up text-indigo-500 text-xl"></i> Évolution sur 7 jours
-            </h2>
-            <div class="flex-1 relative w-full h-full">
-                <canvas id="graphiqueCA"></canvas>
-            </div>
-        </div>
-
     </div>
 </div>
 
+{# Logique pour la flèche d'évolution du CA #}
+{% if evolution_ca is defined %}
+    {% if evolution_ca >= 0 %}
+        {% set sous_texte_ca = '<span class="text-emerald-500"><i class="ph-bold ph-trend-up"></i> +' ~ "%.1f"|format(evolution_ca|abs) ~ '%</span> par rapport à hier' %}
+    {% else %}
+        {% set sous_texte_ca = '<span class="text-red-500"><i class="ph-bold ph-trend-down"></i> -' ~ "%.1f"|format(evolution_ca|abs) ~ '%</span> par rapport à hier' %}
+    {% endif %}
+{% else %}
+    {% set sous_texte_ca = '' %}
+{% endif %}
+
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+
+    {{
+ widget_stat(
+        titre="Chiffre d'Affaires",
+        valeur=ca_jour ~ ' DH',
+        icone='ph-wallet',
+        theme='indigo',
+        sous_texte=sous_texte_ca
+    )
+    }}
+
+    {{
+ widget_stat(
+        titre="Dossiers traités",
+        valeur=total_operations_jour|default(0),
+        icone='ph-folders',
+        theme='blue',
+        sous_texte="Aujourd'hui"
+    )
+    }}
+
+    <a href="{{ url_for('clients.liste_dettes') if total_dettes > 0 else '#' }}" class="block transition-transform hover:-translate-y-1">
+        {% set dettes_theme = 'red' if total_dettes > 0 else 'slate' %}
+        {% set dettes_sous_texte = '<span class="text-red-500 flex items-center gap-1 animate-pulse"><span class="h-2 w-2 bg-red-500 rounded-full"></span> Attention requise</span>' if total_dettes > 0 else 'Aucun crédit dehors' %}
+
+        {{
+ widget_stat(
+            titre="Crédits Dehors",
+            valeur=total_dettes ~ ' DH',
+            icone='ph-warning-circle',
+            theme=dettes_theme,
+            sous_texte=dettes_sous_texte
+        )
+        }}
+    </a>
+
+    {{
+ widget_stat(
+        titre="Bénéfice estimé",
+        valeur=benefice_estime|default('--') ~ ' DH',
+        icone='ph-chart-line-up',
+        theme='emerald',
+        sous_texte="Estimation brute"
+    )
+    }}
+
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
+        <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+            <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                <i class="ph-fill ph-clock-countdown text-indigo-500 text-xl"></i> Opérations en attente
+            </h2>
+            <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-black rounded-full">{{ operations_en_attente|length }} dossiers</span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-3">
+            {% for op in operations_en_attente %}
+            <div x-data="{ modeCloture: false, montant: '' }" class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+
+                <a href="{{ url_for('clients.fiche_client', id_client=op.client.id) }}" class="flex items-center gap-4 group cursor-pointer hover:translate-x-1 transition-transform">
+                    <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center font-black text-slate-500 shrink-0 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-colors shadow-sm">
+                        {{ op.client.prenom[0]|upper }}{{ op.client.nom[0]|upper }}
+                    </div>
+
+                    <div>
+                        <p class="font-black text-slate-800 text-base uppercase leading-tight group-hover:text-indigo-600 transition-colors">
+                            {{ op.client.nom }} <span class="capitalize font-bold text-slate-500 group-hover:text-indigo-400">{{ op.client.prenom }}</span>
+                        </p>
+
+                        <div class="mt-1.5 flex flex-col sm:flex-row flex-wrap gap-1.5">
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 max-w-[200px] truncate" title="{{ op.motif or 'Non spécifié' }}">
+                                <i class="ph-bold ph-tag text-indigo-500"></i> {{ op.motif or 'Non spécifié' }}
+                            </span>
+                            <span class="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                <i class="ph-bold ph-money text-emerald-500"></i> Avance: {{ "%.2f"|format(op.montant_avance or 0) }} DH
+                            </span>
+                        </div>
+
+                        <p class="text-xs font-bold text-slate-400 flex items-center gap-1 mt-0.5">
+                            <i class="ph-bold ph-calendar"></i> Déposé le {{ op.date_operation.strftime('%d/%m à %H:%M') }}
+                        </p>
+                    </div>
+                </a>
+
+                <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+                    <button x-show="!modeCloture" @click="modeCloture = true" class="px-5 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
+                        Traiter
+                    </button>
+
+                    <form x-show="modeCloture" action="/cloturer_operation/{{ op.id }}" method="POST" class="flex items-center gap-2" x-cloak>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <div class="relative w-32">
+                            <input type="number" name="montant_total" x-model="montant" placeholder="Total" required class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 text-sm font-bold outline-none focus:border-emerald-500">
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">DH</span>
+                        </div>
+                        <button type="submit" class="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 shadow-sm" title="Valider">
+                            <i class="ph-bold ph-check text-lg"></i>
+                        </button>
+                        <button type="button" @click="modeCloture = false" class="p-1.5 bg-slate-100 text-slate-400 rounded-lg hover:text-slate-600">
+                            <i class="ph-bold ph-x text-lg"></i>
+                        </button>
+                    </form>
+
+                    {% if session.get('role') == 'admin' %}
+                    <form x-show="!modeCloture" action="/supprimer_operation/{{ op.id }}" method="POST" class="m-0 inline-block">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <button type="submit" onclick="return confirm('Mettre à la corbeille ?');" class="p-2 text-slate-300 hover:text-red-500 bg-white border border-slate-100 rounded-xl hover:bg-red-50 transition-colors cursor-pointer">
+                            <i class="ph-bold ph-trash text-lg"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="h-full flex flex-col items-center justify-center text-center p-8">
+                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                    <i class="ph-fill ph-check-circle text-3xl text-emerald-400"></i>
+                </div>
+                <p class="font-black text-slate-800">Aucun dossier en attente</p>
+                <p class="text-sm font-medium text-slate-400 mt-1">Vous êtes à jour dans vos traitements.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 flex flex-col h-[500px]">
+        <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
+            <i class="ph-fill ph-trend-up text-indigo-500 text-xl"></i> Évolution sur 7 jours
+        </h2>
+        <div class="flex-1 relative w-full h-full">
+            <canvas id="graphiqueCA"></canvas>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // 1. Date du jour
@@ -210,19 +196,18 @@
 
         const ctx = document.getElementById('graphiqueCA').getContext('2d');
 
-        // Création d'un dégradé pour la courbe
         let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');   // Indigo semi-transparent
-        gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');   // Transparent en bas
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+        gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
 
         new Chart(ctx, {
-            type: 'line', // On passe de 'bar' à 'line'
+            type: 'line',
             data: {
                 labels: labelsGraphique,
                 datasets: [{
                     label: "Chiffre d'Affaires",
                     data: donneesGraphique,
-                    borderColor: '#4f46e5', // Indigo-600
+                    borderColor: '#4f46e5',
                     backgroundColor: gradient,
                     borderWidth: 3,
                     pointBackgroundColor: '#ffffff',
@@ -230,15 +215,15 @@
                     pointBorderWidth: 2,
                     pointRadius: 4,
                     pointHoverRadius: 6,
-                    fill: true, // Remplissage en dessous de la courbe
-                    tension: 0.4 // Courbe adoucie (Spline) au lieu de traits droits
+                    fill: true,
+                    tension: 0.4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }, // Cache la légende inutile
+                    legend: { display: false },
                     tooltip: {
                         backgroundColor: '#1e293b',
                         padding: 12,

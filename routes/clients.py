@@ -44,7 +44,7 @@ def liste_clients():
     # 5. On passe à 12 ou 16 par page pour que la grille soit bien symétrique
     clients_pagines = query.paginate(page=page, per_page=12, error_out=False)
 
-    return render_template('clients.html', clients=clients_pagines)
+    return render_template('pages/clients/clients.html', clients=clients_pagines)
 
 # ==========================================
 # HISTORIQUE & DETTES (OPTIMISÉS)
@@ -105,7 +105,7 @@ def historique():
     # 4. Tri et Pagination
     operations = query.order_by(Operation.date_operation.desc()).paginate(page=page, per_page=15, error_out=False)
 
-    return render_template('historique.html', operations=operations)
+    return render_template('pages/clients/historique.html', operations=operations)
 
 @clients_bp.route('/dettes')
 def liste_dettes():
@@ -121,7 +121,7 @@ def liste_dettes():
         Operation.montant_total > Operation.montant_avance
     ).order_by(Operation.date_operation.desc()).all()
     
-    return render_template('dettes.html', operations=operations_dettes, total_dettes=total_dettes)
+    return render_template('pages/clients/dettes.html', operations=operations_dettes, total_dettes=total_dettes)
 
 
 # ==========================================
@@ -133,12 +133,15 @@ def fiche_client(id_client):
     c = Client.query.get_or_404(id_client)
     servs = Service.query.all()
     hist = Operation.query.filter_by(client_id=id_client).order_by(Operation.date_operation.desc()).all()
-    return render_template('fiche_client.html', client=c, services=servs, historique=hist)
+    
+    # 👇 CORRECTION DU CHEMIN DU TEMPLATE 👇
+    return render_template('pages/clients/fiche_client.html', client=c, services=servs, historique=hist)
 
 @clients_bp.route('/ajouter_client', methods=['GET', 'POST'])
 def ajouter_client():
     if not session.get('connecte'): 
-        return redirect(url_for('login'))
+        # 👇 CORRECTION DU BLUEPRINT AUTH 👇
+        return redirect(url_for('auth.login'))
 
     if request.method == 'POST':
         new = Client(
@@ -150,11 +153,13 @@ def ajouter_client():
         db.session.add(new)
         db.session.commit()
         return redirect(url_for('clients.liste_clients'))
-    return render_template('ajouter_client.html')
+    
+    return render_template('pages/clients/ajouter_client.html')
 
 @clients_bp.route('/supprimer_client/<int:id_client>', methods=['POST'])
 def supprimer_client(id_client):
-    if session.get('role') != 'admin': return redirect(url_for('accueil'))
+    # 👇 CORRECTION DU BLUEPRINT DASHBOARD 👇
+    if session.get('role') != 'admin': return redirect(url_for('dashboard.accueil'))
     
     client = Client.query.get_or_404(id_client)
     
@@ -175,7 +180,6 @@ def supprimer_client(id_client):
 
 @clients_bp.route('/ajouter_contrat/<int:id_client>', methods=['POST'])
 def ajouter_contrat(id_client):
-    # On récupère les données du formulaire
     num_contrat = request.form.get('numero_contrat')
     nom_proprio = request.form.get('nom_proprietaire')
     id_service = request.form.get('service_id')
@@ -192,10 +196,7 @@ def ajouter_contrat(id_client):
         db.session.add(nouveau_contrat)
         db.session.commit()
     
-    # On redirige vers la fiche du client pour voir le nouveau contrat
-    return redirect(url_for('clients.fiche_client', id_client=id_client))
-
-@clients_bp.route('/supprimer_contrat/<int:id_contrat>')
+    return redirect(url_for('clients.fiche_client', id_client=id_client))@clients_bp.route('/supprimer_contrat/<int:id_contrat>')
 def supprimer_contrat(id_contrat):
     # Sécurité : Seul l'admin peut supprimer un contrat
     if session.get('role') != 'admin':
@@ -447,7 +448,7 @@ def modifier_client(id_client):
             db.session.rollback()
             print(f"Erreur lors de la modification : {e}")
             
-    return render_template('modifier_client.html', client=client)
+    return render_template('pages/clients/modifier_client.html', client=client)
 
 @clients_bp.route('/imprimer_toutes_cartes')
 def imprimer_toutes_cartes():

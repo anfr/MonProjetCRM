@@ -1,0 +1,90 @@
+{# --- 1. BOUTONS UNIFIÉS --- #}
+{% macro btn(texte, icone='', type='primaire', is_submit=false, classes_extra='') %}
+    <button type="{{ 'submit' if is_submit else 'button' }}" 
+            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-sm {{ classes_extra }}
+            {% if type == 'primaire' %} bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200
+            {% elif type == 'secondaire' %} bg-white border-2 border-slate-100 hover:border-slate-200 hover:bg-slate-50 text-slate-700
+            {% elif type == 'danger' %} bg-rose-500 hover:bg-rose-600 text-white shadow-rose-200
+            {% elif type == 'succes' %} bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200
+            {% endif %}">
+        {% if icone %}<i class="ph-bold {{ icone }} text-lg"></i>{% endif %}
+        <span>{{ texte }}</span>
+    </button>
+{% endmacro %}
+
+{# --- 2. BADGES DE STATUT --- #}
+{% macro badge(texte, icone='', type='neutre') %}
+    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border shadow-sm
+        {% if type == 'neutre' %} bg-slate-50 text-slate-600 border-slate-200
+        {% elif type == 'info' %} bg-blue-50 text-blue-700 border-blue-200
+        {% elif type == 'succes' %} bg-emerald-50 text-emerald-700 border-emerald-200
+        {% elif type == 'danger' %} bg-rose-500 text-white border-rose-600
+        {% elif type == 'warning' %} bg-amber-50 text-amber-700 border-amber-200
+        {% endif %}">
+        {% if icone %}<i class="ph-bold {{ icone }} text-xs"></i>{% endif %}
+        {{ texte }}
+    </span>
+{% endmacro %}
+
+{# --- 3. INPUTS DE FORMULAIRE --- #}
+{% macro input_text(nom, label, placeholder='', valeur='', icone='', type='text', required=false) %}
+    <div class="mb-4 w-full">
+        <label class="block text-sm font-bold text-slate-700 mb-1.5">{{ label }} {% if required %}<span class="text-red-500">*</span>{% endif %}</label>
+        <div class="relative">
+            {% if icone %}
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                <i class="ph-bold {{ icone }} text-lg"></i>
+            </div>
+            {% endif %}
+            <input type="{{ type }}" name="{{ nom }}" value="{{ valeur }}" placeholder="{{ placeholder }}" {% if required %}required{% endif %}
+                   class="block w-full rounded-xl border-2 border-slate-100 bg-slate-50/50 py-2.5 text-slate-800 font-medium focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none shadow-sm {% if icone %}pl-10{% else %}pl-4{% endif %} pr-4">
+        </div>
+    </div>
+{% endmacro %}
+
+{# --- 5. TEXTAREA (Champs longs) --- #}
+{% macro input_textarea(nom, label, placeholder='', valeur='', icone='', rows=3, required=false) %}
+    <div class="mb-4 w-full">
+        <label class="block text-sm font-bold text-slate-700 mb-1.5">{{ label }} {% if required %}<span class="text-red-500">*</span>{% endif %}</label>
+        <div class="relative">
+            {% if icone %}
+            <div class="absolute top-3 left-0 flex items-start pl-3.5 pointer-events-none text-slate-400">
+                <i class="ph-bold {{ icone }} text-lg"></i>
+            </div>
+            {% endif %}
+            <textarea name="{{ nom }}" rows="{{ rows }}" placeholder="{{ placeholder }}" {% if required %}required{% endif %}
+                   class="block w-full rounded-xl border-2 border-slate-100 bg-slate-50/50 py-2.5 text-slate-800 font-medium focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none shadow-sm resize-y {% if icone %}pl-10{% else %}pl-4{% endif %} pr-4">{{ valeur }}</textarea>
+        </div>
+    </div>
+{% endmacro %}
+
+{# --- 4. WIDGETS DASHBOARD (Inspiration Taildash) --- #}
+{% macro widget_stat(titre, valeur, icone, theme='indigo', sous_texte='') %}
+    {% set themes = {
+        'indigo': 'bg-indigo-50 text-indigo-600 border-indigo-100',
+        'emerald': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+        'red': 'bg-red-50 text-red-600 border-red-100',
+        'amber': 'bg-amber-50 text-amber-600 border-amber-100',
+        'blue': 'bg-blue-50 text-blue-600 border-blue-100',
+        'slate': 'bg-slate-100 text-slate-600 border-slate-200'
+    } %}
+    {% set classes_theme = themes[theme] %}
+
+    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300 relative overflow-hidden group">
+        <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full {{ classes_theme }} opacity-20 group-hover:scale-150 transition-transform duration-700 pointer-events-none"></div>
+        
+        <div class="flex items-start justify-between relative z-10">
+            <div>
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{{ titre }}</h3>
+                <p class="text-3xl font-black text-slate-800 tracking-tight">{{ valeur }}</p>
+                {% if sous_texte %}
+                <p class="text-[10px] font-bold text-slate-500 mt-2">{{ sous_texte | safe }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="w-12 h-12 rounded-xl {{ classes_theme }} flex items-center justify-center text-2xl shadow-inner shrink-0 group-hover:-translate-y-1 transition-transform duration-300">
+                <i class="ph-fill {{ icone }}"></i>
+            </div>
+        </div>
+    </div>
+{% endmacro %}

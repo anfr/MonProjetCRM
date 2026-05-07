@@ -26,7 +26,7 @@ def gestion_file():
     
     en_pause = Ticket.query.filter(Ticket.statut == 'en_pause').all()
     historique = Ticket.query.filter_by(statut='appele').order_by(Ticket.id.desc()).limit(10).all()
-    return render_template('gestion_file.html', en_attente=en_attente, en_pause=en_pause, historique=historique)
+    return render_template('pages/queue/gestion_file.html', en_attente=en_attente, en_pause=en_pause, historique=historique)
 
 @queue_bp.route('/queue/prioriser/<int:id_ticket>')
 def prioriser_ticket(id_ticket):

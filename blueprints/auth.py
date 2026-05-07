@@ -46,4 +46,4 @@ def profil():
     user = Utilisateur.query.filter_by(username=session.get('username')).first()
     if not user: 
         return redirect(url_for('auth.login'))
-    return render_template('profil.html', user=user, erreur=None, succes=None)
+    return render_template('pages/profil/profil.html', user=user, erreur=None, succes=None)

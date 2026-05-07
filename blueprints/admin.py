@@ -17,7 +17,7 @@ def parametres():
         db.session.add(config)
         db.session.commit()
         
-    return render_template('parametres.html', 
+    return render_template('pages/parametres/parametres.html', 
                            services=Service.query.all(), 
                            utilisateurs=Utilisateur.query.all(), 
                            config=config)

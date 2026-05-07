@@ -1,0 +1,91 @@
+{% extends "layouts/app.html" %}
+
+{% from "macros/ui.html" import btn, badge %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+    <div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
+            <div class="p-2.5 bg-slate-800 text-white rounded-2xl shadow-lg shadow-slate-800/30">
+                <i class="ph-bold ph-archive text-2xl"></i>
+            </div>
+            Archives de Caisse
+        </h1>
+        <p class="text-slate-500 font-medium mt-2">Consultez l'historique de toutes vos sessions clôturées.</p>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-center gap-3">
+        <form action="{{ url_for('caisse.reinitialiser_caisse') }}" method="POST" onsubmit="return confirm('⚠️ ATTENTION ! Voulez-vous vraiment TOUT supprimer ? Cette action est irréversible.');" class="w-full sm:w-auto">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            {{ btn("Vider l'historique", icone='ph-warning', type='danger', is_submit=true, classes_extra='w-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 shadow-none') }}
+        </form>
+
+        <a href="{{ url_for('caisse.tableau_caisse') }}" class="w-full sm:w-auto">
+            {{ btn('Retour à la caisse', icone='ph-arrow-left', type='secondaire', classes_extra='w-full') }}
+        </a>
+    </div>
+</div>
+
+<div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden relative z-10">
+    <div class="overflow-x-auto p-2">
+        <table class="w-full text-left">
+            <thead class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-slate-50/50">
+                <tr>
+                    <th class="py-4 px-6 rounded-tl-xl">Session / Date</th>
+                    <th class="py-4 px-6">Caissier</th>
+                    <th class="py-4 px-6">Bilan (Théorique vs Réel)</th>
+                    <th class="py-4 px-6 text-center">Écart</th>
+                    <th class="py-4 px-6 text-right rounded-tr-xl">Action</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm">
+                {% for session in sessions %}
+                <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                    <td class="py-4 px-6">
+                        <p class="font-black text-slate-800 text-base">Z #{{ session.id }}</p>
+                        <p class="text-xs text-slate-500 font-bold mt-1 flex items-center gap-1">
+                            <i class="ph-bold ph-calendar"></i> {{ session.date_ouverture.strftime('%d/%m/%Y') }}
+                        </p>
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs uppercase shadow-inner">
+                                {{ session.utilisateur_nom[0] if session.utilisateur_nom else 'A' }}
+                            </div>
+                            <span class="font-bold text-slate-700 capitalize">{{ session.utilisateur_nom or 'Admin' }}</span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="space-y-1">
+                            <p class="text-xs text-slate-500 font-bold">Théorique: <span class="font-mono text-slate-800">{{ "%.2f"|format((session.fond_initial or 0) + (session.total_entrees or 0) - (session.total_sorties or 0)) }} DH</span></p>
+                            <p class="text-xs text-slate-500 font-bold">Déclaré: <span class="font-mono text-slate-800">{{ "%.2f"|format(session.montant_reel or 0) }} DH</span></p>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        {% if session.ecart and session.ecart < 0 %}
+                        {{ badge( session.ecart ~ ' DH', 'ph-warning', 'danger') }}
+                        {% elif session.ecart and session.ecart > 0 %}
+                        {{ badge('+' ~ session.ecart ~ ' DH', 'ph-plus', 'warning') }}
+                        {% else %}
+                        {{ badge('Juste', 'ph-check', 'succes') }}
+                        {% endif %}
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                        <a href="/caisse/rapport_z/{{ session.id }}" class="inline-flex items-center justify-center w-10 h-10 bg-white hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 rounded-xl transition-colors shadow-sm border border-slate-200 hover:border-indigo-200" title="Voir le Rapport Z">
+                            <i class="ph-bold ph-printer text-lg"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="py-16 text-center text-slate-400">
+                        <i class="ph-fill ph-archive-box text-5xl mb-3 opacity-30"></i>
+                        <p class="text-sm font-bold">Aucune archive de caisse disponible.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "layouts/app.html" %}
+
+{% from "macros/ui.html" import btn %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto pb-12 relative z-10">
+
+    <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
+                <div class="p-2.5 bg-slate-100 text-slate-600 rounded-2xl shadow-inner border border-slate-200">
+                    <i class="ph-bold ph-shield-check text-2xl"></i>
+                </div>
+                Politique de Confidentialité
+            </h1>
+            <p class="text-slate-500 font-medium mt-2">Dernière mise à jour : {{ date_jour | default('Mai 2026') }}</p>
+        </div>
+
+        <a href="javascript:history.back()">
+            {{ btn('Retour', icone='ph-arrow-left', type='secondaire') }}
+        </a>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden p-8 sm:p-12">
+
+        <div class="prose prose-slate max-w-none prose-headings:font-black prose-headings:tracking-tight prose-a:text-indigo-600 hover:prose-a:text-indigo-700">
+
+            <p class="text-lg font-medium text-slate-600 lead">
+                La protection de vos données personnelles est une priorité pour <strong>{{ config.nom_boutique if config else 'Kiosque Pro' }}</strong>. Cette politique explique comment nous collectons, utilisons et protégeons vos informations.
+            </p>
+
+            <hr class="border-slate-100 my-8">
+
+            <h3 class="text-xl text-slate-800 flex items-center gap-2 mb-4">
+                <i class="ph-fill ph-database text-indigo-500"></i> 1. Données collectées
+            </h3>
+            <p>Dans le cadre de l'utilisation de nos services (Borne, Kiosque, WhatsApp), nous sommes susceptibles de collecter les données suivantes :</p>
+            <ul class="list-disc pl-5 space-y-2 text-slate-600 marker:text-indigo-400">
+                <li><strong>Données d'identification :</strong> Nom, prénom.</li>
+                <li><strong>Données de contact :</strong> Numéro de téléphone, adresse email, adresse postale.</li>
+                <li><strong>Données de transaction :</strong> Historique des paiements, factures Tasshilat, reçus.</li>
+            </ul>
+
+            <h3 class="text-xl text-slate-800 flex items-center gap-2 mt-8 mb-4">
+                <i class="ph-fill ph-gear text-indigo-500"></i> 2. Utilisation des données
+            </h3>
+            <p>Vos informations sont utilisées exclusivement pour :</p>
+            <ul class="list-disc pl-5 space-y-2 text-slate-600 marker:text-indigo-400">
+                <li>Gérer vos dossiers et suivre vos paiements.</li>
+                <li>Vous envoyer des notifications de statut (ex: rappels de dette, monnaie disponible) via WhatsApp.</li>
+                <li>Générer des reçus et factures officiels.</li>
+            </ul>
+
+            <h3 class="text-xl text-slate-800 flex items-center gap-2 mt-8 mb-4">
+                <i class="ph-fill ph-lock-key text-indigo-500"></i> 3. Protection et Sécurité
+            </h3>
+            <p>
+                Toutes les données sont stockées de manière sécurisée. L'accès à ces informations est strictement limité au personnel autorisé de <strong>{{ config.nom_boutique if config else 'notre établissement' }}</strong> disposant d'un compte sécurisé.
+            </p>
+
+            <h3 class="text-xl text-slate-800 flex items-center gap-2 mt-8 mb-4">
+                <i class="ph-fill ph-hand-waving text-indigo-500"></i> 4. Vos droits
+            </h3>
+            <p>
+                Conformément à la réglementation en vigueur sur la protection des données (notamment la loi 09-08 au Maroc), vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour exercer ce droit, veuillez nous contacter directement en boutique.
+            </p>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

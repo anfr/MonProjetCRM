@@ -1,0 +1,271 @@
+{% extends "layouts/app.html" %}
+
+{% from "macros/ui.html" import btn, badge %}
+
+{% block content %}
+<div class="max-w-screen-2xl mx-auto pb-10 relative z-10">
+
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 mb-8 shadow-xl relative overflow-hidden">
+        <div class="absolute -top-10 -right-10 opacity-10 pointer-events-none">
+            <i class="ph-bold ph-gear-six text-[200px] text-indigo-400"></i>
+        </div>
+
+        <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="p-3 bg-indigo-500/20 rounded-2xl border border-indigo-500/30">
+                    <i class="ph-bold ph-rocket-launch text-3xl text-indigo-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-black text-white tracking-tight">Hub d'Outils Numériques</h3>
+                    <p class="text-slate-400 font-medium mt-1">Accédez instantanément aux écrans publics du Kiosque Pro.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="{{ url_for('queue.affiche_pdf') }}" target="_blank" class="group bg-slate-950/50 border border-slate-700/50 p-5 rounded-2xl flex items-center gap-4 transition-all hover:bg-indigo-950 hover:border-indigo-500/50 shadow-sm hover:shadow-lg">
+                    <div class="bg-slate-800 p-3 rounded-xl group-hover:bg-indigo-600 transition-colors">
+                        <i class="ph-bold ph-printer text-2xl text-slate-300 group-hover:text-white"></i>
+                    </div>
+                    <div>
+                        <strong class="block text-sm font-black text-white tracking-tight">Affiche PDF</strong>
+                        <span class="block text-xs font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Impression A4</span>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('queue.mobile_deck') }}" target="_blank" class="group bg-slate-950/50 border border-slate-700/50 p-5 rounded-2xl flex items-center gap-4 transition-all hover:bg-emerald-950 hover:border-emerald-500/50 shadow-sm hover:shadow-lg">
+                    <div class="bg-slate-800 p-3 rounded-xl group-hover:bg-emerald-600 transition-colors">
+                        <i class="ph-bold ph-game-controller text-2xl text-slate-300 group-hover:text-white"></i>
+                    </div>
+                    <div>
+                        <strong class="block text-sm font-black text-white tracking-tight">Kiosque Pad</strong>
+                        <span class="block text-xs font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Télécommande</span>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('queue.borne_qr') }}" target="_blank" class="group bg-slate-950/50 border border-slate-700/50 p-5 rounded-2xl flex items-center gap-4 transition-all hover:bg-cyan-950 hover:border-cyan-500/50 shadow-sm hover:shadow-lg">
+                    <div class="bg-slate-800 p-3 rounded-xl group-hover:bg-cyan-600 transition-colors">
+                        <i class="ph-bold ph-device-tablet-speaker text-2xl text-slate-300 group-hover:text-white"></i>
+                    </div>
+                    <div>
+                        <strong class="block text-sm font-black text-white tracking-tight">Borne Tablette</strong>
+                        <span class="block text-xs font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Distribution QR</span>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('queue.mobile_portail') }}" target="_blank" class="group bg-slate-950/50 border border-slate-700/50 p-5 rounded-2xl flex items-center gap-4 transition-all hover:bg-amber-950 hover:border-amber-500/50 shadow-sm hover:shadow-lg">
+                    <div class="bg-slate-800 p-3 rounded-xl group-hover:bg-amber-500 transition-colors">
+                        <i class="ph-bold ph-ticket text-2xl text-slate-300 group-hover:text-white"></i>
+                    </div>
+                    <div>
+                        <strong class="block text-sm font-black text-white tracking-tight">Portail Client</strong>
+                        <span class="block text-xs font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Prise de ticket</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between mb-8 gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+            <i class="ph-fill ph-lightning text-amber-500 text-xl"></i> Actions Rapides
+        </h2>
+        <div>
+            <a href="{{ url_for('queue.reinitialiser_file') }}" onclick="return confirm('Êtes-vous sûr de vouloir vider toute la file d\'attente ? Cette action est irréversible.');">
+                {{ btn('Vider la file', icone='ph-trash', type='danger') }}
+            </a>
+        </div>
+    </div>
+
+    <div class="flex flex-col xl:flex-row gap-8">
+        <div class="flex-1 grid grid-cols-1 {% if en_pause %}lg:grid-cols-2{% endif %} gap-8 items-start">
+
+            <section class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+                <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="ph-fill ph-users text-2xl text-indigo-500"></i>
+                        <h2 class="text-lg font-black text-slate-800 tracking-tight">File d'attente principale</h2>
+                    </div>
+                    {{ badge(en_attente|length ~ ' clients', type='info') }}
+                </div>
+
+                <div class="overflow-x-auto p-2">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-[10px] text-slate-400 uppercase tracking-widest font-black border-b border-slate-100">
+                            <tr>
+                                <th class="px-4 py-3">Numéro</th>
+                                <th class="px-4 py-3">Service</th>
+                                <th class="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in en_attente %}
+                            <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors group">
+                                <td class="px-4 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-black text-lg {% if ticket.is_priority %}text-red-600{% else %}text-slate-800{% endif %}">
+                                            {{ ticket.lettre }}{{ "%03d" | format(ticket.numero) }}
+                                        </span>
+                                        {% if ticket.is_priority %}
+                                        <i class="ph-fill ph-warning-circle text-red-500 text-lg animate-pulse" title="Prioritaire"></i>
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i class="ph-bold ph-clock"></i> {{ ticket.date_creation.strftime('%H:%M') }}</span>
+                                </td>
+                                <td class="px-4 py-4 font-bold text-slate-600">{{ ticket.service }}</td>
+                                <td class="px-4 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <a href="{{ url_for('queue.appeler_ticket', id_ticket=ticket.id) }}" class="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors shadow-sm active:scale-95">
+                                            <i class="ph-bold ph-speaker-high text-sm"></i> Appeler
+                                        </a>
+
+                                        <a href="{{ url_for('queue.mettre_en_pause', id_ticket=ticket.id) }}" class="w-8 h-8 flex items-center justify-center bg-amber-100 hover:bg-amber-500 text-amber-600 hover:text-white rounded-lg transition-colors shadow-sm" title="Mettre en pause">
+                                            <i class="ph-bold ph-pause text-sm"></i>
+                                        </a>
+
+                                        <button onclick="lancerImpression({{ ticket.id }})" class="w-8 h-8 flex items-center justify-center bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-lg transition-colors shadow-sm cursor-pointer" title="Imprimer le ticket">
+                                            <i class="ph-bold ph-printer text-sm"></i>
+                                        </button>
+
+                                        {% if not ticket.is_priority %}
+                                        <a href="{{ url_for('queue.prioriser_ticket', id_ticket=ticket.id) }}" class="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-red-500 text-slate-400 hover:text-white rounded-lg transition-colors shadow-sm" title="Passer en Urgence">
+                                            <i class="ph-bold ph-warning-circle text-sm"></i>
+                                        </a>
+                                        {% else %}
+                                        <a href="{{ url_for('queue.annoncer_urgence', id_ticket=ticket.id) }}" class="w-8 h-8 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors shadow-sm shadow-red-500/30 animate-pulse" title="Déclencher Alerte TV">
+                                            <i class="ph-bold ph-television text-sm"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="px-4 py-12 text-center text-slate-400">
+                                    <i class="ph-fill ph-check-circle text-4xl mb-2 opacity-50"></i>
+                                    <p class="font-bold text-sm">La file d'attente est actuellement vide.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            {% if en_pause %}
+            <section class="bg-amber-50 border border-amber-200 rounded-3xl p-6 shadow-sm h-full">
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-amber-200/50">
+                    <i class="ph-fill ph-pause-circle text-2xl text-amber-500"></i>
+                    <h2 class="text-lg font-black text-amber-900 tracking-tight">Tickets en pause</h2>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {% for ticket in en_pause %}
+                    <div class="bg-white border border-amber-100 p-4 rounded-2xl flex items-center justify-between gap-3 shadow-sm">
+                        <div>
+                            <span class="block text-lg font-black text-amber-600 tracking-tight">{{ ticket.lettre }}{{ "%03d" | format(ticket.numero) }}</span>
+                            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate mt-0.5">{{ ticket.service }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="lancerImpression({{ ticket.id }})" class="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors shadow-sm cursor-pointer" title="Imprimer">
+                                <i class="ph-bold ph-printer text-base"></i>
+                            </button>
+                            <a href="{{ url_for('queue.appeler_ticket', id_ticket=ticket.id) }}" class="w-8 h-8 flex items-center justify-center bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white rounded-lg transition-colors shadow-sm" title="Rappeler">
+                                <i class="ph-bold ph-arrow-u-up-left text-base"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+        </div>
+
+        <aside class="w-full xl:w-[24rem] shrink-0 relative">
+            <div class="sticky top-24">
+                <section class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+                    <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                        <i class="ph-fill ph-clock-counter-clockwise text-2xl text-slate-400"></i>
+                        <h2 class="text-lg font-black text-slate-800 tracking-tight">Derniers appels</h2>
+                    </div>
+                    <div class="p-3 max-h-[60vh] overflow-y-auto space-y-2">
+                        {% for ticket in historique %}
+                        <div class="flex items-center justify-between bg-white hover:bg-slate-50 p-3 rounded-2xl border border-slate-100 transition-colors group">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-slate-100 text-slate-500 font-black text-sm w-12 h-12 flex items-center justify-center rounded-xl shadow-inner">
+                                    {{ ticket.lettre }}{{ "%03d" | format(ticket.numero) }}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold text-slate-800 tracking-tight truncate">{{ ticket.service }}</p>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                        Guichet {{ ticket.guichet }} • {{ ticket.date_maj.strftime('%H:%M') if ticket.date_maj else '' }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <a href="{{ url_for('queue.mettre_en_pause', id_ticket=ticket.id) }}" class="p-2 text-slate-400 hover:text-amber-500 transition-colors bg-white rounded-lg shadow-sm border border-slate-100" title="Mettre en pause">
+                                    <i class="ph-bold ph-pause text-lg"></i>
+                                </a>
+                                <button onclick="lancerImpression({{ ticket.id }})" class="p-2 text-slate-400 hover:text-indigo-500 transition-colors bg-white rounded-lg shadow-sm border border-slate-100 cursor-pointer" title="Réimprimer">
+                                    <i class="ph-bold ph-printer text-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-center text-sm font-bold text-slate-400 py-8">Aucun historique disponible.</p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<script>
+    let isNavigating = false;
+
+    window.addEventListener('beforeunload', () => {
+        isNavigating = true;
+        sessionStorage.setItem('scrollPos_gestion', window.scrollY);
+    });
+
+    const socket = io();
+    socket.on('ticket_maj', function () {
+        if (!isNavigating) {
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        }
+    });
+
+    window.addEventListener('load', () => {
+        if (sessionStorage.getItem('scrollPos_gestion')) {
+            window.scrollTo(0, parseInt(sessionStorage.getItem('scrollPos_gestion')));
+        }
+    });
+
+    function lancerImpression(idTicket) {
+        const csrfToken = '{{ csrf_token() }}';
+
+        fetch('/queue/imprimer_direct/' + idTicket, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Requête bloquée ou erreur serveur");
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                console.log("Impression lancée avec succès !");
+            } else {
+                alert("Erreur d'impression : " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Erreur de communication avec l'imprimante :", error);
+        });
+    }
+</script>
+{% endblock %}

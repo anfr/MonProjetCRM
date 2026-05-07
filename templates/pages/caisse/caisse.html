@@ -1,0 +1,459 @@
+{% extends "layouts/app.html" %}
+
+{% from "macros/ui.html" import badge %}
+
+{% block content %}
+<style>
+    @keyframes shake-ios {
+        0%, 50%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-1.5deg); }
+        75% { transform: rotate(1.5deg); }
+    }
+    .animate-shake {
+        animation: shake-ios 0.25s infinite ease-in-out;
+        transform-origin: center center;
+    }
+</style>
+
+<div x-data="{
+     modalMouvement: false, modalCloture: false, typeMouvement: 'Entrée' ,
+     modalAnnulation: false, actionAnnulation: '' , categorieSelectionnee: '' ,
+     modalNouvelleCat: false, modeEdition: false,
+     categories: [
+         {% for cat in categories %}
+         { id: {{ cat.id }}, nom: '{{ cat.nom | escape }}', type_mouvement: '{{ cat.type_mouvement }}', icone: '{{ cat.icone }}' },
+         {% endfor %}
+     ],
+     supprimerCategorie(id) {
+         if (!confirm('Supprimer cette catégorie ? Les mouvements existants ne seront pas affectés.')) return;
+         fetch('/caisse/categorie/supprimer_ajax/' + id, {
+             method: 'POST',
+             headers: { 'X-CSRFToken' : '{{ csrf_token() }}' }
+         })
+         .then(res => { if (!res.ok) throw new Error('Erreur'); return res.json(); })
+         .then(data => {
+             if (data.success) { this.categories = this.categories.filter(c => c.id !== id); } 
+             else { alert('Impossible de supprimer : catégorie utilisée.'); }
+         })
+         .catch(err => { alert('Erreur lors de la suppression.'); });
+     },
+     ajouterCategorie(event) {
+         let formData = new FormData(event.target);
+         fetch('/caisse/categorie/ajouter_ajax', {
+             method: 'POST', body: formData, headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
+         })
+         .then(res => res.json())
+         .then(data => {
+             if(data.success) {
+                 this.categories.push(data);
+                 event.target.reset();
+                 this.$dispatch('cat-ajoutee');
+             }
+         });
+     }
+}">
+
+    <div class="bg-white shadow-sm border border-slate-200 px-6 py-5 mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 rounded-2xl relative z-10">
+        <h1 class="text-2xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
+            <div class="bg-indigo-100 text-indigo-600 p-2.5 rounded-xl shadow-inner border border-indigo-200">
+                <i class="ph-bold ph-monitor text-2xl"></i>
+            </div>
+            Terminal de Caisse (POS)
+        </h1>
+        <a href="{{ url_for('caisse.historique_caisse') }}" class="inline-flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 bg-slate-50 text-sm font-bold text-slate-600 hover:text-indigo-600 hover:bg-white rounded-xl transition-all shadow-sm">
+            <i class="ph-bold ph-clock-counter-clockwise text-lg"></i> Historique Z
+        </a>
+    </div>
+
+    <div class="max-w-screen-2xl mx-auto pb-12 relative z-10">
+
+        {% if not session_ouverte %}
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-200 p-10 max-w-xl mx-auto text-center mt-10 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+            
+            <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-slate-50 mb-6 shadow-inner border border-slate-100">
+                <i class="ph-fill ph-lock-key text-5xl text-slate-300"></i>
+            </div>
+            <h2 class="text-3xl font-black text-slate-800 mb-2 tracking-tight">Caisse Verrouillée</h2>
+            <p class="text-slate-500 font-medium mb-8">Veuillez déclarer vos fonds initiaux pour démarrer la journée.</p>
+
+            <form action="{{ url_for('caisse.ouvrir_caisse') }}" method="POST" class="text-left">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 mb-2 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-wallet text-indigo-500"></i> Tiroir (Espèces)</label>
+                        <input type="number" step="0.01" min="0" name="fond_initial" required placeholder="Ex: 200.00" class="block w-full rounded-xl border-2 border-slate-100 py-3 pl-4 text-xl font-black text-slate-800 bg-slate-50 focus:border-indigo-500 focus:bg-white transition-colors outline-none shadow-sm" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 mb-2 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-device-mobile text-blue-500"></i> Machine Tasshilat</label>
+                        <input type="number" step="0.01" min="0" name="tasshilat_initial" required placeholder="Ex: 5000.00" class="block w-full rounded-xl border-2 border-slate-100 py-3 pl-4 text-xl font-black text-slate-800 bg-slate-50 focus:border-indigo-500 focus:bg-white transition-colors outline-none shadow-sm" />
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl shadow-lg shadow-indigo-500/30 transition-all active:scale-95 text-lg flex justify-center items-center gap-2">
+                    <i class="ph-bold ph-lock-open"></i> Ouvrir la Caisse
+                </button>
+            </form>
+        </div>
+
+        {% else %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i class="ph-fill ph-wallet"></i> Fond Initial</p>
+                <p class="text-2xl font-black text-slate-800 tracking-tight">{{ "%.2f"|format(session_ouverte.fond_initial) }} <span class="text-sm font-bold text-slate-400">DH</span></p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1 flex items-center gap-1"><i class="ph-bold ph-trend-up"></i> Entrées</p>
+                <p class="text-2xl font-black text-emerald-600 tracking-tight">+ {{ "%.2f"|format(session_ouverte.total_entrees) }} <span class="text-sm font-bold text-emerald-400">DH</span></p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                <p class="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1 flex items-center gap-1"><i class="ph-bold ph-trend-down"></i> Sorties</p>
+                <p class="text-2xl font-black text-red-600 tracking-tight">- {{ "%.2f"|format(session_ouverte.total_sorties) }} <span class="text-sm font-bold text-red-400">DH</span></p>
+            </div>
+            <div class="bg-slate-900 p-5 rounded-2xl shadow-xl relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 opacity-10"><i class="ph-fill ph-coins text-8xl text-white"></i></div>
+                <p class="text-[10px] font-black text-amber-400 uppercase tracking-widest relative z-10 flex items-center gap-1"><i class="ph-bold ph-equals"></i> Tiroir Espèces</p>
+                <p class="text-3xl font-black text-white mt-1 relative z-10 tracking-tight">{{ "%.2f"|format(theorique) }} <span class="text-base font-bold text-slate-400">DH</span></p>
+            </div>
+            <div class="bg-blue-900 p-5 rounded-2xl shadow-xl relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 opacity-10"><i class="ph-fill ph-device-mobile text-8xl text-white"></i></div>
+                <p class="text-[10px] font-black text-blue-300 uppercase tracking-widest relative z-10 flex items-center gap-1"><i class="ph-bold ph-device-mobile"></i> Machine Tasshilat</p>
+                <p class="text-2xl font-black text-white mt-1 relative z-10 tracking-tight">{{ "%.2f"|format(session_ouverte.tasshilat_initial - session_ouverte.total_tasshilat_consomme + session_ouverte.total_tasshilat_recharge) }} <span class="text-base font-bold text-blue-400">DH</span></p>
+            </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-4 mb-8">
+            <button @click="modalMouvement = true; typeMouvement = 'Entrée'; categorieSelectionnee = ''" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-3 text-xl">
+                <i class="ph-bold ph-plus-circle text-3xl"></i> Nouvelle Vente
+            </button>
+            <button @click="modalMouvement = true; typeMouvement = 'Sortie'; categorieSelectionnee = ''" class="flex-1 bg-white border-2 border-red-200 text-red-600 hover:bg-red-50 font-black py-5 rounded-2xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-3 text-xl">
+                <i class="ph-bold ph-minus-circle text-3xl"></i> Dépense / Sortie
+            </button>
+            <button @click="modalCloture = true" class="bg-slate-800 hover:bg-slate-900 text-white font-black py-5 px-10 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 text-xl border border-slate-700 lg:w-1/4">
+                <i class="ph-bold ph-lock-key text-3xl text-amber-400"></i> Z de Caisse
+            </button>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h3 class="font-black text-slate-800 flex items-center gap-2 text-lg">
+                    <i class="ph-fill ph-list-bullets text-indigo-500 text-xl"></i> Journal de la session
+                </h3>
+            </div>
+
+            {% if mouvements %}
+            <div class="overflow-x-auto p-2">
+                <table class="w-full text-left">
+                    <thead class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                        <tr>
+                            <th class="py-3 px-4">Heure</th>
+                            <th class="py-3 px-4">Type</th>
+                            <th class="py-3 px-4">Catégorie & Détails</th>
+                            <th class="py-3 px-4 text-right">Montant</th>
+                            <th class="py-3 px-4"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        {% for mvt in mouvements %}
+                        <tr class="border-b border-slate-50 transition-colors {% if mvt.est_annule %}bg-slate-50/50 opacity-60{% else %}hover:bg-slate-50{% endif %} rounded-xl">
+                            <td class="py-4 px-4 font-bold text-slate-500">
+                                {{ mvt.date_mouvement.strftime('%H:%M') if mvt.date_mouvement else '--:--' }}
+                            </td>
+                            <td class="py-4 px-4">
+                                {% if mvt.est_annule %}
+                                    {{ badge('Annulé', 'ph-prohibit', 'neutre') }}
+                                {% elif mvt.type_mouvement == 'Entrée' %}
+                                    {{ badge('Entrée', 'ph-trend-up', 'succes') }}
+                                {% else %}
+                                    {{ badge('Sortie', 'ph-trend-down', 'danger') }}
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-4">
+                                <p class="font-black text-slate-800 {% if mvt.est_annule %}line-through{% endif %}">{{ mvt.categorie }}</p>
+                                {% if mvt.description %}
+                                <p class="text-xs text-slate-500 font-medium mt-0.5">{{ mvt.description }}</p>
+                                {% endif %}
+                                {% if mvt.est_annule %}
+                                <p class="text-[11px] text-red-500 font-bold flex items-center gap-1 mt-1">
+                                    <i class="ph-bold ph-info"></i> {{ mvt.motif_annulation }}
+                                </p>
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-4 text-right font-black text-base {% if mvt.est_annule %}text-slate-400 line-through{% elif mvt.type_mouvement == 'Entrée' %}text-emerald-600{% else %}text-red-600{% endif %}">
+                                {% if mvt.type_mouvement == 'Entrée' %}+{% else %}-{% endif %} {{ "%.2f"|format(mvt.montant) }} DH
+                            </td>
+                            <td class="py-4 px-4 text-right">
+                                {% if not mvt.est_annule and session_ouverte and session_ouverte.statut == 'Ouverte' %}
+                                <button @click="actionAnnulation = '{{ url_for('caisse.annuler_mouvement', mvt_id=mvt.id) }}'; modalAnnulation = true"
+                                        class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-lg transition-colors" title="Annuler">
+                                    <i class="ph-bold ph-trash text-lg"></i>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-16 text-slate-400">
+                <i class="ph-fill ph-receipt text-5xl mb-3 opacity-30"></i>
+                <p class="text-sm font-bold">Aucun mouvement enregistré pour le moment.</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <template x-teleport="body">
+        <div x-show="modalMouvement" x-cloak class="relative z-[9999]">
+            <div x-show="modalMouvement" x-transition.opacity class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+            <div class="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center p-4">
+                <div x-show="modalMouvement" @click.outside="modalMouvement = false; modeEdition = false" x-transition.scale.95 class="relative w-full max-w-lg rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+                    <form action="{{ url_for('caisse.ajouter_mouvement') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <div class="px-8 pt-8 pb-6">
+                            <h3 class="text-2xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                                <div class="bg-indigo-100 text-indigo-600 p-2 rounded-xl"><i class="ph-bold ph-coins text-2xl"></i></div>
+                                <span x-text="'Enregistrer une ' + typeMouvement"></span>
+                            </h3>
+                            <input type="hidden" name="type_mouvement" :value="typeMouvement">
+
+                            <div class="mb-6">
+                                <label class="block text-sm font-black text-slate-700 mb-2 uppercase tracking-widest">Montant (DH)</label>
+                                <input type="number" step="0.01" min="0" name="montant" required placeholder="0.00" class="block w-full rounded-xl border-2 border-slate-100 bg-slate-50 py-4 px-5 focus:bg-white focus:border-indigo-500 font-black text-2xl text-slate-800 outline-none transition-colors">
+                            </div>
+
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center mb-3">
+                                    <label class="text-sm font-black text-slate-700 uppercase tracking-widest">Catégorie</label>
+                                    <button type="button" @click="modeEdition = !modeEdition" class="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1" :class="modeEdition ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+                                        <i class="ph-bold" :class="modeEdition ? 'ph-check-circle' : 'ph-pencil-simple'"></i> <span x-text="modeEdition ? 'Terminer' : 'Éditer'"></span>
+                                    </button>
+                                </div>
+                                <div class="flex flex-wrap gap-2 p-1">
+                                    <template x-for="cat in categories" :key="cat.id">
+                                        <div x-show="typeMouvement === cat.type_mouvement" class="relative">
+                                            <button type="button" @click="if(!modeEdition) { categorieSelectionnee = cat.nom }"
+                                                    :class="[categorieSelectionnee === cat.nom ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30' : 'bg-white text-slate-600 border-2 border-slate-100 hover:bg-slate-50 hover:border-slate-200', modeEdition ? 'animate-shake opacity-80 cursor-default' : 'transition-all active:scale-95']"
+                                                    class="px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2">
+                                                <i class="ph-fill text-lg" :class="[cat.icone, categorieSelectionnee === cat.nom ? 'text-white' : 'text-slate-400']"></i> <span x-text="cat.nom"></span>
+                                            </button>
+                                            <button type="button" @click.stop="supprimerCategorie(cat.id)" x-show="modeEdition" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-10"><i class="ph-bold ph-x text-xs"></i></button>
+                                        </div>
+                                    </template>
+                                    <button type="button" x-show="!modeEdition" @click="modalNouvelleCat = true" class="px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 border-2 border-dashed border-slate-300 text-slate-500 hover:bg-slate-50 transition-all"><i class="ph-bold ph-plus"></i> Nouvelle</button>
+                                </div>
+                                <input type="hidden" name="categorie" :value="categorieSelectionnee" required>
+                            </div>
+
+                            <div class="mb-6 p-4 bg-blue-50/50 border border-blue-100 rounded-2xl flex items-start gap-3">
+                                <input type="checkbox" name="impact_tasshilat" id="impact_t" class="mt-1 w-5 h-5 text-blue-600 rounded border-blue-300 focus:ring-blue-500 cursor-pointer">
+                                <label for="impact_t" class="cursor-pointer cursor-pointer">
+                                    <p class="text-sm font-black text-blue-900">Modifie le solde Tasshilat</p>
+                                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">Cochez si c'est une facture ou une recharge machine.</p>
+                                </label>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-black text-slate-700 mb-2 uppercase tracking-widest">Note (Optionnelle)</label>
+                                <input type="text" name="description" placeholder="Ex: Réf client..." class="block w-full rounded-xl border-2 border-slate-100 bg-slate-50 py-3 px-4 font-bold text-sm focus:border-indigo-500 focus:bg-white outline-none transition-colors">
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 px-8 py-5 border-t border-slate-100 flex justify-end gap-3">
+                            <button type="button" @click="modalMouvement = false" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-100 transition-colors">Annuler</button>
+                            <button type="submit" :disabled="categorieSelectionnee === ''" :class="categorieSelectionnee === '' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700 active:scale-95 shadow-md shadow-indigo-500/30'" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold transition-all">Valider</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template x-teleport="body">
+       <div x-show="modalCloture" x-cloak class="relative z-[9999]">
+           <div x-show="modalCloture" x-transition.opacity class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+           <div class="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center p-4">
+               <div x-show="modalCloture" @click.outside="modalCloture = false" class="relative w-full max-w-2xl rounded-3xl bg-white shadow-2xl overflow-hidden border border-slate-200">
+                   <div x-data="{
+                        b200: 0, b100: 0, b50: 0, b20: 0,
+                        p10: 0, p5: 0, p2: 0, p1: 0, p05: 0,
+                        tasshilat: 0,
+                        get totalEspeces() {
+                            return (this.b200 * 200) + (this.b100 * 100) + (this.b50 * 50) + (this.b20 * 20) +
+                                   (this.p10 * 10) + (this.p5 * 5) + (this.p2 * 2) + (this.p1 * 1) + (this.p05 * 0.5);
+                        }
+                    }">
+                        <form action="{{ url_for('caisse.cloturer_caisse') }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <div class="p-8">
+                                <div class="flex justify-between items-center mb-8 border-b border-slate-100 pb-4">
+                                    <h3 class="text-2xl font-black text-slate-800 flex items-center gap-3">
+                                        <i class="ph-bold ph-calculator text-indigo-500"></i> Comptage Caisse
+                                    </h3>
+                                    <div class="text-right bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Théorique Attendu</p>
+                                        <p class="text-xl font-black text-slate-800">{{ "%.2f"|format(theorique) }} DH</p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-8 mb-6">
+                                    <div>
+                                        <h4 class="text-xs font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="ph-fill ph-money text-lg"></i> Billets</h4>
+                                        <div class="space-y-2">
+                                            <div class="flex items-center justify-between"><span class="font-mono font-bold text-slate-600">200 DH</span> <input type="number" min="0" x-model.number="b200" class="w-20 text-center rounded-lg border-2 border-slate-100 bg-slate-50 py-1 font-bold focus:bg-white focus:border-indigo-500 outline-none"></div>
+                                            <div class="flex items-center justify-between"><span class="font-mono font-bold text-slate-600">100 DH</span> <input type="number" min="0" x-model.number="b100" class="w-20 text-center rounded-lg border-2 border-slate-100 bg-slate-50 py-1 font-bold focus:bg-white focus:border-indigo-500 outline-none"></div>
+                                            <div class="flex items-center justify-between"><span class="font-mono font-bold text-slate-600">50 DH</span> <input type="number" min="0" x-model.number="b50" class="w-20 text-center rounded-lg border-2 border-slate-100 bg-slate-50 py-1 font-bold focus:bg-white focus:border-indigo-500 outline-none"></div>
+                                            <div class="flex items-center justify-between"><span class="font-mono font-bold text-slate-600">20 DH</span> <input type="number" min="0" x-model.number="b20" class="w-20 text-center rounded-lg border-2 border-slate-100 bg-slate-50 py-1 font-bold focus:bg-white focus:border-indigo-500 outline-none"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-black text-amber-500 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="ph-fill ph-coin text-lg"></i> Pièces</h4>
+                                        <div class="space-y-2">
+                                            <div class="flex items-center justify-between"><span class="font-mono font-bold text-slate-600">10 DH</span> <input type="number" min="0" x-model.number="p10" class="w-20 text-center rounded-lg border-2 border-slate-100 bg-slate-50 py-1 font-bold focus:bg-white focus:border-indigo-500 outline-none"></div>
+                                            <div class="flex items-center justify-between"><span class="font-mono font-bold text-slate-600">5 DH</span> <input type="number" min="0" x-model.number="p5" class="w-20 text-center rounded-lg border-2 border-slate-100 bg-slate-50 py-1 font-bold focus:bg-white focus:border-indigo-500 outline-none"></div>
+                                            <div class="flex items-center justify-between"><span class="font-mono font-bold text-slate-600">2 DH</span> <input type="number" min="0" x-model.number="p2" class="w-20 text-center rounded-lg border-2 border-slate-100 bg-slate-50 py-1 font-bold focus:bg-white focus:border-indigo-500 outline-none"></div>
+                                            <div class="flex items-center justify-between"><span class="font-mono font-bold text-slate-600">1 DH</span> <input type="number" min="0" x-model.number="p1" class="w-20 text-center rounded-lg border-2 border-slate-100 bg-slate-50 py-1 font-bold focus:bg-white focus:border-indigo-500 outline-none"></div>
+                                            <div class="flex items-center justify-between"><span class="font-mono font-bold text-slate-600">0.5 DH</span> <input type="number" min="0" x-model.number="p05" class="w-20 text-center rounded-lg border-2 border-slate-100 bg-slate-50 py-1 font-bold focus:bg-white focus:border-indigo-500 outline-none"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-6 flex justify-between items-center">
+                                    <h4 class="text-sm font-black text-blue-900 uppercase tracking-widest flex items-center gap-2">
+                                        <i class="ph-fill ph-device-mobile text-xl"></i> Solde Tasshilat (Écran)
+                                    </h4>
+                                    <div class="relative w-1/3">
+                                        <input type="number" step="0.01" min="0" name="tasshilat_reel" x-model.number="tasshilat" placeholder="0.00" class="block w-full rounded-lg border-2 border-blue-200 bg-white py-2 pl-3 pr-10 font-black text-blue-900 focus:border-blue-500 text-right outline-none">
+                                        <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none"><span class="text-slate-400 font-bold">DH</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl overflow-hidden border-2 border-slate-800">
+                                    <div class="bg-slate-900 p-4 flex justify-between items-center text-white border-b border-slate-800">
+                                        <span class="font-black uppercase tracking-widest text-xs text-amber-400">Total Espèces :</span>
+                                        <span class="text-3xl font-black text-amber-400 tracking-tight" x-text="totalEspeces.toFixed(2) + ' DH'"></span>
+                                        <input type="hidden" name="montant_reel" :value="totalEspeces">
+                                    </div>
+                                    <div class="bg-slate-800 p-3 flex justify-between items-center text-white"
+                                         :class="Math.abs(totalEspeces - {{ theorique }}) <= 0.01 ? 'bg-emerald-900/40' : 'bg-red-900/40'">
+                                        <span class="font-bold uppercase tracking-widest text-[10px] flex items-center gap-2"
+                                              :class="Math.abs(totalEspeces - {{ theorique }}) <= 0.01 ? 'text-emerald-400' : 'text-red-400'">
+                                            Écart Tiroir :
+                                        </span>
+                                        <span class="text-xl font-black"
+                                              :class="Math.abs(totalEspeces - {{ theorique }}) <= 0.01 ? 'text-emerald-400' : 'text-red-400'"
+                                              x-text="(totalEspeces - {{ theorique }}).toFixed(2) + ' DH'"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 px-8 py-5 flex gap-3 justify-end border-t border-slate-100">
+                                <button type="button" @click="modalCloture = false" class="bg-white border border-slate-200 text-slate-700 font-bold py-2.5 px-6 rounded-xl transition-colors hover:bg-slate-100">Annuler</button>
+                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-black py-2.5 px-8 rounded-xl shadow-md transition-colors flex items-center gap-2">
+                                    <i class="ph-bold ph-lock-key"></i> Clôturer
+                                </button>
+                            </div>
+                        </form>
+                   </div>
+               </div>
+           </div>
+       </div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-show="modalAnnulation" x-cloak class="relative z-[9999]">
+            <div x-show="modalAnnulation" x-transition.opacity class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+            <div class="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center p-4">
+                <div x-show="modalAnnulation" @click.outside="modalAnnulation = false" x-transition.scale.95 class="relative w-full max-w-sm rounded-3xl bg-white text-left shadow-2xl border border-slate-200 overflow-hidden">
+                    <form :action="actionAnnulation" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <div class="px-8 pt-8 pb-6 text-center">
+                            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-2xl bg-red-100 border border-red-200 mb-4">
+                                <i class="ph-bold ph-trash text-3xl text-red-600"></i>
+                            </div>
+                            <h3 class="text-xl font-black text-slate-800 mb-2">Annuler le mouvement ?</h3>
+                            <p class="text-sm text-slate-500 font-medium mb-6">Le total de la caisse sera automatiquement recalculé.</p>
+                            
+                            <div class="text-left">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Motif (Obligatoire)</label>
+                                <input type="text" name="motif_annulation" required placeholder="Ex: Erreur de frappe..." class="block w-full rounded-xl border-2 border-slate-100 bg-slate-50 py-3 px-4 font-bold text-sm focus:border-red-500 focus:bg-white outline-none transition-colors">
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 px-8 py-5 flex gap-3 justify-end border-t border-slate-100">
+                            <button type="button" @click="modalAnnulation = false" class="bg-white border border-slate-200 text-slate-600 font-bold py-2.5 px-4 rounded-xl transition-colors hover:bg-slate-100 w-full">Non</button>
+                            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-black py-2.5 px-4 rounded-xl shadow-md transition-colors w-full">Oui, annuler</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-show="modalNouvelleCat" x-cloak class="relative z-[10000]">
+            <div x-show="modalNouvelleCat" x-transition.opacity class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm"></div>
+            <div class="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center p-4">
+                <div x-show="modalNouvelleCat" @click.outside="modalNouvelleCat = false" x-transition.scale.95 class="relative w-full max-w-sm rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+
+                    <form @submit.prevent="ajouterCategorie($event)"
+                          x-data="{
+                            iconeChoisie: 'ph-star',
+                            iconesDispos: [
+                                'ph-printer', 'ph-copy', 'ph-file-text', 'ph-scissors',
+                                'ph-coffee', 'ph-hamburger', 'ph-lightning', 'ph-device-mobile',
+                                'ph-wifi-high', 'ph-car', 'ph-wrench', 'ph-shopping-cart',
+                                'ph-money', 'ph-credit-card', 'ph-star', 'ph-heart'
+                            ],
+                            notifAjout: false
+                          }"
+                          @cat-ajoutee.window="notifAjout = true; setTimeout(() => notifAjout = false, 2500)">
+                          
+                        <div class="px-8 pt-6 pb-4">
+                            <h3 class="text-xl font-black text-slate-800 mb-4 flex items-center gap-3">
+                                <div class="bg-indigo-100 text-indigo-600 p-2 rounded-xl"><i class="ph-bold ph-tag text-xl"></i></div> 
+                                Nouvelle Catégorie
+                            </h3>
+
+                            <div x-show="notifAjout" x-transition class="mb-4 p-3 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-xl border border-emerald-200 flex items-center gap-2" style="display: none;">
+                                <i class="ph-fill ph-check-circle text-base"></i> Ajouté ! Vous pouvez en créer un autre.
+                            </div>
+
+                            <input type="hidden" name="type_mouvement" :value="typeMouvement">
+                            <input type="hidden" name="icone" :value="iconeChoisie">
+
+                            <div class="mb-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                Sera ajoutée dans les <strong class="text-slate-800" x-text="typeMouvement + 's'"></strong>.
+                            </div>
+
+                            <div class="mb-5">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nom de la catégorie</label>
+                                <input type="text" name="nom" required placeholder="Ex: Réparation PC" class="block w-full rounded-xl border-2 border-slate-100 bg-slate-50 py-3 px-4 focus:border-indigo-500 focus:bg-white outline-none font-bold text-sm transition-colors">
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Choisissez une icône</label>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <div class="grid grid-cols-4 gap-2">
+                                        <template x-for="icone in iconesDispos" :key="icone">
+                                            <button type="button"
+                                                    @click="iconeChoisie = icone"
+                                                    class="aspect-square flex items-center justify-center rounded-xl text-xl transition-all duration-200 border-2"
+                                                    :class="iconeChoisie === icone ? 'bg-indigo-600 text-white border-indigo-600 shadow-md scale-110' : 'bg-white text-slate-400 hover:bg-indigo-50 hover:text-indigo-500 border-slate-100'">
+                                                <i class="ph-fill" :class="icone"></i>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-50 px-8 py-4 flex gap-3 justify-end border-t border-slate-100">
+                            <button type="button" @click="modalNouvelleCat = false" class="bg-white border border-slate-200 text-slate-600 font-bold py-2.5 px-5 rounded-xl hover:bg-slate-100 transition-colors text-sm">Fermer</button>
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-xl shadow-md shadow-indigo-500/30 transition-all text-sm active:scale-95">Sauvegarder</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+{% endblock %}

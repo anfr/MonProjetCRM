@@ -65,6 +65,12 @@ def create_app(config_class=Config):
 
         return dict(notifs=notifs, nb_notifs=len(notifs), liste_boutons=liste_boutons, config=config, version_app=app.config.get('VERSION_APP'))
 
+    @app.route('/confidentialite')
+    def confidentialite():
+        # Si tu as mis tes routes dans un Blueprint (ex: core_bp), 
+        # remplace @app.route par @core_bp.route
+        return render_template('pages/confidentialite.html')
+    
     @app.errorhandler(404)
     def page_non_trouvee(e): 
         return render_template('404.html'), 404
@@ -100,6 +106,8 @@ def create_app(config_class=Config):
     # 📌 C'EST ICI QU'ON AJOUTERA NOS NOUVEAUX BLUEPRINTS (auth, dashboard, etc.)
 
     return app
+
+
 
 # POINT DE LANCEMENT DU SERVEUR
 # ==========================================

@@ -22,7 +22,7 @@ def tableau_caisse():
         # On récupère tous les mouvements de cette session (du plus récent au plus ancien)
         mouvements = MouvementCaisse.query.filter_by(session_id=session_ouverte.id).order_by(MouvementCaisse.id.desc()).all()
         
-    return render_template('caisse.html', session_ouverte=session_ouverte, theorique=theorique, mouvements=mouvements, categories=categories)
+    return render_template('pages/caisse/caisse.html', session_ouverte=session_ouverte, theorique=theorique, mouvements=mouvements, categories=categories)
 
 @caisse_bp.route('/caisse/ouvrir', methods=['POST'])
 def ouvrir_caisse():
@@ -147,7 +147,8 @@ def historique_caisse():
     # On récupère toutes les sessions clôturées, de la plus récente à la plus ancienne
     archives = SessionCaisse.query.filter_by(statut='Clôturée').order_by(SessionCaisse.id.desc()).all()
     
-    return render_template('historique_caisse.html', archives=archives)
+    # 👇 CORRECTION 1 : On appelle le bon fichier HTML avec la variable "sessions"
+    return render_template('pages/caisse/historique_caisse.html', sessions=archives)
 
 @caisse_bp.route('/caisse/categorie/ajouter_ajax', methods=['POST'])
 def ajouter_categorie_ajax():
@@ -213,6 +214,5 @@ def rapport_z(session_id):
         est_annule=False
     ).order_by(MouvementCaisse.id.asc()).all()
     
-    return render_template('rapport_z.html', 
-                           session_caisse=session_caisse, 
-                           mouvements=mouvements)
+    # 👇 CORRECTION 2 : Le rapport Z a sa propre ligne de retour
+    return render_template('pages/caisse/rapport_z.html', session_caisse=session_caisse, mouvements=mouvements)

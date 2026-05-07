@@ -1,0 +1,124 @@
+{% extends "layouts/master.html" %}
+
+{% block layout_content %}
+<div class="min-h-screen bg-slate-100 p-4 sm:p-8 print:bg-white print:p-0 w-full overflow-y-auto">
+
+    <div class="max-w-4xl mx-auto mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
+        <a href="javascript:history.back()" class="text-slate-500 hover:text-slate-800 font-bold flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition-colors">
+            <i class="ph-bold ph-arrow-left text-lg"></i> Retour à l'historique
+        </a>
+        <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-md shadow-indigo-500/30 flex items-center gap-2 transition-all active:scale-95">
+            <i class="ph-bold ph-printer text-lg"></i> Imprimer le Rapport Z
+        </button>
+    </div>
+
+    <div class="max-w-4xl mx-auto bg-white p-8 sm:p-12 shadow-2xl rounded-2xl print:shadow-none print:p-0 border border-slate-200 print:border-none">
+
+        <div class="border-b-2 border-slate-800 pb-6 mb-8 flex justify-between items-end">
+            <div>
+                <h1 class="text-4xl font-black text-slate-800 tracking-tight">RAPPORT Z</h1>
+                <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mt-2">Clôture de Caisse #{{ session_caisse.id }}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-2xl font-black text-slate-800">{{ config.nom_boutique if config else 'Kiosque Pro' }}</p>
+                <p class="text-sm font-bold text-slate-500">{{ session_caisse.date_ouverture.strftime('%d/%m/%Y') }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 mb-10">
+            <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 print:border-slate-300">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Détails de session</p>
+                <p class="text-sm text-slate-700 font-bold mb-1"><span class="text-slate-500 mr-2">Ouverture :</span> {{ session_caisse.date_ouverture.strftime('%H:%M') }}</p>
+                <p class="text-sm text-slate-700 font-bold mb-1"><span class="text-slate-500 mr-2">Fermeture :</span> {{ session_caisse.date_fermeture.strftime('%H:%M') if session_caisse.date_fermeture else 'En cours' }}</p>
+                <p class="text-sm text-slate-700 font-bold"><span class="text-slate-500 mr-2">Caissier :</span> <span class="capitalize">{{ session_caisse.utilisateur_nom or 'Admin' }}</span></p>
+            </div>
+            <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 print:border-slate-300">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Bilan Machine (Tasshilat)</p>
+                <p class="text-sm text-slate-700 font-bold mb-1"><span class="text-slate-500 mr-2">Initial :</span> {{ "%.2f"|format(session_caisse.tasshilat_initial or 0) }} DH</p>
+                <p class="text-sm text-slate-700 font-bold mb-1"><span class="text-slate-500 mr-2">Déclaré Écran :</span> {{ "%.2f"|format(session_caisse.tasshilat_reel or 0) }} DH</p>
+                {% set ecart_t = (session_caisse.tasshilat_reel or 0) - ((session_caisse.tasshilat_initial or 0) - (session_caisse.total_tasshilat_consomme or 0) + (session_caisse.total_tasshilat_recharge or 0)) %}
+                <p class="text-sm font-bold {% if ecart_t == 0 %}text-emerald-600{% else %}text-red-600{% endif %}">
+                    <span class="text-slate-500 mr-2">Écart :</span> {{ "%.2f"|format(ecart_t) }} DH
+                </p>
+            </div>
+        </div>
+
+        <h3 class="text-lg font-black text-slate-800 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">Bilan Tiroir (Espèces)</h3>
+        <div class="mb-10">
+            <table class="w-full text-sm text-left">
+                <tbody>
+                    <tr class="border-b border-slate-100">
+                        <td class="py-3 font-bold text-slate-600">Fond de caisse initial</td>
+                        <td class="py-3 font-mono text-right text-slate-800">{{ "%.2f"|format(session_caisse.fond_initial) }} DH</td>
+                    </tr>
+                    <tr class="border-b border-slate-100">
+                        <td class="py-3 font-bold text-slate-600 text-emerald-600">+ Total des Entrées</td>
+                        <td class="py-3 font-mono text-right text-emerald-600">{{ "%.2f"|format(session_caisse.total_entrees) }} DH</td>
+                    </tr>
+                    <tr class="border-b border-slate-200">
+                        <td class="py-3 font-bold text-slate-600 text-red-600">- Total des Sorties</td>
+                        <td class="py-3 font-mono text-right text-red-600">{{ "%.2f"|format(session_caisse.total_sorties) }} DH</td>
+                    </tr>
+                    <tr class="bg-slate-50 font-black text-base print:bg-transparent border-b-2 border-slate-800">
+                        <td class="py-4 px-2 uppercase tracking-widest text-slate-800">Total Théorique Attendu</td>
+                        <td class="py-4 px-2 font-mono text-right text-slate-800">{{ "%.2f"|format(session_caisse.fond_initial + session_caisse.total_entrees - session_caisse.total_sorties) }} DH</td>
+                    </tr>
+                    <tr>
+                        <td class="py-4 px-2 font-black uppercase tracking-widest text-slate-800">Total Réel Déclaré</td>
+                        <td class="py-4 px-2 font-mono text-right font-black text-slate-800">{{ "%.2f"|format(session_caisse.montant_reel or 0) }} DH</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 px-2 text-xs font-bold uppercase tracking-widest text-slate-500">Écart Constaté</td>
+                        <td class="py-2 px-2 font-mono text-right font-black {% if session_caisse.ecart and session_caisse.ecart < 0 %}text-red-600{% elif session_caisse.ecart and session_caisse.ecart > 0 %}text-amber-600{% else %}text-emerald-600{% endif %}">
+                            {{ "%.2f"|format(session_caisse.ecart or 0) }} DH
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="text-lg font-black text-slate-800 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">Détail des opérations</h3>
+        <table class="w-full text-sm text-left">
+            <thead class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 print:bg-transparent border-b border-slate-300">
+                <tr>
+                    <th class="py-3 px-2">Heure</th>
+                    <th class="py-3 px-2">Type</th>
+                    <th class="py-3 px-2">Catégorie</th>
+                    <th class="py-3 px-2 text-right">Montant</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for mvt in mouvements %}
+                <tr class="{% if mvt.est_annule %}opacity-50 line-through{% endif %}">
+                    <td class="py-2.5 px-2 font-mono text-slate-500">{{ mvt.date_mouvement.strftime('%H:%M') }}</td>
+                    <td class="py-2.5 px-2 font-bold {% if mvt.type_mouvement == 'Entrée' %}text-emerald-600{% else %}text-red-600{% endif %}">{{ mvt.type_mouvement }}</td>
+                    <td class="py-2.5 px-2">
+                        <span class="font-bold text-slate-800">{{ mvt.categorie }}</span>
+                        {% if mvt.description %}<span class="text-slate-500 text-xs ml-1 font-medium">- {{ mvt.description }}</span>{% endif %}
+                    </td>
+                    <td class="py-2.5 px-2 text-right font-mono font-bold {% if mvt.type_mouvement == 'Entrée' %}text-emerald-600{% else %}text-red-600{% endif %}">
+                        {% if mvt.type_mouvement == 'Entrée' %}+{% else %}-{% endif %}{{ "%.2f"|format(mvt.montant) }} DH
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="py-8 text-center italic text-slate-400 font-bold">Aucun mouvement enregistré dans cette session.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="mt-16 pt-8 border-t border-slate-300 flex justify-between px-10">
+            <div class="text-center">
+                <p class="text-sm font-black text-slate-800 uppercase tracking-widest mb-12">Signature Caissier</p>
+                <p class="text-slate-400 border-t border-slate-300 pt-2 w-48 mx-auto font-medium text-xs">{{ session_caisse.utilisateur_nom or 'Admin' }}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-sm font-black text-slate-800 uppercase tracking-widest mb-12">Signature Gérant</p>
+                <p class="text-slate-400 border-t border-slate-300 pt-2 w-48 mx-auto font-medium text-xs">Validation</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

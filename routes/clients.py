@@ -196,22 +196,26 @@ def ajouter_contrat(id_client):
         db.session.add(nouveau_contrat)
         db.session.commit()
     
-    return redirect(url_for('clients.fiche_client', id_client=id_client))@clients_bp.route('/supprimer_contrat/<int:id_contrat>')
+    # Correction de url_for : on vise la fonction 'fiche_client' du blueprint 'clients'
+    return redirect(url_for('clients.fiche_client', id_client=id_client))
+
+
+@clients_bp.route('/supprimer_contrat/<int:id_contrat>', methods=['GET', 'POST'])
 def supprimer_contrat(id_contrat):
     # Sécurité : Seul l'admin peut supprimer un contrat
     if session.get('role') != 'admin':
-        return redirect(url_for('accueil'))
+        return redirect(url_for('dashboard.index')) # Ou ton accueil
     
     contrat = Contrat.query.get_or_404(id_contrat)
-    id_client = contrat.client_id # On garde l'ID pour la redirection
+    id_client = contrat.client_id
     
     try:
-        # ✅ LA CORRECTION EST ICI : On archive au lieu de supprimer
+        # On archive au lieu de supprimer (Corbeille)
         contrat.archive = True
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        print(f"Erreur lors de la mise en corbeille du contrat : {e}")
+        print(f"Erreur lors de l'archivage du contrat : {e}")
         
     return redirect(url_for('clients.fiche_client', id_client=id_client))
 

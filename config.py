@@ -14,7 +14,7 @@ class Config:
     UPLOAD_FOLDER = 'static/uploads/recus'
     
     # Informations de l'application
-    VERSION_APP = '0.9.1-bêta'
+    VERSION_APP = '0.9.131-bêta'
 
     # Création automatique du dossier d'upload s'il n'existe pas
     @staticmethod

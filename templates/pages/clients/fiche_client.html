@@ -134,7 +134,7 @@
                         </button>
 
                         {% if session.get('role') == 'admin' %}
-                        <form action="/supprimer_contrat/{{ contrat.id }}" method="POST" class="m-0 inline-block" onclick="event.stopPropagation();">
+                        <form action="{{ url_for('clients.supprimer_contrat', id_contrat=contrat.id) }}" method="POST" class="m-0 inline-block" onclick="event.stopPropagation();">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                             <button type="submit" onclick="return confirm('Supprimer définitivement ce contrat ?');" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors bg-transparent border-none cursor-pointer" title="Supprimer">
                                 <i class="ph-bold ph-trash text-base"></i>
